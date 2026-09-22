@@ -1,0 +1,186 @@
+@extends('layouts.owner')
+
+@section('title', 'Process Return')
+@php $activeNav = 'returns'; @endphp
+
+@section('content')
+<div class="space-y-6 max-w-xl">
+
+    {{-- Back Link --}}
+    <a href="{{ route('owner.returns.index') }}"
+       class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700">
+        ← Back to Returns & Warranties
+    </a>
+
+    {{-- Page Header --}}
+    <div>
+        <h1 class="text-2xl font-bold text-slate-800">Process Return</h1>
+        <p class="text-sm text-slate-500 mt-1">For transaction {{ $txn->id ?? 'TXN-2024-003' }}</p>
+    </div>
+
+    {{-- Success Alert --}}
+    @if(session('success'))
+    <div class="flex items-center gap-3 px-4 py-3 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        {{ session('success') }}
+    </div>
+    @endif
+
+    {{-- Form Card --}}
+    <div class="bg-white rounded-xl border shadow-sm p-6">
+        <form id="returnForm" method="POST" action="{{ route('owner.returns.store') }}" class="space-y-5" onsubmit="handleSubmit(event)">
+            @csrf
+
+            {{-- Read-only Transaction ID --}}
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Transaction ID</label>
+                <div class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 select-all">
+                    {{ $txn->id ?? 'TXN-2024-003' }}
+                </div>
+                <input type="hidden" name="transaction_id" value="{{ $txn->id ?? 'TXN-2024-003' }}">
+            </div>
+
+            {{-- Product to Return --}}
+            <div>
+                <label for="product_id" class="block text-sm font-medium text-slate-700 mb-1">
+                    Product to Return <span class="text-red-500">*</span>
+                </label>
+                <select id="product_id" name="product_id"
+                        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" required>
+                    <option value="">Select a product...</option>
+                    @foreach($txn->items ?? [] as $item)
+                        <option value="{{ $item->product_id }}" {{ old('product_id') == $item->product_id ? 'selected' : '' }}>
+                            {{ $item->product_name }} (Qty: {{ $item->qty }})
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            {{-- Quantity to Return --}}
+            <div>
+                <label for="qty" class="block text-sm font-medium text-slate-700 mb-1">
+                    Quantity to Return <span class="text-red-500">*</span>
+                </label>
+                <input type="number" id="qty" name="qty" min="1" value="{{ old('qty', 1) }}"
+                       class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" required>
+            </div>
+
+            {{-- Reason for Return --}}
+            <div>
+                <label for="reason" class="block text-sm font-medium text-slate-700 mb-1">
+                    Reason for Return <span class="text-red-500">*</span>
+                </label>
+                <textarea id="reason" name="reason" rows="3"
+                          class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                          placeholder="Describe the reason for the return..." required>{{ old('reason') }}</textarea>
+            </div>
+
+            {{-- Resolution --}}
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">
+                    Resolution <span class="text-red-500">*</span>
+                </label>
+                <div class="flex flex-wrap gap-3">
+                    @foreach(['Replacement', 'Refund', 'Exchange'] as $res)
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="resolution" value="{{ $res }}"
+                               {{ old('resolution') === $res ? 'checked' : '' }}
+                               class="accent-slate-700" required>
+                        <span class="text-sm text-slate-700">{{ $res }}</span>
+                    </label>
+                    @endforeach
+                </div>
+            </div>
+
+            {{-- Item Condition --}}
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">
+                    Item Condition <span class="text-red-500">*</span>
+                </label>
+                <div class="space-y-3">
+                    <label class="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-slate-50 has-[:checked]:border-slate-700 has-[:checked]:bg-slate-50 transition-colors">
+                        <input type="radio" name="condition" value="restock"
+                               {{ old('condition') === 'restock' ? 'checked' : '' }}
+                               class="mt-0.5 accent-slate-700" required>
+                        <div>
+                            <p class="text-sm font-medium text-slate-800">Return to available stock</p>
+                            <p class="text-xs text-slate-500 mt-0.5">Item re-added to inventory.</p>
+                        </div>
+                    </label>
+                    <label class="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-slate-50 has-[:checked]:border-slate-700 has-[:checked]:bg-slate-50 transition-colors">
+                        <input type="radio" name="condition" value="damaged"
+                               {{ old('condition') === 'damaged' ? 'checked' : '' }}
+                               class="mt-0.5 accent-slate-700">
+                        <div>
+                            <p class="text-sm font-medium text-slate-800">Damaged</p>
+                            <p class="text-xs text-slate-500 mt-0.5">NOT added back to inventory.</p>
+                        </div>
+                    </label>
+                    <label class="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-slate-50 has-[:checked]:border-slate-700 has-[:checked]:bg-slate-50 transition-colors">
+                        <input type="radio" name="condition" value="no_restock"
+                               {{ old('condition') === 'no_restock' ? 'checked' : '' }}
+                               class="mt-0.5 accent-slate-700">
+                        <div>
+                            <p class="text-sm font-medium text-slate-800">Not restocked</p>
+                            <p class="text-xs text-slate-500 mt-0.5">Returned but NOT added to inventory.</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            {{-- Notes --}}
+            <div>
+                <label for="notes" class="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+                <textarea id="notes" name="notes" rows="2"
+                          class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                          placeholder="Optional additional notes...">{{ old('notes') }}</textarea>
+            </div>
+
+            {{-- Buttons --}}
+            <div class="flex items-center gap-3 pt-2">
+                <button type="button" onclick="document.getElementById('confirmDialog').classList.remove('hidden')"
+                        class="px-5 py-2 text-sm font-medium text-white rounded-lg transition-opacity hover:opacity-90"
+                        style="background-color:#363E48">
+                    Process Return
+                </button>
+                <a href="{{ route('owner.returns.index') }}"
+                   class="px-5 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+
+</div>
+@endsection
+
+@push('modals')
+<div id="confirmDialog" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl p-6 max-w-sm mx-4 shadow-xl">
+        <h3 class="font-semibold text-slate-800 mb-2">Confirm Return</h3>
+        <p class="text-sm text-slate-600 mb-4">Process this return? This action cannot be undone.</p>
+        <div class="flex gap-2 justify-end">
+            <button onclick="document.getElementById('confirmDialog').classList.add('hidden')"
+                    class="px-4 py-2 text-sm border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
+                Cancel
+            </button>
+            <button onclick="document.getElementById('returnForm').submit()"
+                    class="px-4 py-2 text-sm text-white rounded-lg transition-opacity hover:opacity-90"
+                    style="background-color:#363E48">
+                Process Return
+            </button>
+        </div>
+    </div>
+</div>
+@endpush
+
+@push('scripts')
+<script>
+    function handleSubmit(e) {
+        e.preventDefault();
+        document.getElementById('confirmDialog').classList.remove('hidden');
+    }
+</script>
+@endpush
