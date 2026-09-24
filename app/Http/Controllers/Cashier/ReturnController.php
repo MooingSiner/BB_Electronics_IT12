@@ -40,6 +40,8 @@ class ReturnController extends Controller
         }
 
         $returns = ReturnRecord::with(['product', 'sale'])
+            ->when($request->input('status') === 'Pending', fn ($query) => $query->where('status', 'open'))
+            ->when($request->input('status') === 'Approved', fn ($query) => $query->where('status', 'resolved'))
             ->latest('return_date')
             ->get()
             ->map(fn (ReturnRecord $return) => (object) [

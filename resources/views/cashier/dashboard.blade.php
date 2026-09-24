@@ -17,7 +17,7 @@
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
         {{-- Today's Sales --}}
-        <div class="rounded-2xl p-5 text-white" style="background-color:#363E48;">
+        <a href="{{ route('cashier.sales.index', ['date' => 'today']) }}" class="rounded-2xl p-5 text-white hover:opacity-90 transition-opacity" style="background-color:#363E48;">
             <div class="flex items-center justify-between mb-3">
                 <span class="text-sm font-medium opacity-80">Today's Sales</span>
                 <div class="w-9 h-9 rounded-full flex items-center justify-center" style="background-color:rgba(224,205,102,0.2);">
@@ -28,10 +28,10 @@
             </div>
             <p class="text-2xl font-bold">₱{{ number_format($todaysSales ?? 0, 2) }}</p>
             <p class="text-xs opacity-60 mt-1">{{ $todaysSalesCount ?? 0 }} transactions</p>
-        </div>
+        </a>
 
         {{-- Low Stock Items --}}
-        <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+        <a href="{{ route('cashier.inventory.index', ['status' => 'needs_restock']) }}" class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
             <div class="flex items-center justify-between mb-3">
                 <span class="text-sm font-medium text-slate-600">Low Stock Items</span>
                 <div class="w-9 h-9 bg-amber-50 rounded-full flex items-center justify-center">
@@ -42,10 +42,10 @@
             </div>
             <p class="text-2xl font-bold text-slate-800">{{ $lowStockCount ?? 0 }}</p>
             <p class="text-xs text-slate-400 mt-1">items need restocking</p>
-        </div>
+        </a>
 
         {{-- Pending Returns --}}
-        <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+        <a href="{{ route('cashier.returns.index', ['status' => 'Pending']) }}" class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
             <div class="flex items-center justify-between mb-3">
                 <span class="text-sm font-medium text-slate-600">Pending Returns</span>
                 <div class="w-9 h-9 bg-rose-50 rounded-full flex items-center justify-center">
@@ -56,10 +56,10 @@
             </div>
             <p class="text-2xl font-bold text-slate-800">{{ $pendingReturnsCount ?? 0 }}</p>
             <p class="text-xs text-slate-400 mt-1">awaiting processing</p>
-        </div>
+        </a>
 
         {{-- My Sales Today --}}
-        <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+        <a href="{{ route('cashier.sales.index', ['date' => 'today', 'mine' => 1]) }}" class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
             <div class="flex items-center justify-between mb-3">
                 <span class="text-sm font-medium text-slate-600">My Sales Today</span>
                 <div class="w-9 h-9 bg-blue-50 rounded-full flex items-center justify-center">
@@ -70,7 +70,7 @@
             </div>
             <p class="text-2xl font-bold text-slate-800">{{ $mySalesTodayCount ?? 0 }}</p>
             <p class="text-xs text-slate-400 mt-1">₱{{ number_format($mySalesTodayTotal ?? 0, 2) }} total</p>
-        </div>
+        </a>
 
     </div>
 
@@ -152,11 +152,14 @@
 
         {{-- Low / Out of Stock --}}
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
-                <svg class="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                </svg>
-                <h2 class="font-semibold text-slate-800">Low / Out of Stock</h2>
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <h2 class="font-semibold text-slate-800">Low / Out of Stock</h2>
+                </div>
+                <a href="{{ route('cashier.inventory.index', ['status' => 'needs_restock']) }}" class="text-xs font-medium hover:underline" style="color:#363E48;">View all</a>
             </div>
             <ul class="divide-y divide-slate-50">
                 @forelse($lowStockItems ?? [] as $item)

@@ -52,6 +52,7 @@
                     <option value="in_stock" {{ request('status') === 'in_stock' ? 'selected' : '' }}>In Stock</option>
                     <option value="low_stock" {{ request('status') === 'low_stock' ? 'selected' : '' }}>Low Stock</option>
                     <option value="out_of_stock" {{ request('status') === 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
+                    <option value="needs_restock" {{ request('status') === 'needs_restock' ? 'selected' : '' }}>Needs Restock (Low + Out)</option>
                 </select>
             </div>
             <button type="submit"

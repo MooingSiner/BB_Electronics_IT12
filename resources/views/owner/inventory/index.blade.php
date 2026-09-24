@@ -67,9 +67,10 @@
                 <select name="status"
                         class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
                     <option value="">All Statuses</option>
-                    <option value="In Stock"    {{ request('status') === 'In Stock'    ? 'selected' : '' }}>In Stock</option>
-                    <option value="Low Stock"   {{ request('status') === 'Low Stock'   ? 'selected' : '' }}>Low Stock</option>
-                    <option value="Out of Stock"{{ request('status') === 'Out of Stock'? 'selected' : '' }}>Out of Stock</option>
+                    <option value="In Stock"      {{ request('status') === 'In Stock'      ? 'selected' : '' }}>In Stock</option>
+                    <option value="Low Stock"     {{ request('status') === 'Low Stock'     ? 'selected' : '' }}>Low Stock</option>
+                    <option value="Out of Stock"  {{ request('status') === 'Out of Stock'  ? 'selected' : '' }}>Out of Stock</option>
+                    <option value="Needs Restock" {{ request('status') === 'Needs Restock' ? 'selected' : '' }}>Needs Restock (Low + Out)</option>
                 </select>
             </div>
             <div>

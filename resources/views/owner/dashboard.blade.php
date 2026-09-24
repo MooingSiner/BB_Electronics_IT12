@@ -17,7 +17,7 @@
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
 
     {{-- Total Products --}}
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col gap-3">
+    <a href="{{ route('owner.inventory.index') }}" class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
         <div class="flex items-center justify-between">
             <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Products</span>
             <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-slate-100 text-[#363E48]">
@@ -30,10 +30,10 @@
             <p class="text-3xl font-bold text-[#363E48]">{{ $totalProducts ?? 11 }}</p>
             <p class="text-xs text-slate-400 mt-0.5">in inventory</p>
         </div>
-    </div>
+    </a>
 
     {{-- Total Stock --}}
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col gap-3">
+    <a href="{{ route('owner.inventory.index') }}" class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
         <div class="flex items-center justify-between">
             <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Stock</span>
             <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-slate-100 text-[#363E48]">
@@ -46,7 +46,7 @@
             <p class="text-3xl font-bold text-[#363E48]">{{ $totalStock ?? '1,922' }}</p>
             <p class="text-xs text-slate-400 mt-0.5">units available</p>
         </div>
-    </div>
+    </a>
 
     {{-- Today's Sales (dark card) --}}
     <div class="bg-[#363E48] rounded-xl shadow-sm p-5 flex flex-col gap-3">
@@ -65,7 +65,7 @@
     </div>
 
     {{-- Low Stock Items --}}
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col gap-3">
+    <a href="{{ route('owner.inventory.index', ['status' => 'Needs Restock']) }}" class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
         <div class="flex items-center justify-between">
             <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Low Stock Items</span>
             <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-amber-50 text-amber-500">
@@ -78,7 +78,7 @@
             <p class="text-3xl font-bold text-[#363E48]">{{ $lowStockCount ?? 4 }}</p>
             <p class="text-xs text-slate-400 mt-0.5">{{ $outOfStockCount ?? 1 }} out of stock</p>
         </div>
-    </div>
+    </a>
 </div>
 
 {{-- Main Grid --}}
@@ -141,7 +141,7 @@
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
             <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
                 <h2 class="text-sm font-semibold text-[#363E48]">Low / Out of Stock</h2>
-                <a href="{{ route('owner.inventory.index') }}"
+                <a href="{{ route('owner.inventory.index', ['status' => 'Needs Restock']) }}"
                    class="text-xs text-[#363E48] hover:text-[#E0CD66] transition-colors font-medium">
                     View all &rarr;
                 </a>
