@@ -66,9 +66,30 @@ class UserController extends Controller
         return redirect()->route('owner.users.index')->with('success', 'User created successfully.');
     }
 
-    public function edit(User $user): RedirectResponse
+    public function edit(User $user): View
     {
-        return back()->with('status', 'Editing users is not implemented yet.');
+        return view('owner.users.edit', ['item' => $user]);
+    }
+
+    public function update(Request $request, User $user): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'max:255', 'unique:user,username,'.$user->user_id.',user_id'],
+            'role' => ['required', 'in:owner,cashier'],
+            'status' => ['required', 'in:Active,Inactive'],
+            'password' => ['nullable', 'confirmed', 'min:8'],
+        ]);
+
+        $user->update([
+            'full_name' => $validated['name'],
+            'username' => $validated['username'],
+            'role' => $validated['role'] === 'owner' ? UserRole::OwnerManager : UserRole::CashierAttendant,
+            'status' => $validated['status'] === 'Active' ? UserStatus::Active : UserStatus::Inactive,
+            ...($validated['password'] ? ['password_hash' => Hash::make($validated['password'])] : []),
+        ]);
+
+        return redirect()->route('owner.users.index')->with('success', 'User updated successfully.');
     }
 
     public function toggleStatus(User $user): RedirectResponse

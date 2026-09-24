@@ -78,6 +78,7 @@ Route::middleware(['auth', 'role:owner_manager'])->prefix('owner')->name('owner.
     Route::get('/users', [OwnerUserController::class, 'index'])->name('users.index');
     Route::post('/users', [OwnerUserController::class, 'store'])->name('users.store');
     Route::get('/users/{user}/edit', [OwnerUserController::class, 'edit'])->name('users.edit');
+    Route::put('/users/{user}', [OwnerUserController::class, 'update'])->name('users.update');
     Route::post('/users/{user}/toggle-status', [OwnerUserController::class, 'toggleStatus'])->name('users.toggleStatus');
 
     Route::get('/profile', [OwnerProfileController::class, 'edit'])->name('profile');
