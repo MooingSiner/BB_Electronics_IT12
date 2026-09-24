@@ -117,7 +117,7 @@
                         <td class="px-6 py-4">
                             <a href="{{ route('cashier.sales.show', $txn->id) }}"
                                class="font-medium hover:underline" style="color:#363E48;">
-                                #{{ $txn->id }}
+                                {{ $txn->code }}
                             </a>
                         </td>
                         <td class="px-6 py-4 text-slate-700">{{ $txn->product_name ?? $txn->items_summary ?? '—' }}</td>

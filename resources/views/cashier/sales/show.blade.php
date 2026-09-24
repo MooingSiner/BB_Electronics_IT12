@@ -1,13 +1,13 @@
 @extends('layouts.cashier')
 
-@section('title', 'Transaction #' . $txn->id)
+@section('title', 'Transaction ' . $txn->code)
 
 @php $activeNav = 'sales'; @endphp
 
 @section('breadcrumb')
 <a href="{{ route('cashier.sales.index') }}" class="hover:underline" style="color:#363E48;">Sales Transactions</a>
 <span class="mx-1 text-slate-400">/</span>
-<span class="text-slate-600">#{{ $txn->id }}</span>
+<span class="text-slate-600">{{ $txn->code }}</span>
 @endsection
 
 @section('content')
@@ -15,7 +15,7 @@
 
     <div class="flex items-center justify-between">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800">Transaction #{{ $txn->id }}</h1>
+            <h1 class="text-2xl font-bold text-slate-800">Transaction {{ $txn->code }}</h1>
             <p class="text-sm text-slate-500 mt-1">{{ \Carbon\Carbon::parse($txn->created_at)->format('F d, Y \a\t g:i A') }}</p>
         </div>
         <div class="flex gap-2">

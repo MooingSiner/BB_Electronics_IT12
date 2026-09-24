@@ -54,4 +54,14 @@ class Sale extends Model
     {
         return $this->hasMany(ReturnRecord::class, 'sale_id', 'sale_id');
     }
+
+    public function code(): string
+    {
+        return static::formatCode($this->sale_id);
+    }
+
+    public static function formatCode(int $saleId): string
+    {
+        return sprintf('TXN-%05d', $saleId);
+    }
 }

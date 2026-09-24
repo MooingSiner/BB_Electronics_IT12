@@ -72,7 +72,7 @@
                             @if($ret->transaction_id)
                             <a href="{{ route('cashier.sales.show', $ret->transaction_id) }}"
                                class="font-medium hover:underline text-xs" style="color:#363E48;">
-                                #{{ $ret->transaction_id }}
+                                {{ $ret->transaction_code }}
                             </a>
                             @else
                             <span class="text-slate-400">—</span>

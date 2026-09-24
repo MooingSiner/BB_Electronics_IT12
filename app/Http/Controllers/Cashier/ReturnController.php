@@ -47,6 +47,7 @@ class ReturnController extends Controller
             ->map(fn (ReturnRecord $return) => (object) [
                 'id' => $return->return_id,
                 'transaction_id' => $return->sale_id,
+                'transaction_code' => $return->sale?->code(),
                 'product_name' => $return->product->product_name ?? '—',
                 'reason' => $return->reason,
                 'amount' => (float) ($return->product->unit_price ?? 0) * $return->quantity,

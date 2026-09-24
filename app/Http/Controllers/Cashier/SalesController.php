@@ -57,6 +57,7 @@ class SalesController extends Controller
     {
         return (object) [
             'id' => $sale->sale_id,
+            'code' => $sale->code(),
             'items_summary' => $sale->items->pluck('product.product_name')->filter()->implode(', '),
             'total_qty' => $sale->items->sum('quantity'),
             'total' => (float) $sale->total_amount,

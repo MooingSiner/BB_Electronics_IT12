@@ -223,7 +223,7 @@
             </svg>
         </div>
         <h2 class="text-xl font-bold text-slate-800 mb-1">Sale Complete!</h2>
-        <p class="text-sm text-slate-500 mb-4">Transaction ID: {{ $completedSale['id'] }}</p>
+        <p class="text-sm text-slate-500 mb-4">Transaction ID: {{ $completedSale['code'] }}</p>
         <div class="text-left bg-slate-50 rounded-lg p-4 text-sm space-y-1 mb-4">
             <div class="flex justify-between">
                 <span class="text-slate-500">Subtotal</span>

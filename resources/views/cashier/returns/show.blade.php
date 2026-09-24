@@ -22,7 +22,7 @@
         <div class="flex justify-between">
             <span class="text-slate-500">Transaction</span>
             @if($ret->sale_id)
-            <a href="{{ route('cashier.sales.show', $ret->sale_id) }}" class="font-medium hover:underline" style="color:#363E48;">#{{ $ret->sale_id }}</a>
+            <a href="{{ route('cashier.sales.show', $ret->sale_id) }}" class="font-medium hover:underline" style="color:#363E48;">{{ $ret->sale?->code() }}</a>
             @else
             <span class="text-slate-400">—</span>
             @endif

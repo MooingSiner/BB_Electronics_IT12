@@ -109,7 +109,7 @@
                         @forelse($transactions ?? [] as $txn)
                             <tr class="hover:bg-slate-50 transition-colors cursor-pointer"
                                 onclick="window.location='{{ route('owner.sales.show', $txn->id) }}'">
-                                <td class="px-6 py-3 font-mono text-xs text-slate-700">{{ $txn->id }}</td>
+                                <td class="px-6 py-3 font-mono text-xs text-slate-700">{{ $txn->code }}</td>
                                 <td class="px-6 py-3 text-slate-700">{{ $txn->products }}</td>
                                 <td class="px-6 py-3 font-medium text-slate-800">{{ $txn->total }}</td>
                                 <td class="px-6 py-3 text-slate-600">{{ $txn->processed_by }}</td>

@@ -214,6 +214,7 @@ class Pos extends Component
 
         $this->completedSale = [
             'id' => (string) $sale->sale_id,
+            'code' => $sale->code(),
             'subtotal' => number_format($subtotal, 2),
             'discount' => number_format($discountAmount, 2),
             'total' => number_format($total, 2),

@@ -43,6 +43,7 @@ class DashboardController extends Controller
             ->get()
             ->map(fn (Sale $sale) => (object) [
                 'id' => $sale->sale_id,
+                'code' => $sale->code(),
                 'items_summary' => $sale->items->pluck('product.product_name')->filter()->implode(', '),
                 'total' => (float) $sale->total_amount,
                 'processed_by' => $sale->user->full_name ?? '—',

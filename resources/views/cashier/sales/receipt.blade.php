@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Receipt #{{ $txn->id }}</title>
+    <title>Receipt {{ $txn->code }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -24,7 +24,7 @@
     <div class="border-t border-dashed border-slate-300 my-3"></div>
 
     <div class="text-xs text-slate-500 space-y-0.5 mb-3">
-        <div class="flex justify-between"><span>Transaction #</span><span>{{ $txn->id }}</span></div>
+        <div class="flex justify-between"><span>Transaction #</span><span>{{ $txn->code }}</span></div>
         <div class="flex justify-between"><span>Date</span><span>{{ \Carbon\Carbon::parse($txn->created_at)->format('M d, Y g:i A') }}</span></div>
         <div class="flex justify-between"><span>Cashier</span><span>{{ $txn->processed_by }}</span></div>
     </div>
