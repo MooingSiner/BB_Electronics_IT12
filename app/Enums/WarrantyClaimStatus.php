@@ -2,10 +2,10 @@
 
 namespace App\Enums;
 
-enum WarrantyStatus: string
+enum WarrantyClaimStatus: string
 {
-    case Pending = 'pending';
+    case None = 'none';
+    case Claimed = 'claimed';
     case InProgress = 'in_progress';
     case Resolved = 'resolved';
-    case Rejected = 'rejected';
 }

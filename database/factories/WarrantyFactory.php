@@ -2,10 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Enums\WarrantyStatus;
-use App\Models\Product;
-use App\Models\SalesTransaction;
-use App\Models\User;
+use App\Enums\WarrantyClaimStatus;
+use App\Enums\WarrantyOutcome;
+use App\Models\SaleItem;
 use App\Models\Warranty;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -21,20 +20,17 @@ class WarrantyFactory extends Factory
      */
     public function definition(): array
     {
+        $start = fake()->dateTimeBetween('-2 months', 'now');
+
         return [
-            'sales_transaction_id' => SalesTransaction::factory(),
-            'product_id' => Product::factory(),
-            'user_id' => User::factory(),
-            'warranty_reference' => strtoupper(fake()->bothify('WR-####??')),
-            'issue' => fake()->randomElement([
-                'Unit does not power on',
-                'Intermittent connection issue',
-                'Component overheating',
-                'Physical defect found after purchase',
-            ]),
-            'resolution' => fake()->optional()->sentence(),
-            'status' => fake()->randomElement(WarrantyStatus::cases()),
-            'date' => fake()->dateTimeBetween('-2 months', 'now'),
+            'sale_item_id' => SaleItem::factory(),
+            'customer_name' => fake()->name(),
+            'contact_number' => fake()->phoneNumber(),
+            'start_date' => $start,
+            'end_date' => (clone $start)->modify('+180 days'),
+            'claim_status' => WarrantyClaimStatus::None,
+            'claim_date' => null,
+            'outcome' => WarrantyOutcome::NotApplicable,
         ];
     }
 }

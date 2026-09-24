@@ -2,9 +2,10 @@
 
 namespace App\Enums;
 
-enum SupplierOrderStatus: string
+enum PurchaseOrderStatus: string
 {
     case Pending = 'pending';
+    case PartiallyReceived = 'partially_received';
     case Received = 'received';
     case Cancelled = 'cancelled';
 }

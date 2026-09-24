@@ -2,14 +2,15 @@
 
 namespace Database\Factories;
 
-use App\Models\Inventory;
+use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\PurchaseOrder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<Inventory>
+ * @extends Factory<OrderItem>
  */
-class InventoryFactory extends Factory
+class OrderItemFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -19,8 +20,11 @@ class InventoryFactory extends Factory
     public function definition(): array
     {
         return [
+            'order_id' => PurchaseOrder::factory(),
             'product_id' => Product::factory(),
-            'quantity' => fake()->numberBetween(0, 200),
+            'quantity_ordered' => fake()->numberBetween(10, 100),
+            'quantity_received' => 0,
+            'unit_cost' => fake()->randomFloat(2, 3, 1000),
         ];
     }
 }

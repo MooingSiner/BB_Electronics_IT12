@@ -3,14 +3,14 @@
 namespace Database\Factories;
 
 use App\Models\Product;
-use App\Models\SalesItem;
-use App\Models\SalesTransaction;
+use App\Models\Sale;
+use App\Models\SaleItem;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<SalesItem>
+ * @extends Factory<SaleItem>
  */
-class SalesItemFactory extends Factory
+class SaleItemFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -19,11 +19,11 @@ class SalesItemFactory extends Factory
      */
     public function definition(): array
     {
-        $quantity = fake()->numberBetween(1, 10);
+        $quantity = fake()->numberBetween(1, 5);
         $unitPrice = fake()->randomFloat(2, 5, 1500);
 
         return [
-            'sales_transaction_id' => SalesTransaction::factory(),
+            'sale_id' => Sale::factory(),
             'product_id' => Product::factory(),
             'quantity' => $quantity,
             'unit_price' => $unitPrice,

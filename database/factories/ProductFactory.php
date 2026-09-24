@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -11,21 +12,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class ProductFactory extends Factory
 {
     /**
-     * @var array<string, array<int, string>>
-     */
-    protected static array $catalog = [
-        'Lighting' => ['LED Bulb 9W', 'LED Bulb 12W', 'Fluorescent Tube 18W', 'LED Strip Light 5m'],
-        'Wiring & Cables' => ['Electrical Wire 2.0mm (per meter)', 'Electrical Wire 3.5mm (per meter)', 'Extension Cord 5m', 'HDMI Cable 2m'],
-        'Components' => ['Ceramic Capacitor 104', 'Electrolytic Capacitor 1000uF', 'Resistor 1K Ohm', 'Resistor 10K Ohm', 'Diode 1N4007'],
-        'Switches & Outlets' => ['Toggle Switch', 'Wall Outlet Duplex', 'Automatic Voltage Regulator', 'Circuit Breaker 20A'],
-        'Power & Batteries' => ['AA Battery (pack of 4)', '9V Battery', 'Power Adapter 5V 2A', 'Universal Charger'],
-        'Connectors' => ['USB Connector Type-C', 'RCA Connector Pair', 'Terminal Block 12-way', 'Wire Nut Connector (pack)'],
-    ];
-
-    /**
-     * Remaining [category, name] pairs to hand out before the catalog repeats.
-     *
-     * @var array<int, array{0: string, 1: string}>|null
+     * @var array<int, string>|null
      */
     protected static ?array $queue = null;
 
@@ -37,21 +24,27 @@ class ProductFactory extends Factory
     public function definition(): array
     {
         if (empty(static::$queue)) {
-            static::$queue = collect(static::$catalog)
-                ->flatMap(fn (array $names, string $category) => collect($names)->map(fn (string $name) => [$category, $name]))
-                ->shuffle()
-                ->all();
+            static::$queue = collect([
+                'LED Bulb 9W', 'LED Bulb 12W', 'Fluorescent Tube 18W', 'LED Strip Light 5m',
+                'Electrical Wire 2.0mm (per meter)', 'Electrical Wire 3.5mm (per meter)', 'Extension Cord 5m', 'HDMI Cable 2m',
+                'Ceramic Capacitor 104', 'Electrolytic Capacitor 1000uF', 'Resistor 1K Ohm', 'Resistor 10K Ohm', 'Diode 1N4007',
+                'Toggle Switch', 'Wall Outlet Duplex', 'Automatic Voltage Regulator', 'Circuit Breaker 20A',
+                'AA Battery (pack of 4)', '9V Battery', 'Power Adapter 5V 2A', 'Universal Charger',
+                'USB Connector Type-C', 'RCA Connector Pair', 'Terminal Block 12-way', 'Wire Nut Connector (pack)',
+            ])->shuffle()->all();
         }
 
-        [$category, $name] = array_pop(static::$queue);
+        $unitPrice = fake()->randomFloat(2, 5, 1500);
 
         return [
-            'sku' => strtoupper(fake()->unique()->bothify('??-####')),
-            'name' => $name,
-            'category' => $category,
-            'description' => fake()->optional()->sentence(),
-            'unit_price' => fake()->randomFloat(2, 5, 1500),
+            'category_id' => Category::factory(),
+            'product_name' => array_pop(static::$queue),
+            'unit_price' => $unitPrice,
+            'cost_price' => round($unitPrice * 0.7, 2),
+            'quantity_on_hand' => fake()->numberBetween(0, 200),
             'reorder_level' => fake()->numberBetween(5, 20),
+            'warranty_period_days' => fake()->randomElement([0, 90, 180, 365]),
+            'is_active' => true,
         ];
     }
 }

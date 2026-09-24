@@ -2,16 +2,16 @@
 
 namespace Database\Factories;
 
-use App\Enums\SupplierOrderStatus;
+use App\Enums\PurchaseOrderStatus;
+use App\Models\PurchaseOrder;
 use App\Models\Supplier;
-use App\Models\SupplierOrder;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<SupplierOrder>
+ * @extends Factory<PurchaseOrder>
  */
-class SupplierOrderFactory extends Factory
+class PurchaseOrderFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -24,7 +24,8 @@ class SupplierOrderFactory extends Factory
             'supplier_id' => Supplier::factory(),
             'user_id' => User::factory(),
             'order_date' => fake()->dateTimeBetween('-2 months', 'now'),
-            'status' => fake()->randomElement(SupplierOrderStatus::cases()),
+            'status' => PurchaseOrderStatus::Received,
+            'date_received' => fake()->dateTimeBetween('-2 months', 'now'),
         ];
     }
 }

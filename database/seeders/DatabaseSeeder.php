@@ -2,18 +2,16 @@
 
 namespace Database\Seeders;
 
-use App\Enums\StockMovementReason;
-use App\Enums\StockMovementType;
-use App\Enums\SupplierOrderStatus;
-use App\Models\Inventory;
+use App\Enums\PurchaseOrderStatus;
+use App\Models\Category;
+use App\Models\OrderItem;
 use App\Models\Product;
-use App\Models\SalesItem;
-use App\Models\SalesReturn;
-use App\Models\SalesTransaction;
-use App\Models\StockMovement;
+use App\Models\PurchaseOrder;
+use App\Models\ReturnRecord;
+use App\Models\Sale;
+use App\Models\SaleItem;
+use App\Models\StockAdjustment;
 use App\Models\Supplier;
-use App\Models\SupplierOrder;
-use App\Models\SupplierOrderItem;
 use App\Models\User;
 use App\Models\Warranty;
 use Illuminate\Database\Seeder;
@@ -26,109 +24,101 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $owner = User::factory()->ownerManager()->create([
-            'name' => 'Bea Bautista',
-            'email' => 'owner@bbelectronics.test',
+            'full_name' => 'Bea Bautista',
+            'username' => 'owner',
         ]);
 
-        $cashier = User::factory()->cashier()->create([
-            'name' => 'Test Cashier',
-            'email' => 'cashier@bbelectronics.test',
+        $cashier = User::factory()->cashierAttendant()->create([
+            'full_name' => 'Test Cashier',
+            'username' => 'cashier',
+        ]);
+
+        $categories = Category::factory(6)->create();
+
+        $products = Product::factory(20)->create([
+            'category_id' => fn () => $categories->random()->category_id,
         ]);
 
         $supplier = Supplier::factory()->create([
-            'name' => 'Davao Electro Parts Trading',
+            'supplier_name' => 'Davao Electro Parts Trading',
         ]);
 
-        $products = Product::factory(20)->create();
-
-        $products->each(fn (Product $product) => Inventory::factory()->create([
-            'product_id' => $product->id,
-            'quantity' => fake()->numberBetween(10, 150),
-        ]));
-
-        $order = SupplierOrder::factory()->create([
-            'supplier_id' => $supplier->id,
-            'user_id' => $owner->id,
-            'status' => SupplierOrderStatus::Received,
+        $order = PurchaseOrder::factory()->create([
+            'supplier_id' => $supplier->supplier_id,
+            'user_id' => $owner->user_id,
+            'status' => PurchaseOrderStatus::Received,
         ]);
 
-        $orderedProducts = $products->random(5);
+        // Receiving is a separate UPDATE (not the initial insert) so the
+        // trg_orderitem_after_update trigger fires and stock is credited.
+        foreach ($products->random(8) as $product) {
+            $quantityOrdered = fake()->numberBetween(20, 60);
 
-        foreach ($orderedProducts as $product) {
-            $quantity = fake()->numberBetween(20, 60);
-
-            SupplierOrderItem::factory()->create([
-                'supplier_order_id' => $order->id,
-                'product_id' => $product->id,
-                'quantity' => $quantity,
-                'unit_cost' => $product->unit_price * 0.7,
+            $item = OrderItem::factory()->create([
+                'order_id' => $order->order_id,
+                'product_id' => $product->product_id,
+                'quantity_ordered' => $quantityOrdered,
+                'quantity_received' => 0,
+                'unit_cost' => $product->cost_price,
             ]);
 
-            StockMovement::factory()->create([
-                'product_id' => $product->id,
-                'user_id' => $owner->id,
-                'type' => StockMovementType::In,
-                'reason' => StockMovementReason::SupplierDelivery,
-                'quantity' => $quantity,
-                'notes' => 'Supplier delivery from '.$supplier->name,
-            ]);
+            $item->update(['quantity_received' => $quantityOrdered]);
         }
 
-        SalesTransaction::factory(15)
-            ->create(['user_id' => $cashier->id])
-            ->each(function (SalesTransaction $transaction) use ($products, $cashier) {
-                $lineItems = $products->random(fake()->numberBetween(1, 3));
-                $total = 0;
+        // Refresh in-memory quantities now that supplier deliveries have posted.
+        $products = $products->map(fn (Product $product) => $product->fresh());
 
-                foreach ($lineItems as $product) {
-                    $quantity = fake()->numberBetween(1, 4);
-                    $subtotal = $quantity * $product->unit_price;
-                    $total += $subtotal;
+        for ($i = 0; $i < 15; $i++) {
+            $sale = Sale::factory()->create(['user_id' => $cashier->user_id]);
+            $total = 0;
 
-                    SalesItem::factory()->create([
-                        'sales_transaction_id' => $transaction->id,
-                        'product_id' => $product->id,
-                        'quantity' => $quantity,
-                        'unit_price' => $product->unit_price,
-                        'subtotal' => $subtotal,
-                    ]);
-
-                    StockMovement::factory()->create([
-                        'product_id' => $product->id,
-                        'user_id' => $cashier->id,
-                        'type' => StockMovementType::Out,
-                        'reason' => StockMovementReason::CustomerSale,
-                        'quantity' => $quantity,
-                        'notes' => null,
-                    ]);
+            foreach ($products->random(fake()->numberBetween(1, 3)) as $product) {
+                if ($product->quantity_on_hand < 1) {
+                    continue;
                 }
 
-                $transaction->update(['total_price' => $total]);
-            });
+                $quantity = min($product->quantity_on_hand, fake()->numberBetween(1, 4));
+                $subtotal = $quantity * $product->unit_price;
+                $total += $subtotal;
 
-        $returnTransaction = SalesTransaction::query()->with('items')->first();
+                SaleItem::factory()->create([
+                    'sale_id' => $sale->sale_id,
+                    'product_id' => $product->product_id,
+                    'quantity' => $quantity,
+                    'unit_price' => $product->unit_price,
+                    'subtotal' => $subtotal,
+                ]);
 
-        if ($returnTransaction && $returnTransaction->items->isNotEmpty()) {
-            $item = $returnTransaction->items->first();
+                $product->quantity_on_hand -= $quantity;
+            }
 
-            SalesReturn::factory()->create([
-                'sales_transaction_id' => $returnTransaction->id,
-                'product_id' => $item->product_id,
-                'user_id' => $cashier->id,
+            $sale->update([
+                'total_amount' => $total,
+                'amount_paid' => $total,
+                'change_amount' => 0,
+            ]);
+        }
+
+        $firstSaleItem = SaleItem::query()->first();
+
+        if ($firstSaleItem) {
+            ReturnRecord::factory()->create([
+                'sale_id' => $firstSaleItem->sale_id,
+                'product_id' => $firstSaleItem->product_id,
+                'supplier_id' => null,
                 'quantity' => 1,
             ]);
-        }
-
-        $warrantyTransaction = SalesTransaction::query()->with('items')->skip(1)->first();
-
-        if ($warrantyTransaction && $warrantyTransaction->items->isNotEmpty()) {
-            $item = $warrantyTransaction->items->first();
 
             Warranty::factory()->create([
-                'sales_transaction_id' => $warrantyTransaction->id,
-                'product_id' => $item->product_id,
-                'user_id' => $cashier->id,
+                'sale_item_id' => $firstSaleItem->sale_item_id,
             ]);
         }
+
+        StockAdjustment::factory()->create([
+            'product_id' => $products->first()->product_id,
+            'user_id' => $owner->user_id,
+            'quantity_change' => -2,
+            'reason' => 'Damaged in storage',
+        ]);
     }
 }

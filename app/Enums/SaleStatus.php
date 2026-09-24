@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum SalesTransactionStatus: string
+enum SaleStatus: string
 {
     case Completed = 'completed';
     case Voided = 'voided';

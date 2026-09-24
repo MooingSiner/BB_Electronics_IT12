@@ -2,11 +2,12 @@
 
 namespace App\Enums;
 
-enum ReturnResolution: string
+enum WarrantyOutcome: string
 {
     case Replacement = 'replacement';
     case Refund = 'refund';
     case Repair = 'repair';
     case SupplierExchange = 'supplier_exchange';
-    case Pending = 'pending';
+    case Denied = 'denied';
+    case NotApplicable = 'n_a';
 }

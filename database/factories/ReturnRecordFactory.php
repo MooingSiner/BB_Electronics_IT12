@@ -2,18 +2,18 @@
 
 namespace Database\Factories;
 
+use App\Enums\ReturnCondition;
 use App\Enums\ReturnResolution;
 use App\Enums\ReturnStatus;
 use App\Models\Product;
-use App\Models\SalesReturn;
-use App\Models\SalesTransaction;
-use App\Models\User;
+use App\Models\ReturnRecord;
+use App\Models\Sale;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<SalesReturn>
+ * @extends Factory<ReturnRecord>
  */
-class SalesReturnFactory extends Factory
+class ReturnRecordFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -23,9 +23,10 @@ class SalesReturnFactory extends Factory
     public function definition(): array
     {
         return [
-            'sales_transaction_id' => SalesTransaction::factory(),
+            'sale_id' => Sale::factory(),
             'product_id' => Product::factory(),
-            'user_id' => User::factory(),
+            'supplier_id' => null,
+            'return_date' => fake()->dateTimeBetween('-2 months', 'now'),
             'quantity' => fake()->numberBetween(1, 5),
             'reason' => fake()->randomElement([
                 'Product arrived damaged',
@@ -33,9 +34,9 @@ class SalesReturnFactory extends Factory
                 'Customer changed mind',
                 'Defective on arrival',
             ]),
+            'condition' => fake()->randomElement(ReturnCondition::cases()),
             'resolution' => fake()->randomElement(ReturnResolution::cases()),
             'status' => fake()->randomElement(ReturnStatus::cases()),
-            'return_date' => fake()->dateTimeBetween('-2 months', 'now'),
         ];
     }
 }
