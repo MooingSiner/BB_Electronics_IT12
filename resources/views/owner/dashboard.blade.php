@@ -110,20 +110,7 @@
                             <tr class="hover:bg-slate-50 transition-colors cursor-pointer"
                                 onclick="window.location='{{ route('owner.sales.show', $txn->id) }}'">
                                 <td class="px-6 py-3 font-mono text-xs text-slate-700">{{ $txn->code }}</td>
-                                <td class="px-6 py-3 text-slate-700 max-w-[220px]">
-                                    <div class="flex flex-wrap items-center gap-x-1 gap-y-1">
-                                        @foreach($txn->products as $product)
-                                            <span class="inline-flex items-center gap-1 whitespace-nowrap">
-                                                {{ $product->name }}@if(! $loop->last),@endif
-                                                @if($product->movement === 'Fast-Moving')
-                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-800">Fast</span>
-                                                @elseif($product->movement === 'Slow-Moving')
-                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-800">Slow</span>
-                                                @endif
-                                            </span>
-                                        @endforeach
-                                    </div>
-                                </td>
+                                <td class="px-6 py-3 text-slate-700">{{ $txn->products }}</td>
                                 <td class="px-6 py-3 font-medium text-slate-800">{{ $txn->total }}</td>
                                 <td class="px-6 py-3 text-slate-600">{{ $txn->processed_by }}</td>
                                 <td class="px-6 py-3">
@@ -176,6 +163,41 @@
                     <li class="px-5 py-6 text-center text-sm text-slate-400">All products are sufficiently stocked.</li>
                 @endforelse
             </ul>
+        </div>
+
+        {{-- Fast & Slow Moving Products --}}
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                <h2 class="text-sm font-semibold text-[#363E48]">Fast &amp; Slow Moving</h2>
+                <a href="{{ route('owner.reports.index', ['type' => 'inventory']) }}"
+                   class="text-xs text-[#363E48] hover:text-[#E0CD66] transition-colors font-medium">
+                    View all &rarr;
+                </a>
+            </div>
+            <div class="px-5 py-3">
+                <p class="text-xs font-semibold uppercase tracking-wide text-green-600 mb-2">Fast-Moving</p>
+                <ul class="divide-y divide-slate-100 mb-3">
+                    @forelse($fastMoving ?? [] as $product)
+                        <li class="flex items-center justify-between py-2">
+                            <p class="text-sm text-slate-700">{{ $product->name }}</p>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">{{ $product->units_sold }} sold</span>
+                        </li>
+                    @empty
+                        <li class="py-2 text-sm text-slate-400">No fast-moving products yet.</li>
+                    @endforelse
+                </ul>
+                <p class="text-xs font-semibold uppercase tracking-wide text-amber-600 mb-2">Slow-Moving</p>
+                <ul class="divide-y divide-slate-100">
+                    @forelse($slowMoving ?? [] as $product)
+                        <li class="flex items-center justify-between py-2">
+                            <p class="text-sm text-slate-700">{{ $product->name }}</p>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">{{ $product->units_sold }} sold</span>
+                        </li>
+                    @empty
+                        <li class="py-2 text-sm text-slate-400">No slow-moving products.</li>
+                    @endforelse
+                </ul>
+            </div>
         </div>
 
         {{-- Supplier Orders --}}
