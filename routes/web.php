@@ -89,8 +89,6 @@ Route::middleware(['auth', 'role:cashier_attendant'])->prefix('cashier')->name('
     Route::get('/pos', [PosController::class, 'index'])->name('pos');
     Route::post('/pos/add', [PosController::class, 'add'])->name('pos.add');
     Route::post('/pos/remove', [PosController::class, 'remove'])->name('pos.remove');
-    Route::post('/pos/increment', [PosController::class, 'increment'])->name('pos.increment');
-    Route::post('/pos/decrement', [PosController::class, 'decrement'])->name('pos.decrement');
     Route::post('/pos/update-qty', [PosController::class, 'updateQuantity'])->name('pos.update-qty');
     Route::post('/pos/clear', [PosController::class, 'clear'])->name('pos.clear');
     Route::post('/pos/discount', [PosController::class, 'discount'])->name('pos.discount');

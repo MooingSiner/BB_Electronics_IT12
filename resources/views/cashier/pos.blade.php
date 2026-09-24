@@ -126,11 +126,6 @@
                 </div>
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-1">
-                        <form method="POST" action="{{ route('cashier.pos.decrement') }}">
-                            @csrf
-                            <input type="hidden" name="cart_key" value="{{ $cartKey }}">
-                            <button type="submit" class="w-7 h-7 rounded-md border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 flex items-center justify-center text-sm font-medium transition-colors">−</button>
-                        </form>
                         <form method="POST" action="{{ route('cashier.pos.update-qty') }}">
                             @csrf
                             <input type="hidden" name="cart_key" value="{{ $cartKey }}">
@@ -138,13 +133,8 @@
                                    name="quantity"
                                    value="{{ $item['quantity'] }}"
                                    min="1"
-                                   class="w-12 h-7 text-center text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-1"
+                                   class="w-16 h-7 text-center text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-1"
                                    onchange="this.form.submit()">
-                        </form>
-                        <form method="POST" action="{{ route('cashier.pos.increment') }}">
-                            @csrf
-                            <input type="hidden" name="cart_key" value="{{ $cartKey }}">
-                            <button type="submit" class="w-7 h-7 rounded-md border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 flex items-center justify-center text-sm font-medium transition-colors">+</button>
                         </form>
                     </div>
                     <span class="font-medium text-sm text-slate-800">₱{{ number_format($item['price'] * $item['quantity'], 2) }}</span>
