@@ -31,7 +31,6 @@
             <thead>
                 <tr class="bg-slate-50 border-b border-slate-200">
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Damage ID</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Supplier Order</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Supplier</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Product</th>
                     <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Qty Damaged</th>
@@ -47,13 +46,7 @@
                         <td class="px-4 py-3">
                             <span class="font-mono text-xs text-slate-500">{{ $item->id ?? 'DMG-0001' }}</span>
                         </td>
-                        <td class="px-4 py-3">
-                            <a href="{{ route('owner.suppliers.show', $item->supplier_order_id ?? 0) }}"
-                               class="font-mono text-xs font-medium hover:underline" style="color:#363E48">
-                                {{ $item->supplier_order_id ?? '—' }}
-                            </a>
-                        </td>
-                        <td class="px-4 py-3 text-slate-700">{{ $item->supplier ?? $item->order?->supplier ?? '—' }}</td>
+                        <td class="px-4 py-3 text-slate-700">{{ $item->supplier ?? '—' }}</td>
                         <td class="px-4 py-3 font-medium text-slate-800">{{ $item->product->name ?? $item->product_name ?? '—' }}</td>
                         <td class="px-4 py-3 text-right font-semibold text-red-600">{{ $item->qty_damaged ?? 0 }}</td>
                         <td class="px-4 py-3 text-slate-600">
@@ -85,7 +78,7 @@
                             @endif
                         </td>
                         <td class="px-4 py-3 text-center">
-                            <a href="{{ route('owner.suppliers.damaged.show', $item->id ?? 0) }}"
+                            <a href="{{ route('owner.suppliers.damaged.show', $item->return_id ?? 0) }}"
                                class="px-3 py-1 text-xs border border-slate-300 rounded-md text-slate-600 hover:bg-slate-100 transition">
                                 View
                             </a>
@@ -93,7 +86,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="9" class="px-4 py-12 text-center text-slate-400">
+                        <td colspan="8" class="px-4 py-12 text-center text-slate-400">
                             <div class="flex flex-col items-center gap-2">
                                 <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"

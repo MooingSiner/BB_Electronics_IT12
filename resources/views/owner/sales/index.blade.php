@@ -89,7 +89,7 @@
                 @forelse($transactions ?? [] as $txn)
                     <tr class="hover:bg-slate-50 transition-colors">
                         <td class="px-5 py-3">
-                            <span class="font-mono text-xs text-slate-700">{{ $txn->id }}</span>
+                            <span class="font-mono text-xs text-slate-700">{{ $txn->code }}</span>
                         </td>
                         <td class="px-5 py-3 text-slate-700 max-w-[180px] truncate">{{ $txn->products }}</td>
                         <td class="px-5 py-3 text-slate-600">{{ $txn->qty ?? '—' }}</td>

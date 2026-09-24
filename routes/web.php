@@ -6,6 +6,7 @@ use App\Http\Controllers\Cashier\InventoryController as CashierInventoryControll
 use App\Http\Controllers\Cashier\ProfileController as CashierProfileController;
 use App\Http\Controllers\Cashier\ReturnController as CashierReturnController;
 use App\Http\Controllers\Cashier\SalesController as CashierSalesController;
+use App\Http\Controllers\Owner\AuditController as OwnerAuditController;
 use App\Http\Controllers\Owner\DashboardController as OwnerDashboardController;
 use App\Http\Controllers\Owner\InventoryController as OwnerInventoryController;
 use App\Http\Controllers\Owner\ProfileController as OwnerProfileController;
@@ -59,19 +60,20 @@ Route::middleware(['auth', 'role:owner_manager'])->prefix('owner')->name('owner.
     Route::post('/suppliers', [OwnerSupplierController::class, 'store'])->name('suppliers.store');
     Route::get('/suppliers/damaged', [OwnerSupplierController::class, 'damagedIndex'])->name('suppliers.damaged');
     Route::get('/suppliers/damaged/{id}', [OwnerSupplierController::class, 'damagedShow'])->name('suppliers.damaged.show');
-    Route::get('/suppliers/{supplier}', [OwnerSupplierController::class, 'show'])->name('suppliers.show');
-    Route::post('/suppliers/{supplier}/damage', [OwnerSupplierController::class, 'reportDamage'])->name('suppliers.damage');
-    Route::post('/suppliers/{supplier}/return', [OwnerSupplierController::class, 'returnToSupplier'])->name('suppliers.return');
-    Route::post('/suppliers/{supplier}/replacement', [OwnerSupplierController::class, 'replacement'])->name('suppliers.replacement');
-    Route::post('/suppliers/{supplier}/receive', [OwnerSupplierController::class, 'receive'])->name('suppliers.receive');
+    Route::get('/suppliers/{order}', [OwnerSupplierController::class, 'show'])->name('suppliers.show');
+    Route::post('/suppliers/{order}/damage', [OwnerSupplierController::class, 'reportDamage'])->name('suppliers.damage');
+    Route::patch('/suppliers/{order}/return', [OwnerSupplierController::class, 'returnToSupplier'])->name('suppliers.return');
+    Route::post('/suppliers/{order}/replacement', [OwnerSupplierController::class, 'replacement'])->name('suppliers.replacement');
+    Route::post('/suppliers/{order}/receive', [OwnerSupplierController::class, 'receive'])->name('suppliers.receive');
 
     Route::get('/returns', [OwnerReturnController::class, 'index'])->name('returns.index');
     Route::post('/returns', [OwnerReturnController::class, 'store'])->name('returns.store');
     Route::get('/returns/create/{transaction}', [OwnerReturnController::class, 'create'])->name('returns.create');
     Route::get('/returns/process/{returnRecord?}', [OwnerReturnController::class, 'process'])->name('returns.process');
     Route::get('/returns/{returnRecord}', [OwnerReturnController::class, 'show'])->name('returns.show');
+    Route::patch('/returns/{returnRecord}/resolve', [OwnerReturnController::class, 'resolve'])->name('returns.resolve');
     Route::get('/returns/warranty/{warranty}', [OwnerReturnController::class, 'warranty'])->name('returns.warranty');
-    Route::post('/returns/warranty/{warranty}', [OwnerReturnController::class, 'warrantyUpdate'])->name('returns.warrantyUpdate');
+    Route::patch('/returns/warranty/{warranty}', [OwnerReturnController::class, 'warrantyUpdate'])->name('returns.warrantyUpdate');
 
     Route::get('/reports', [OwnerReportController::class, 'index'])->name('reports.index');
 
@@ -79,7 +81,9 @@ Route::middleware(['auth', 'role:owner_manager'])->prefix('owner')->name('owner.
     Route::post('/users', [OwnerUserController::class, 'store'])->name('users.store');
     Route::get('/users/{user}/edit', [OwnerUserController::class, 'edit'])->name('users.edit');
     Route::put('/users/{user}', [OwnerUserController::class, 'update'])->name('users.update');
-    Route::post('/users/{user}/toggle-status', [OwnerUserController::class, 'toggleStatus'])->name('users.toggleStatus');
+    Route::patch('/users/{user}/toggle-status', [OwnerUserController::class, 'toggleStatus'])->name('users.toggleStatus');
+
+    Route::get('/audit-log', [OwnerAuditController::class, 'index'])->name('audit.index');
 
     Route::get('/profile', [OwnerProfileController::class, 'edit'])->name('profile');
     Route::patch('/profile', [OwnerProfileController::class, 'update'])->name('profile.update');

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Owner;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Category;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -133,6 +134,7 @@ class InventoryController extends Controller
     public function update(Request $request, Product $product): RedirectResponse
     {
         $validated = $this->validateProduct($request, forUpdate: true);
+        $oldPrice = (float) $product->unit_price;
 
         $product->update([
             'category_id' => $this->resolveCategory($validated['category'])->category_id,
@@ -143,6 +145,13 @@ class InventoryController extends Controller
             'reorder_level' => $validated['reorder_level'],
             'warranty_period_days' => $this->parseWarrantyPeriod($validated['warranty_period'] ?? null),
         ]);
+
+        if ($oldPrice !== (float) $validated['unit_price']) {
+            AuditLog::record(
+                'price_change',
+                "Changed unit price of {$product->product_code} ({$product->product_name}) from ₱".number_format($oldPrice, 2).' to ₱'.number_format((float) $validated['unit_price'], 2)
+            );
+        }
 
         return redirect()->route('owner.inventory.show', $product->product_id)
             ->with('success', 'Product updated.');
@@ -172,6 +181,11 @@ class InventoryController extends Controller
             'quantity_change' => $validated['quantity'],
             'reason' => $validated['reason'] ?? 'Manual stock-in',
         ]);
+
+        AuditLog::record(
+            'stock_adjustment',
+            "Added {$validated['quantity']} unit(s) to {$product->product_code} ({$product->product_name})".(isset($validated['reason']) ? " — {$validated['reason']}" : '')
+        );
 
         return redirect()->route('owner.inventory.show', $product->product_id)
             ->with('success', "Added {$validated['quantity']} unit(s) to stock.");
