@@ -17,6 +17,16 @@ class ProductFactory extends Factory
     protected static ?array $queue = null;
 
     /**
+     * Configure the model factory.
+     */
+    public function configure(): static
+    {
+        return $this->afterCreating(function (Product $product) {
+            $product->update(['product_code' => Product::generateCode($product->category)]);
+        });
+    }
+
+    /**
      * Define the model's default state.
      *
      * @return array<string, mixed>

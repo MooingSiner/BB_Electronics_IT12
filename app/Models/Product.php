@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['category_id', 'product_name', 'unit_price', 'cost_price', 'quantity_on_hand', 'reorder_level', 'warranty_period_days', 'is_active'])]
+#[Fillable(['category_id', 'product_code', 'product_name', 'unit_price', 'cost_price', 'quantity_on_hand', 'reorder_level', 'warranty_period_days', 'is_active'])]
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
@@ -64,5 +64,17 @@ class Product extends Model
     public function isLowStock(): bool
     {
         return $this->quantity_on_hand <= $this->reorder_level;
+    }
+
+    public static function generateCode(Category $category): string
+    {
+        $prefix = substr(strtoupper(preg_replace('/[^A-Za-z]/', '', $category->category_name)), 0, 3) ?: 'GEN';
+
+        do {
+            $sequence = static::where('product_code', 'like', "{$prefix}-%")->count() + 1;
+            $code = sprintf('%s-%04d', $prefix, $sequence);
+        } while (static::where('product_code', $code)->exists());
+
+        return $code;
     }
 }

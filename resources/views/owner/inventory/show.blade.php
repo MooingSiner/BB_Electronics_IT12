@@ -28,7 +28,7 @@
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-200 text-slate-600">Archived</span>
                 @endif
             </div>
-            <p class="text-sm text-slate-500 mt-1">#{{ $item->id }} &middot; {{ $item->category }}</p>
+            <p class="text-sm text-slate-500 mt-1 font-mono">{{ $item->code }} &middot; {{ $item->category }}</p>
         </div>
         <div class="flex items-center gap-2">
             <a href="{{ route('owner.inventory.edit', $item->id) }}"

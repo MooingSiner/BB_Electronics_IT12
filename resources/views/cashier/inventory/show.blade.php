@@ -15,7 +15,7 @@
 
     <div>
         <h1 class="text-2xl font-bold text-slate-800">{{ $item->name }}</h1>
-        <p class="text-sm text-slate-500 mt-1">#{{ $item->id }} &middot; {{ $item->category }}</p>
+        <p class="text-sm text-slate-500 mt-1 font-mono">{{ $item->code }} &middot; {{ $item->category }}</p>
     </div>
 
     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-3 text-sm">

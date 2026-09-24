@@ -49,7 +49,7 @@
             <div class="flex-1 min-w-[180px]">
                 <label class="block text-xs font-medium text-slate-600 mb-1">Search</label>
                 <input type="text" name="search" value="{{ request('search') }}"
-                       placeholder="Product name or ID…"
+                       placeholder="Product name or code…"
                        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
             </div>
             <div class="min-w-[160px]">
@@ -102,7 +102,7 @@
                 @forelse($products as $product)
                     <tr class="hover:bg-slate-50 transition">
                         <td class="px-4 py-3">
-                            <span class="font-mono text-xs text-slate-500">{{ $product->id ?? 'PRD-0001' }}</span>
+                            <span class="font-mono text-xs text-slate-500">{{ $product->code ?? 'PRD-0001' }}</span>
                         </td>
                         <td class="px-4 py-3 font-medium text-slate-800">{{ $product->name ?? 'Product Name' }}</td>
                         <td class="px-4 py-3 text-slate-600">{{ $product->category ?? '—' }}</td>

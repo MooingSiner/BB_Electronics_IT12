@@ -17,9 +17,13 @@ class InventoryController extends Controller
         $products = Product::query()
             ->with('category')
             ->where('is_active', true)
-            ->when($request->filled('search'), fn ($query) => $query->where(
-                'product_name', 'like', '%'.$request->string('search').'%'
-            ))
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->string('search');
+
+                $query->where(fn ($q) => $q
+                    ->where('product_name', 'like', "%{$search}%")
+                    ->orWhere('product_code', 'like', "%{$search}%"));
+            })
             ->when($request->filled('category'), fn ($query) => $query->whereHas(
                 'category',
                 fn ($q) => $q->where('category_name', 'like', '%'.$request->string('category').'%')
@@ -34,6 +38,7 @@ class InventoryController extends Controller
             ->get()
             ->map(fn (Product $product) => (object) [
                 'id' => $product->product_id,
+                'code' => $product->product_code,
                 'name' => $product->product_name,
                 'category' => $product->category->category_name ?? '—',
                 'price' => (float) $product->unit_price,
@@ -50,6 +55,7 @@ class InventoryController extends Controller
 
         $item = (object) [
             'id' => $product->product_id,
+            'code' => $product->product_code,
             'name' => $product->product_name,
             'category' => $product->category->category_name ?? '—',
             'price' => (float) $product->unit_price,

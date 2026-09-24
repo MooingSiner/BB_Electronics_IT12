@@ -22,9 +22,13 @@ class InventoryController extends Controller
         $products = Product::query()
             ->with('category')
             ->where('is_active', ! $showArchived)
-            ->when($request->filled('search'), fn ($query) => $query->where(
-                'product_name', 'like', '%'.$request->string('search').'%'
-            ))
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->string('search');
+
+                $query->where(fn ($q) => $q
+                    ->where('product_name', 'like', "%{$search}%")
+                    ->orWhere('product_code', 'like', "%{$search}%"));
+            })
             ->when($request->filled('category'), fn ($query) => $query->whereHas(
                 'category',
                 fn ($q) => $q->where('category_name', 'like', '%'.$request->string('category').'%')
@@ -39,6 +43,7 @@ class InventoryController extends Controller
             ->get()
             ->map(fn (Product $product) => (object) [
                 'id' => $product->product_id,
+                'code' => $product->product_code,
                 'name' => $product->product_name,
                 'category' => $product->category->category_name ?? '—',
                 'unit_price' => (float) $product->unit_price,
@@ -65,9 +70,11 @@ class InventoryController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $this->validateProduct($request);
+        $category = $this->resolveCategory($validated['category']);
 
         $product = Product::create([
-            'category_id' => $this->resolveCategoryId($validated['category']),
+            'category_id' => $category->category_id,
+            'product_code' => Product::generateCode($category),
             'product_name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'unit_price' => $validated['unit_price'],
@@ -79,7 +86,7 @@ class InventoryController extends Controller
         ]);
 
         return redirect()->route('owner.inventory.show', $product->product_id)
-            ->with('success', 'Product added.');
+            ->with('success', "Product added ({$product->product_code}).");
     }
 
     public function show(Product $product): View
@@ -88,6 +95,7 @@ class InventoryController extends Controller
 
         $item = (object) [
             'id' => $product->product_id,
+            'code' => $product->product_code,
             'name' => $product->product_name,
             'category' => $product->category->category_name ?? '—',
             'description' => $product->description,
@@ -109,6 +117,7 @@ class InventoryController extends Controller
 
         $item = (object) [
             'id' => $product->product_id,
+            'code' => $product->product_code,
             'name' => $product->product_name,
             'category' => $product->category->category_name ?? '',
             'description' => $product->description,
@@ -126,7 +135,7 @@ class InventoryController extends Controller
         $validated = $this->validateProduct($request, forUpdate: true);
 
         $product->update([
-            'category_id' => $this->resolveCategoryId($validated['category']),
+            'category_id' => $this->resolveCategory($validated['category'])->category_id,
             'product_name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'unit_price' => $validated['unit_price'],
@@ -143,6 +152,7 @@ class InventoryController extends Controller
     {
         return view('owner.inventory.stock-in', ['item' => (object) [
             'id' => $product->product_id,
+            'code' => $product->product_code,
             'name' => $product->product_name,
             'stock' => $product->quantity_on_hand,
         ]]);
@@ -208,7 +218,7 @@ class InventoryController extends Controller
             ->values();
 
         return view('owner.inventory.history', [
-            'item' => (object) ['id' => $product->product_id, 'name' => $product->product_name],
+            'item' => (object) ['id' => $product->product_id, 'code' => $product->product_code, 'name' => $product->product_name],
             'movements' => $movements,
         ]);
     }
@@ -244,11 +254,10 @@ class InventoryController extends Controller
         ]);
     }
 
-    private function resolveCategoryId(string $label): int
+    private function resolveCategory(string $label): Category
     {
-        $category = Category::where('category_name', 'like', "%{$label}%")->first();
-
-        return $category?->category_id ?? Category::create(['category_name' => $label])->category_id;
+        return Category::where('category_name', 'like', "%{$label}%")->first()
+            ?? Category::create(['category_name' => $label]);
     }
 
     private function parseWarrantyPeriod(?string $period): ?int

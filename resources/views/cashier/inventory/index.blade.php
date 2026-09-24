@@ -27,7 +27,7 @@
                     <input type="text"
                            name="search"
                            value="{{ request('search') }}"
-                           placeholder="Product name or ID..."
+                           placeholder="Product name or code..."
                            class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2"
                            style="--tw-ring-color:#363E48;">
                 </div>
@@ -88,7 +88,7 @@
                 <tbody class="divide-y divide-slate-50">
                     @forelse($products as $product)
                     <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-5 py-4 text-slate-500 font-mono text-xs">#{{ $product->id }}</td>
+                        <td class="px-5 py-4 text-slate-500 font-mono text-xs">{{ $product->code }}</td>
                         <td class="px-5 py-4">
                             <p class="font-medium text-slate-800">{{ $product->name }}</p>
                             @if($product->sku ?? false)
