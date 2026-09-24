@@ -6,7 +6,7 @@
 {{-- Page Header --}}
 <div class="mb-8">
     <h1 class="text-2xl font-bold text-[#363E48]">
-        Welcome, {{ auth()->user()->name ?? 'Maria' }}
+        Welcome, {{ auth()->user()->full_name }}
     </h1>
     <p class="mt-1 text-sm text-slate-500">
         Owner / Manager &mdash; {{ now()->format('F d, Y') }}
@@ -124,51 +124,8 @@
                                 </td>
                             </tr>
                         @empty
-                            {{-- Hardcoded sample rows --}}
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-3 font-mono text-xs text-slate-700">TXN-2024-001</td>
-                                <td class="px-6 py-3 text-slate-700">LED Bulb 9W</td>
-                                <td class="px-6 py-3 font-medium text-slate-800">₱202.50</td>
-                                <td class="px-6 py-3 text-slate-600">Ana Reyes</td>
-                                <td class="px-6 py-3">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Completed</span>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-3 font-mono text-xs text-slate-700">TXN-2024-002</td>
-                                <td class="px-6 py-3 text-slate-700">Extension Cord 5m</td>
-                                <td class="px-6 py-3 font-medium text-slate-800">₱170.00</td>
-                                <td class="px-6 py-3 text-slate-600">Ana Reyes</td>
-                                <td class="px-6 py-3">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Completed</span>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-3 font-mono text-xs text-slate-700">TXN-2024-003</td>
-                                <td class="px-6 py-3 text-slate-700">Circuit Breaker 15A</td>
-                                <td class="px-6 py-3 font-medium text-slate-800">₱450.00</td>
-                                <td class="px-6 py-3 text-slate-600">Carlo Mena</td>
-                                <td class="px-6 py-3">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Pending</span>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-3 font-mono text-xs text-slate-700">TXN-2024-004</td>
-                                <td class="px-6 py-3 text-slate-700">Wire 2.0mm (10m)</td>
-                                <td class="px-6 py-3 font-medium text-slate-800">₱320.00</td>
-                                <td class="px-6 py-3 text-slate-600">Ana Reyes</td>
-                                <td class="px-6 py-3">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Completed</span>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-3 font-mono text-xs text-slate-700">TXN-2024-005</td>
-                                <td class="px-6 py-3 text-slate-700">Switch Panel 4-gang</td>
-                                <td class="px-6 py-3 font-medium text-slate-800">₱285.00</td>
-                                <td class="px-6 py-3 text-slate-600">Carlo Mena</td>
-                                <td class="px-6 py-3">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Returned</span>
-                                </td>
+                            <tr>
+                                <td colspan="5" class="px-6 py-6 text-center text-sm text-slate-400">No transactions yet.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -203,34 +160,7 @@
                         @endif
                     </li>
                 @empty
-                    <li class="flex items-center justify-between px-5 py-3">
-                        <div>
-                            <p class="text-sm font-medium text-slate-700">LED Bulb 9W</p>
-                            <p class="text-xs text-slate-400">0 units left</p>
-                        </div>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Out</span>
-                    </li>
-                    <li class="flex items-center justify-between px-5 py-3">
-                        <div>
-                            <p class="text-sm font-medium text-slate-700">Wire 2.0mm</p>
-                            <p class="text-xs text-slate-400">3 units left</p>
-                        </div>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Low</span>
-                    </li>
-                    <li class="flex items-center justify-between px-5 py-3">
-                        <div>
-                            <p class="text-sm font-medium text-slate-700">Switch Panel 4-gang</p>
-                            <p class="text-xs text-slate-400">2 units left</p>
-                        </div>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Low</span>
-                    </li>
-                    <li class="flex items-center justify-between px-5 py-3">
-                        <div>
-                            <p class="text-sm font-medium text-slate-700">Extension Cord 5m</p>
-                            <p class="text-xs text-slate-400">4 units left</p>
-                        </div>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Low</span>
-                    </li>
+                    <li class="px-5 py-6 text-center text-sm text-slate-400">All products are sufficiently stocked.</li>
                 @endforelse
             </ul>
         </div>
@@ -251,14 +181,7 @@
                         <p class="text-xs text-slate-400">{{ $order->items }} items &middot; {{ $order->date }}</p>
                     </li>
                 @empty
-                    <li class="px-5 py-3">
-                        <p class="text-sm font-medium text-slate-700">Abenson Supplies</p>
-                        <p class="text-xs text-slate-400">12 items &middot; Jan 14, 2024</p>
-                    </li>
-                    <li class="px-5 py-3">
-                        <p class="text-sm font-medium text-slate-700">ElectroPH Trading</p>
-                        <p class="text-xs text-slate-400">5 items &middot; Jan 10, 2024</p>
-                    </li>
+                    <li class="px-5 py-6 text-center text-sm text-slate-400">No supplier orders yet.</li>
                 @endforelse
             </ul>
         </div>
