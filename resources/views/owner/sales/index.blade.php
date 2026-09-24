@@ -91,7 +91,20 @@
                         <td class="px-5 py-3">
                             <span class="font-mono text-xs text-slate-700">{{ $txn->code }}</span>
                         </td>
-                        <td class="px-5 py-3 text-slate-700 max-w-[180px] truncate">{{ $txn->products }}</td>
+                        <td class="px-5 py-3 text-slate-700 max-w-[220px]">
+                            <div class="flex flex-wrap items-center gap-x-1 gap-y-1">
+                                @foreach($txn->products as $product)
+                                    <span class="inline-flex items-center gap-1 whitespace-nowrap">
+                                        {{ $product->name }}@if(! $loop->last),@endif
+                                        @if($product->movement === 'Fast-Moving')
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-800">Fast</span>
+                                        @elseif($product->movement === 'Slow-Moving')
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-800">Slow</span>
+                                        @endif
+                                    </span>
+                                @endforeach
+                            </div>
+                        </td>
                         <td class="px-5 py-3 text-slate-600">{{ $txn->qty ?? '—' }}</td>
                         <td class="px-5 py-3 font-medium text-slate-800">{{ $txn->total }}</td>
                         <td class="px-5 py-3">

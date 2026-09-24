@@ -7,12 +7,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Sale;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class SalesController extends Controller
 {
     public function index(Request $request): View
     {
+        $movement = $this->movementByProduct();
+
         $transactions = Sale::query()
             ->with(['user', 'items.product'])
             ->when($request->filled('search'), function ($query) use ($request) {
@@ -32,7 +35,10 @@ class SalesController extends Controller
             ->through(fn (Sale $sale) => (object) [
                 'id' => $sale->sale_id,
                 'code' => $sale->code(),
-                'products' => $sale->items->pluck('product.product_name')->filter()->implode(', '),
+                'products' => $sale->items->map(fn ($item) => (object) [
+                    'name' => $item->product->product_name ?? '—',
+                    'movement' => $this->movementLabel($item->product_id, $movement),
+                ]),
                 'qty' => $sale->items->sum('quantity'),
                 'total' => '₱'.number_format((float) $sale->total_amount, 2),
                 'discount' => (float) $sale->subtotal > 0 ? round(((float) $sale->discount_amount / (float) $sale->subtotal) * 100) : 0,
@@ -48,6 +54,8 @@ class SalesController extends Controller
     public function show(Sale $sale): View
     {
         $sale->load(['user', 'items.product']);
+
+        $movement = $this->movementByProduct();
 
         $txn = (object) [
             'id' => $sale->sale_id,
@@ -68,6 +76,7 @@ class SalesController extends Controller
                 'qty' => $item->quantity,
                 'unit_price' => (float) $item->unit_price,
                 'subtotal' => (float) $item->subtotal,
+                'movement' => $this->movementLabel($item->product_id, $movement),
             ]),
         ];
 
@@ -77,5 +86,26 @@ class SalesController extends Controller
     public function receipt(Sale $sale): RedirectResponse
     {
         return redirect()->route('owner.sales.show', $sale->sale_id);
+    }
+
+    /**
+     * Units sold per product over the last 30 days, keyed by product_id.
+     */
+    private function movementByProduct(): Collection
+    {
+        return Sale::where('status', SaleStatus::Completed)
+            ->where('sale_date', '>=', now()->subDays(30)->startOfDay())
+            ->with('items')
+            ->get()
+            ->flatMap->items
+            ->groupBy('product_id')
+            ->map(fn ($items) => $items->sum('quantity'));
+    }
+
+    private function movementLabel(?int $productId, Collection $movement): string
+    {
+        $unitsSold = (int) ($movement[$productId] ?? 0);
+
+        return $unitsSold === 0 ? 'No Movement' : ($unitsSold >= 10 ? 'Fast-Moving' : 'Slow-Moving');
     }
 }

@@ -48,8 +48,8 @@
                 ['id' => 'supplier-orders',   'label' => 'Supplier Orders',      'route' => 'owner.suppliers.index',  'icon' => 'truck'],
                 ['id' => 'returns',           'label' => 'Returns & Warranties', 'route' => 'owner.returns.index',    'icon' => 'return'],
                 ['id' => 'reports',           'label' => 'Reports',              'route' => 'owner.reports.index',    'icon' => 'chart'],
-                ['id' => 'users',             'label' => 'User Management',      'route' => 'owner.users.index',      'icon' => 'users'],
                 ['id' => 'audit',             'label' => 'Audit Log',            'route' => 'owner.audit.index',      'icon' => 'audit'],
+                ['id' => 'users',             'label' => 'User Management',      'route' => 'owner.users.index',      'icon' => 'users'],
             ] as $item)
                 @php $isActive = $nav === $item['id']; @endphp
                 <li>
