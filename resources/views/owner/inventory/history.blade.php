@@ -5,9 +5,9 @@
 @php $activeNav = 'inventory'; @endphp
 
 @section('content')
-    <a href="{{ route('owner.inventory.show', $item->id) }}"
+    <a href="{{ route('owner.inventory.index') }}"
        class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-4 transition">
-        ← Back to Product
+        ← Back to Inventory
     </a>
 
     <h1 class="text-2xl font-bold mb-1" style="color:#363E48">Stock History</h1>
