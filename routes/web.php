@@ -48,8 +48,12 @@ Route::middleware(['auth', 'role:owner_manager'])->prefix('owner')->name('owner.
     Route::post('/inventory', [OwnerInventoryController::class, 'store'])->name('inventory.store');
     Route::get('/inventory/{product}', [OwnerInventoryController::class, 'show'])->name('inventory.show');
     Route::get('/inventory/{product}/edit', [OwnerInventoryController::class, 'edit'])->name('inventory.edit');
-    Route::post('/inventory/{product}/stock-in', [OwnerInventoryController::class, 'stockIn'])->name('inventory.stockin');
+    Route::put('/inventory/{product}', [OwnerInventoryController::class, 'update'])->name('inventory.update');
+    Route::get('/inventory/{product}/stock-in', [OwnerInventoryController::class, 'stockIn'])->name('inventory.stockin');
+    Route::post('/inventory/{product}/stock-in', [OwnerInventoryController::class, 'stockInStore'])->name('inventory.stockin.store');
     Route::get('/inventory/{product}/history', [OwnerInventoryController::class, 'history'])->name('inventory.history');
+    Route::post('/inventory/{product}/archive', [OwnerInventoryController::class, 'archive'])->name('inventory.archive');
+    Route::post('/inventory/{product}/restore', [OwnerInventoryController::class, 'restore'])->name('inventory.restore');
 
     Route::get('/suppliers', [OwnerSupplierController::class, 'index'])->name('suppliers.index');
     Route::get('/suppliers/orders', [OwnerSupplierController::class, 'orders'])->name('suppliers.orders');
