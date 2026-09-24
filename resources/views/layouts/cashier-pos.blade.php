@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B&B Electronics — @yield('title', 'Dashboard')</title>
+    <title>B&B Electronics — {{ $title ?? 'Point of Sale' }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -12,7 +12,6 @@
         .accent-bg  { background-color: #E0CD66; }
         .accent-text { color: #363E48; }
     </style>
-    @stack('styles')
     @livewireStyles
 </head>
 <body class="bg-slate-100 flex h-screen overflow-hidden">
@@ -38,7 +37,7 @@
         <p class="text-white/30 text-xs uppercase tracking-wider font-medium px-2 mb-2">Menu</p>
         <ul class="space-y-0.5">
 
-            @php $nav = $activeNav ?? ''; @endphp
+            @php $nav = 'sales'; @endphp
 
             @foreach ([
                 ['id' => 'dashboard', 'label' => 'Dashboard',           'route' => 'cashier.dashboard',       'icon' => 'dashboard'],
@@ -99,7 +98,7 @@
 
     {{-- Header --}}
     <header class="bg-white border-b border-slate-200 px-5 h-14 flex items-center justify-between flex-shrink-0">
-        <div class="text-sm text-slate-500">@yield('breadcrumb')</div>
+        <div class="text-sm text-slate-500"></div>
         <div class="flex items-center gap-3">
             <button class="relative p-1.5 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -125,13 +124,11 @@
     </header>
 
     {{-- Page content --}}
-    <main class="@yield('main-class', 'flex-1 overflow-y-auto p-5 lg:p-6')">
-        @yield('content')
+    <main class="flex-1 overflow-hidden">
+        {{ $slot }}
     </main>
 </div>
 
-@stack('modals')
-@stack('scripts')
 @livewireScripts
 </body>
 </html>

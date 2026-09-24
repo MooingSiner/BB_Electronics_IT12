@@ -3,7 +3,6 @@
 use App\Enums\UserRole;
 use App\Http\Controllers\Cashier\DashboardController as CashierDashboardController;
 use App\Http\Controllers\Cashier\InventoryController as CashierInventoryController;
-use App\Http\Controllers\Cashier\PosController;
 use App\Http\Controllers\Cashier\ProfileController as CashierProfileController;
 use App\Http\Controllers\Cashier\ReturnController as CashierReturnController;
 use App\Http\Controllers\Cashier\SalesController as CashierSalesController;
@@ -16,6 +15,7 @@ use App\Http\Controllers\Owner\SalesController as OwnerSalesController;
 use App\Http\Controllers\Owner\SupplierController as OwnerSupplierController;
 use App\Http\Controllers\Owner\UserController as OwnerUserController;
 use App\Http\Controllers\ProfileController;
+use App\Livewire\Cashier\Pos;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -86,15 +86,7 @@ Route::middleware(['auth', 'role:owner_manager'])->prefix('owner')->name('owner.
 Route::middleware(['auth', 'role:cashier_attendant'])->prefix('cashier')->name('cashier.')->group(function () {
     Route::get('/dashboard', [CashierDashboardController::class, 'index'])->name('dashboard');
 
-    Route::get('/pos', [PosController::class, 'index'])->name('pos');
-    Route::post('/pos/add', [PosController::class, 'add'])->name('pos.add');
-    Route::post('/pos/remove', [PosController::class, 'remove'])->name('pos.remove');
-    Route::post('/pos/update-qty', [PosController::class, 'updateQuantity'])->name('pos.update-qty');
-    Route::post('/pos/clear', [PosController::class, 'clear'])->name('pos.clear');
-    Route::post('/pos/discount', [PosController::class, 'discount'])->name('pos.discount');
-    Route::post('/pos/payment', [PosController::class, 'payment'])->name('pos.payment');
-    Route::post('/pos/amount', [PosController::class, 'amount'])->name('pos.amount');
-    Route::post('/pos/complete', [PosController::class, 'complete'])->name('pos.complete');
+    Route::get('/pos', Pos::class)->name('pos');
 
     Route::get('/sales', [CashierSalesController::class, 'index'])->name('sales.index');
     Route::get('/sales/{sale}', [CashierSalesController::class, 'show'])->name('sales.show');
