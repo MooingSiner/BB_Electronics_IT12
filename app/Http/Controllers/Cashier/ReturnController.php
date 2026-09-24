@@ -70,7 +70,7 @@ class ReturnController extends Controller
     public function process(Request $request): View
     {
         $transactionId = $request->input('transaction_id');
-        $sale = $transactionId
+        $sale = $transactionId > 0
             ? Sale::where('status', SaleStatus::Completed)->with('items.product')->find($transactionId)
             : null;
 

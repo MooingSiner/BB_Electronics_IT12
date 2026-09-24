@@ -40,7 +40,7 @@
     <form method="GET" action="{{ route('cashier.returns.process') }}" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-3">
         <label class="block text-sm font-medium text-slate-700">Find Transaction</label>
         <div class="flex gap-2">
-            <input type="number" name="transaction_id" placeholder="Transaction number, e.g. 12"
+            <input type="number" name="transaction_id" min="1" placeholder="Transaction number, e.g. 12"
                    value="{{ $transactionId ?? '' }}"
                    class="flex-1 px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2"
                    style="--tw-ring-color:#363E48;">

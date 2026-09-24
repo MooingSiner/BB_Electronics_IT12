@@ -36,7 +36,7 @@
         <form method="GET" action="{{ route('owner.returns.process') }}" class="space-y-2">
             <label class="block text-sm font-medium text-slate-700">Find Transaction</label>
             <div class="flex gap-2">
-                <input type="number" name="transaction_id" placeholder="Transaction number, e.g. 12"
+                <input type="number" name="transaction_id" min="1" placeholder="Transaction number, e.g. 12"
                        value="{{ request('transaction_id') }}"
                        class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
                 <button type="submit"

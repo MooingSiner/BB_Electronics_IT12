@@ -88,7 +88,7 @@ class ReturnController extends Controller
     public function process(?ReturnRecord $returnRecord = null): View
     {
         $transactionId = request('transaction_id');
-        $sale = $transactionId
+        $sale = $transactionId > 0
             ? Sale::where('status', SaleStatus::Completed)->with('items.product')->find($transactionId)
             : null;
 
