@@ -11,8 +11,10 @@
         ← Back to Supplier Orders
     </a>
 
+    <div class="max-w-2xl mx-auto">
+
     {{-- Page Header --}}
-    <h1 class="text-2xl font-bold mb-6" style="color:#363E48">New Supplier Order</h1>
+    <h1 class="text-2xl font-bold mb-6 text-center" style="color:#363E48">New Supplier Order</h1>
 
     {{-- Validation Errors --}}
     @if($errors->any())
@@ -26,7 +28,7 @@
         </div>
     @endif
 
-    <form id="orderForm" method="POST" action="{{ route('owner.suppliers.store') }}" class="max-w-2xl space-y-5">
+    <form id="orderForm" method="POST" action="{{ route('owner.suppliers.store') }}" class="space-y-5">
         @csrf
 
         {{-- Card: Order Information --}}
@@ -134,6 +136,7 @@
             </a>
         </div>
     </form>
+    </div>
 @endsection
 
 @push('modals')

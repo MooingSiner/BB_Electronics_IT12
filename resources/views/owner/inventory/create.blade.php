@@ -11,8 +11,10 @@
         ← Back to Inventory
     </a>
 
+    <div class="max-w-xl mx-auto">
+
     {{-- Page Header --}}
-    <h1 class="text-2xl font-bold mb-6" style="color:#363E48">Add Product</h1>
+    <h1 class="text-2xl font-bold mb-6 text-center" style="color:#363E48">Add Product</h1>
 
     {{-- Success Alert --}}
     @if(session('success'))
@@ -39,7 +41,7 @@
     @endif
 
     {{-- Form --}}
-    <form method="POST" action="{{ route('owner.inventory.store') }}" class="max-w-xl">
+    <form method="POST" action="{{ route('owner.inventory.store') }}">
         @csrf
 
         <div class="bg-white rounded-xl shadow border border-slate-200 p-6 space-y-5">
@@ -155,14 +157,15 @@
         {{-- Form Buttons --}}
         <div class="flex items-center gap-3 mt-5">
             <button type="submit"
-                    class="px-5 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition shadow-sm"
+                    class="flex-1 px-5 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition shadow-sm"
                     style="background-color:#363E48">
                 Add Product
             </button>
             <a href="{{ route('owner.inventory.index') }}"
-               class="px-5 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition">
+               class="flex-1 text-center px-5 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition">
                 Cancel
             </a>
         </div>
     </form>
+    </div>
 @endsection

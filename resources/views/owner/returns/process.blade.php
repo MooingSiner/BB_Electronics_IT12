@@ -4,7 +4,7 @@
 @php $activeNav = 'returns'; @endphp
 
 @section('content')
-<div class="space-y-6 max-w-xl">
+<div class="space-y-6 max-w-xl mx-auto">
 
     {{-- Back Link --}}
     <a href="{{ route('owner.returns.index') }}"
