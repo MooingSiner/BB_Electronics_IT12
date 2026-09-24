@@ -100,6 +100,36 @@ class PosController extends Controller
         return $this->adjustQuantity($request, -1);
     }
 
+    private function adjustQuantity(Request $request, int $delta): RedirectResponse
+    {
+        $key = $request->string('cart_key')->toString();
+        $cart = session('cart', []);
+
+        if (! isset($cart[$key])) {
+            return back();
+        }
+
+        $newQuantity = $cart[$key]['quantity'] + $delta;
+
+        if ($newQuantity < 1) {
+            unset($cart[$key]);
+            session(['cart' => $cart]);
+
+            return back();
+        }
+
+        $product = Product::find($cart[$key]['product_id']);
+
+        if ($product && $newQuantity > $product->quantity_on_hand) {
+            $newQuantity = $product->quantity_on_hand;
+        }
+
+        $cart[$key]['quantity'] = $newQuantity;
+        session(['cart' => $cart]);
+
+        return back();
+    }
+
     public function updateQuantity(Request $request): RedirectResponse
     {
         $key = $request->string('cart_key')->toString();
