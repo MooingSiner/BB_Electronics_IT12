@@ -17,13 +17,6 @@
         <h1 class="text-2xl font-bold text-[#363E48]">Sales Transactions</h1>
         <p class="mt-0.5 text-sm text-slate-500">All recorded transactions in the system</p>
     </div>
-    <a href="{{ route('owner.sales.create') }}"
-       class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#363E48] text-white text-sm font-semibold hover:bg-[#2a3039] transition-colors shadow-sm">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-        New Sale
-    </a>
 </div>
 
 {{-- Main Card --}}

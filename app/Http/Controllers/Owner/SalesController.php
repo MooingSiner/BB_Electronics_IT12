@@ -19,16 +19,6 @@ class SalesController extends Controller
         return view('owner.sales.show', ['txn' => new \stdClass]);
     }
 
-    public function create(): View
-    {
-        return view('owner.sales.create');
-    }
-
-    public function store(): RedirectResponse
-    {
-        return back()->with('status', 'Recording sales is not implemented yet.');
-    }
-
     public function receipt(Sale $sale): RedirectResponse
     {
         return back()->with('status', 'Receipts are not implemented yet.');

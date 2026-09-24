@@ -38,8 +38,6 @@ Route::middleware(['auth', 'role:owner_manager'])->prefix('owner')->name('owner.
     Route::get('/dashboard', [OwnerDashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/sales', [OwnerSalesController::class, 'index'])->name('sales.index');
-    Route::get('/sales/create', [OwnerSalesController::class, 'create'])->name('sales.create');
-    Route::post('/sales', [OwnerSalesController::class, 'store'])->name('sales.store');
     Route::get('/sales/{sale}', [OwnerSalesController::class, 'show'])->name('sales.show');
     Route::get('/sales/{sale}/receipt', [OwnerSalesController::class, 'receipt'])->name('sales.receipt');
 
