@@ -30,16 +30,27 @@
 
     {{-- Form Card --}}
     <div class="bg-white rounded-xl border shadow-sm p-6">
+        @if(! $txn)
+        <p class="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">
+            No transaction selected. Start a return from a transaction's detail page, or choose one below.
+        </p>
+        @endif
         <form id="returnForm" method="POST" action="{{ route('owner.returns.store') }}" class="space-y-5" onsubmit="handleSubmit(event)">
             @csrf
 
-            {{-- Read-only Transaction ID --}}
+            {{-- Transaction ID --}}
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">Transaction ID</label>
-                <div class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 select-all">
-                    {{ $txn->id ?? 'TXN-2024-003' }}
-                </div>
-                <input type="hidden" name="transaction_id" value="{{ $txn->id ?? 'TXN-2024-003' }}">
+                @if($txn)
+                    <div class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 select-all">
+                        {{ $txn->code }}
+                    </div>
+                    <input type="hidden" name="transaction_id" value="{{ $txn->id }}">
+                @else
+                    <input type="number" name="transaction_id" value="{{ old('transaction_id') }}" required
+                           placeholder="Enter the numeric sale ID"
+                           class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
+                @endif
             </div>
 
             {{-- Product to Return --}}
@@ -83,12 +94,12 @@
                     Resolution <span class="text-red-500">*</span>
                 </label>
                 <div class="flex flex-wrap gap-3">
-                    @foreach(['Replacement', 'Refund', 'Exchange'] as $res)
+                    @foreach(['replacement' => 'Replacement', 'refund' => 'Refund', 'repair' => 'Repair', 'supplier_exchange' => 'Supplier Exchange'] as $value => $label)
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="resolution" value="{{ $res }}"
-                               {{ old('resolution') === $res ? 'checked' : '' }}
+                        <input type="radio" name="resolution" value="{{ $value }}"
+                               {{ old('resolution') === $value ? 'checked' : '' }}
                                class="accent-slate-700" required>
-                        <span class="text-sm text-slate-700">{{ $res }}</span>
+                        <span class="text-sm text-slate-700">{{ $label }}</span>
                     </label>
                     @endforeach
                 </div>
@@ -101,12 +112,30 @@
                 </label>
                 <div class="space-y-3">
                     <label class="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-slate-50 has-[:checked]:border-slate-700 has-[:checked]:bg-slate-50 transition-colors">
-                        <input type="radio" name="condition" value="restock"
-                               {{ old('condition') === 'restock' ? 'checked' : '' }}
+                        <input type="radio" name="condition" value="wrong_item"
+                               {{ old('condition') === 'wrong_item' ? 'checked' : '' }}
                                class="mt-0.5 accent-slate-700" required>
                         <div>
-                            <p class="text-sm font-medium text-slate-800">Return to available stock</p>
-                            <p class="text-xs text-slate-500 mt-0.5">Item re-added to inventory.</p>
+                            <p class="text-sm font-medium text-slate-800">Wrong item</p>
+                            <p class="text-xs text-slate-500 mt-0.5">Unopened/unused — re-added to inventory.</p>
+                        </div>
+                    </label>
+                    <label class="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-slate-50 has-[:checked]:border-slate-700 has-[:checked]:bg-slate-50 transition-colors">
+                        <input type="radio" name="condition" value="customer_changed_mind"
+                               {{ old('condition') === 'customer_changed_mind' ? 'checked' : '' }}
+                               class="mt-0.5 accent-slate-700">
+                        <div>
+                            <p class="text-sm font-medium text-slate-800">Customer changed mind</p>
+                            <p class="text-xs text-slate-500 mt-0.5">Unopened/unused — re-added to inventory.</p>
+                        </div>
+                    </label>
+                    <label class="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-slate-50 has-[:checked]:border-slate-700 has-[:checked]:bg-slate-50 transition-colors">
+                        <input type="radio" name="condition" value="defective"
+                               {{ old('condition') === 'defective' ? 'checked' : '' }}
+                               class="mt-0.5 accent-slate-700">
+                        <div>
+                            <p class="text-sm font-medium text-slate-800">Defective</p>
+                            <p class="text-xs text-slate-500 mt-0.5">NOT added back to inventory.</p>
                         </div>
                     </label>
                     <label class="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-slate-50 has-[:checked]:border-slate-700 has-[:checked]:bg-slate-50 transition-colors">
@@ -119,12 +148,12 @@
                         </div>
                     </label>
                     <label class="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-slate-50 has-[:checked]:border-slate-700 has-[:checked]:bg-slate-50 transition-colors">
-                        <input type="radio" name="condition" value="no_restock"
-                               {{ old('condition') === 'no_restock' ? 'checked' : '' }}
+                        <input type="radio" name="condition" value="other"
+                               {{ old('condition') === 'other' ? 'checked' : '' }}
                                class="mt-0.5 accent-slate-700">
                         <div>
-                            <p class="text-sm font-medium text-slate-800">Not restocked</p>
-                            <p class="text-xs text-slate-500 mt-0.5">Returned but NOT added to inventory.</p>
+                            <p class="text-sm font-medium text-slate-800">Other</p>
+                            <p class="text-xs text-slate-500 mt-0.5">Re-added to inventory.</p>
                         </div>
                     </label>
                 </div>

@@ -8,14 +8,25 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'contact_person', 'phone', 'email', 'address'])]
+#[Fillable(['supplier_name', 'contact_person', 'contact_number', 'address'])]
 class Supplier extends Model
 {
     /** @use HasFactory<SupplierFactory> */
     use HasFactory;
 
-    public function orders(): HasMany
+    protected $table = 'supplier';
+
+    protected $primaryKey = 'supplier_id';
+
+    public $timestamps = false;
+
+    public function purchaseOrders(): HasMany
     {
-        return $this->hasMany(SupplierOrder::class);
+        return $this->hasMany(PurchaseOrder::class, 'supplier_id', 'supplier_id');
+    }
+
+    public function returnRecords(): HasMany
+    {
+        return $this->hasMany(ReturnRecord::class, 'supplier_id', 'supplier_id');
     }
 }

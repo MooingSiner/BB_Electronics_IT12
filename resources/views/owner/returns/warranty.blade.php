@@ -56,10 +56,10 @@
                     <div>
                         <dt class="text-xs text-slate-500 uppercase tracking-wide font-medium">Transaction</dt>
                         <dd class="mt-0.5">
-                            @if(isset($warranty->transaction_id))
+                            @if(!empty($warranty->transaction_id))
                                 <a href="{{ route('owner.sales.show', $warranty->transaction_id) }}"
                                    class="font-medium hover:underline" style="color:#363E48">
-                                    {{ $warranty->transaction_id }}
+                                    {{ $warranty->transaction_code }}
                                 </a>
                             @else
                                 <span class="text-slate-500">—</span>
@@ -171,20 +171,19 @@
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Warranty Status</label>
                     <select name="status" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
-                        @foreach(['Active', 'Under Review', 'Repaired', 'Replaced', 'Refunded', 'Completed'] as $s)
-                            <option value="{{ $s }}" {{ ($warranty->status ?? '') === $s ? 'selected' : '' }}>{{ $s }}</option>
+                        @foreach(['none' => 'Active', 'claimed' => 'Under Review', 'in_progress' => 'Repaired', 'resolved' => 'Completed'] as $value => $label)
+                            <option value="{{ $value }}" {{ ($warranty->status_value ?? '') === $value ? 'selected' : '' }}>{{ $label }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Resolution / Action Taken</label>
-                    <textarea name="resolution" rows="3"
-                              class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">{{ $warranty->resolution ?? '' }}</textarea>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Notes</label>
-                    <textarea name="notes" rows="2"
-                              class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">{{ $warranty->notes ?? '' }}</textarea>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Outcome</label>
+                    <select name="outcome" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
+                        <option value="">Not yet determined</option>
+                        @foreach(['replacement' => 'Replacement', 'refund' => 'Refund', 'repair' => 'Repair', 'supplier_exchange' => 'Supplier Exchange', 'denied' => 'Denied'] as $value => $label)
+                            <option value="{{ $value }}" {{ old('outcome') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
             <div class="flex gap-2 justify-end mt-4 pt-4 border-t">

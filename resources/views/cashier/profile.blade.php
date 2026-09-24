@@ -45,23 +45,17 @@
                 {{-- Avatar --}}
                 <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-white text-2xl font-bold"
                      style="background-color:#363E48;">
-                    {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}{{ strtoupper(substr(explode(' ', auth()->user()->name ?? 'U ')[1] ?? 'U', 0, 1)) }}
+                    {{ strtoupper(substr(auth()->user()->full_name, 0, 1)) }}{{ strtoupper(substr(explode(' ', auth()->user()->full_name)[1] ?? 'U', 0, 1)) }}
                 </div>
-                <h2 class="text-lg font-bold text-slate-800">{{ auth()->user()->name }}</h2>
+                <h2 class="text-lg font-bold text-slate-800">{{ auth()->user()->full_name }}</h2>
                 <p class="text-sm text-slate-500 mt-0.5">Cashier / Store Attendant</p>
                 <div class="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium" style="background-color:rgba(224,205,102,0.2); color:#363E48;">
                     <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                     </svg>
-                    {{ auth()->user()->username ?? auth()->user()->email }}
+                    {{ auth()->user()->username }}
                 </div>
                 <div class="mt-4 pt-4 border-t border-slate-100 space-y-2 text-sm text-left">
-                    <div class="flex items-center gap-2 text-slate-500">
-                        <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                        </svg>
-                        <span class="truncate">{{ auth()->user()->email }}</span>
-                    </div>
                     <div class="flex items-center gap-2 text-slate-500">
                         <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -88,7 +82,7 @@
                         <input type="text"
                                id="name"
                                name="name"
-                               value="{{ old('name', auth()->user()->name) }}"
+                               value="{{ old('name', auth()->user()->full_name) }}"
                                required
                                class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 transition-shadow @error('name') border-red-300 @enderror"
                                style="--tw-ring-color:#363E48;">

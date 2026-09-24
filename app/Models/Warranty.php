@@ -2,18 +2,25 @@
 
 namespace App\Models;
 
-use App\Enums\WarrantyStatus;
+use App\Enums\WarrantyClaimStatus;
+use App\Enums\WarrantyOutcome;
 use Database\Factories\WarrantyFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['sales_transaction_id', 'product_id', 'user_id', 'warranty_reference', 'issue', 'resolution', 'status', 'date'])]
+#[Fillable(['sale_item_id', 'customer_name', 'contact_number', 'start_date', 'end_date', 'claim_status', 'claim_date', 'outcome'])]
 class Warranty extends Model
 {
     /** @use HasFactory<WarrantyFactory> */
     use HasFactory;
+
+    protected $table = 'warranty';
+
+    protected $primaryKey = 'warranty_id';
+
+    public $timestamps = false;
 
     /**
      * @return array<string, string>
@@ -21,23 +28,16 @@ class Warranty extends Model
     protected function casts(): array
     {
         return [
-            'status' => WarrantyStatus::class,
-            'date' => 'date',
+            'start_date' => 'date',
+            'end_date' => 'date',
+            'claim_date' => 'date',
+            'claim_status' => WarrantyClaimStatus::class,
+            'outcome' => WarrantyOutcome::class,
         ];
     }
 
-    public function salesTransaction(): BelongsTo
+    public function saleItem(): BelongsTo
     {
-        return $this->belongsTo(SalesTransaction::class);
-    }
-
-    public function product(): BelongsTo
-    {
-        return $this->belongsTo(Product::class);
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(SaleItem::class, 'sale_item_id', 'sale_item_id');
     }
 }

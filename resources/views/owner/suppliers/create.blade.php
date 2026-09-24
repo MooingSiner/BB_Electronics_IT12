@@ -38,42 +38,32 @@
                 <label for="supplier" class="block text-sm font-medium text-slate-700 mb-1">
                     Supplier <span class="text-red-500">*</span>
                 </label>
-                <select id="supplier" name="supplier" required
-                        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 @error('supplier') border-red-400 @enderror">
-                    <option value="">Select a supplier</option>
-                    @foreach(['ABC Electronics Supply', 'TechWorld Distributors', 'PhilComponents Inc.'] as $s)
-                        <option value="{{ $s }}" {{ old('supplier') === $s ? 'selected' : '' }}>{{ $s }}</option>
+                <input type="text" id="supplier" name="supplier" list="supplier-options" value="{{ old('supplier') }}" required
+                       autocomplete="off"
+                       placeholder="e.g. TechWorld Distributors"
+                       class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 @error('supplier') border-red-400 @enderror">
+                <datalist id="supplier-options">
+                    @foreach($suppliers ?? [] as $s)
+                        <option value="{{ $s }}"></option>
                     @endforeach
-                </select>
+                </datalist>
+                <p class="mt-1 text-xs text-slate-400">Type a new supplier name to add them automatically.</p>
                 @error('supplier')
                     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                 @enderror
             </div>
 
-            {{-- Order Date & Expected Date --}}
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label for="order_date" class="block text-sm font-medium text-slate-700 mb-1">
-                        Order Date <span class="text-red-500">*</span>
-                    </label>
-                    <input type="date" id="order_date" name="order_date"
-                           value="{{ old('order_date') }}" required
-                           class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 @error('order_date') border-red-400 @enderror">
-                    @error('order_date')
-                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-                <div>
-                    <label for="expected_date" class="block text-sm font-medium text-slate-700 mb-1">
-                        Expected Delivery Date <span class="text-red-500">*</span>
-                    </label>
-                    <input type="date" id="expected_date" name="expected_date"
-                           value="{{ old('expected_date') }}" required
-                           class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 @error('expected_date') border-red-400 @enderror">
-                    @error('expected_date')
-                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
+            {{-- Order Date --}}
+            <div>
+                <label for="order_date" class="block text-sm font-medium text-slate-700 mb-1">
+                    Order Date <span class="text-red-500">*</span>
+                </label>
+                <input type="date" id="order_date" name="order_date"
+                       value="{{ old('order_date', date('Y-m-d')) }}" required
+                       class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 @error('order_date') border-red-400 @enderror">
+                @error('order_date')
+                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                @enderror
             </div>
 
             {{-- Notes --}}

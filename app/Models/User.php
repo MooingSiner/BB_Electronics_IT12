@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRole;
+use App\Enums\UserStatus;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -12,25 +12,44 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role'])]
-#[Hidden(['password', 'remember_token'])]
+#[Fillable(['full_name', 'username', 'password_hash', 'role', 'status'])]
+#[Hidden(['password_hash'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
+    protected $table = 'user';
+
+    protected $primaryKey = 'user_id';
+
+    const UPDATED_AT = null;
+
     /**
-     * Get the attributes that should be cast.
-     *
      * @return array<string, string>
      */
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'password_hash' => 'hashed',
             'role' => UserRole::class,
+            'status' => UserStatus::class,
         ];
+    }
+
+    public function getAuthPassword(): string
+    {
+        return $this->password_hash;
+    }
+
+    public function getAuthPasswordName(): string
+    {
+        return 'password_hash';
+    }
+
+    public function getRememberTokenName(): string
+    {
+        return '';
     }
 
     public function isOwnerManager(): bool
@@ -38,23 +57,28 @@ class User extends Authenticatable
         return $this->role === UserRole::OwnerManager;
     }
 
-    public function isCashier(): bool
+    public function isCashierAttendant(): bool
     {
-        return $this->role === UserRole::Cashier;
+        return $this->role === UserRole::CashierAttendant;
     }
 
-    public function salesTransactions(): HasMany
+    public function isActive(): bool
     {
-        return $this->hasMany(SalesTransaction::class);
+        return $this->status === UserStatus::Active;
     }
 
-    public function supplierOrders(): HasMany
+    public function sales(): HasMany
     {
-        return $this->hasMany(SupplierOrder::class);
+        return $this->hasMany(Sale::class, 'user_id', 'user_id');
     }
 
-    public function stockMovements(): HasMany
+    public function purchaseOrders(): HasMany
     {
-        return $this->hasMany(StockMovement::class);
+        return $this->hasMany(PurchaseOrder::class, 'user_id', 'user_id');
+    }
+
+    public function stockAdjustments(): HasMany
+    {
+        return $this->hasMany(StockAdjustment::class, 'user_id', 'user_id');
     }
 }

@@ -4,7 +4,9 @@ namespace App\Enums;
 
 enum ReturnResolution: string
 {
-    case Refund = 'refund';
     case Replacement = 'replacement';
-    case Warranty = 'warranty';
+    case Refund = 'refund';
+    case Repair = 'repair';
+    case SupplierExchange = 'supplier_exchange';
+    case Pending = 'pending';
 }

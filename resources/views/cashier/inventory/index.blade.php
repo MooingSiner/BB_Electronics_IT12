@@ -27,7 +27,7 @@
                     <input type="text"
                            name="search"
                            value="{{ request('search') }}"
-                           placeholder="Product name or ID..."
+                           placeholder="Product name or code..."
                            class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2"
                            style="--tw-ring-color:#363E48;">
                 </div>
@@ -52,6 +52,7 @@
                     <option value="in_stock" {{ request('status') === 'in_stock' ? 'selected' : '' }}>In Stock</option>
                     <option value="low_stock" {{ request('status') === 'low_stock' ? 'selected' : '' }}>Low Stock</option>
                     <option value="out_of_stock" {{ request('status') === 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
+                    <option value="needs_restock" {{ request('status') === 'needs_restock' ? 'selected' : '' }}>Needs Restock (Low + Out)</option>
                 </select>
             </div>
             <button type="submit"
@@ -87,7 +88,7 @@
                 <tbody class="divide-y divide-slate-50">
                     @forelse($products as $product)
                     <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-5 py-4 text-slate-500 font-mono text-xs">#{{ $product->id }}</td>
+                        <td class="px-5 py-4 text-slate-500 font-mono text-xs">{{ $product->code }}</td>
                         <td class="px-5 py-4">
                             <p class="font-medium text-slate-800">{{ $product->name }}</p>
                             @if($product->sku ?? false)

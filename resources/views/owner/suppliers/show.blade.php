@@ -23,15 +23,16 @@
                     style="background-color:#363E48">
                 Receive Delivery
             </button>
-            <a href="{{ route('owner.suppliers.damage', $order->id ?? 0) }}"
-               class="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition">
+            <button type="button" id="openDamageModal"
+                    class="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition">
                 Report Damage
-            </a>
+            </button>
             <form method="POST" action="{{ route('owner.suppliers.return', $order->id ?? 0) }}" class="inline">
                 @csrf
                 @method('PATCH')
                 <button type="submit"
-                        class="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition">
+                        class="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition"
+                        onclick="return confirm('Mark all open damaged items for this supplier as returned?')">
                     Mark Returned
                 </button>
             </form>
@@ -150,19 +151,22 @@
                             style="background-color:#363E48">
                         Receive Delivery
                     </button>
-                    <a href="{{ route('owner.suppliers.damage', $order->id ?? 0) }}"
-                       class="block w-full px-4 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition">
+                    <button type="button" id="openDamageModalSide"
+                            class="w-full px-4 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition text-left">
                         Report Damage
-                    </a>
-                    <a href="{{ route('owner.suppliers.replacement', $order->id ?? 0) }}"
-                       class="block w-full px-4 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition">
+                    </button>
+                    @if(($openDamaged ?? collect())->isNotEmpty())
+                    <button type="button" id="openReplacementModal"
+                            class="w-full px-4 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition text-left">
                         Record Replacement
-                    </a>
+                    </button>
+                    @endif
                     <form method="POST" action="{{ route('owner.suppliers.return', $order->id ?? 0) }}">
                         @csrf
                         @method('PATCH')
                         <button type="submit"
-                                class="w-full px-4 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition text-left">
+                                class="w-full px-4 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition text-left"
+                                onclick="return confirm('Mark all open damaged items for this supplier as returned?')">
                             Mark Returned
                         </button>
                     </form>
@@ -254,6 +258,93 @@
             </form>
         </div>
     </div>
+
+    {{-- Report Damage Modal --}}
+    <div id="damageModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-semibold text-slate-800">Report Damage</h3>
+                <button type="button" id="closeDamageModal" class="text-slate-400 hover:text-slate-600 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <form method="POST" action="{{ route('owner.suppliers.damage', $order->id ?? 0) }}" class="space-y-4">
+                @csrf
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Product</label>
+                    <select name="product_id" required
+                            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
+                        <option value="">Select product</option>
+                        @foreach($order->items ?? [] as $item)
+                            <option value="{{ $item->product->id }}">{{ $item->product->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Quantity Damaged</label>
+                    <input type="number" name="quantity" min="1" required
+                           class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                    <textarea name="reason" rows="2" required
+                              class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30"></textarea>
+                </div>
+                <div class="flex gap-2 justify-end pt-2">
+                    <button type="button" onclick="document.getElementById('damageModal').classList.add('hidden')"
+                            class="px-4 py-2 text-sm border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 text-sm text-white rounded-lg hover:opacity-90 transition"
+                            style="background-color:#363E48">
+                        Report Damage
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- Record Replacement Modal --}}
+    <div id="replacementModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-semibold text-slate-800">Record Replacement</h3>
+                <button type="button" id="closeReplacementModal" class="text-slate-400 hover:text-slate-600 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <form method="POST" action="{{ route('owner.suppliers.replacement', $order->id ?? 0) }}" class="space-y-4">
+                @csrf
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Damaged Report</label>
+                    <select name="return_id" required
+                            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
+                        <option value="">Select a report</option>
+                        @foreach($openDamaged ?? [] as $dmg)
+                            <option value="{{ $dmg->id }}">{{ $dmg->product_name }} — {{ $dmg->quantity }} unit(s)</option>
+                        @endforeach
+                    </select>
+                    <p class="mt-1 text-xs text-slate-400">Marks the report resolved and adds the replaced quantity back to stock.</p>
+                </div>
+                <div class="flex gap-2 justify-end pt-2">
+                    <button type="button" onclick="document.getElementById('replacementModal').classList.add('hidden')"
+                            class="px-4 py-2 text-sm border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 text-sm text-white rounded-lg hover:opacity-90 transition"
+                            style="background-color:#363E48">
+                        Record Replacement
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 @endpush
 
 @push('scripts')
@@ -277,5 +368,16 @@
         modal.addEventListener('click', function (e) {
             if (e.target === this) closeModal();
         });
+
+        const damageModal = document.getElementById('damageModal');
+        document.getElementById('openDamageModal')?.addEventListener('click', () => damageModal.classList.remove('hidden'));
+        document.getElementById('openDamageModalSide')?.addEventListener('click', () => damageModal.classList.remove('hidden'));
+        document.getElementById('closeDamageModal').addEventListener('click', () => damageModal.classList.add('hidden'));
+        damageModal.addEventListener('click', function (e) { if (e.target === this) this.classList.add('hidden'); });
+
+        const replacementModal = document.getElementById('replacementModal');
+        document.getElementById('openReplacementModal')?.addEventListener('click', () => replacementModal.classList.remove('hidden'));
+        document.getElementById('closeReplacementModal').addEventListener('click', () => replacementModal.classList.add('hidden'));
+        replacementModal.addEventListener('click', function (e) { if (e.target === this) this.classList.add('hidden'); });
     </script>
 @endpush

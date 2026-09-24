@@ -1,5 +1,5 @@
 @extends('layouts.owner')
-@section('title', ($txn->id ?? 'TXN-2024-001') . ' — Transaction Detail')
+@section('title', ($txn->code ?? 'TXN-2024-001') . ' — Transaction Detail')
 @php $activeNav = 'sales'; @endphp
 
 @section('content')
@@ -17,9 +17,9 @@
 {{-- Page Header --}}
 <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
     <div>
-        <h1 class="text-2xl font-bold text-[#363E48] font-mono">{{ $txn->id ?? 'TXN-2024-001' }}</h1>
+        <h1 class="text-2xl font-bold text-[#363E48] font-mono">{{ $txn->code ?? 'TXN-2024-001' }}</h1>
         <p class="mt-0.5 text-sm text-slate-500">
-            Transaction details for {{ isset($txn->date) ? \Carbon\Carbon::parse($txn->date)->format('F d, Y') : '2024-01-15' }}
+            Transaction details for {{ isset($txn->created_at) ? \Carbon\Carbon::parse($txn->created_at)->format('F d, Y') : '2024-01-15' }}
         </p>
     </div>
     <div class="flex items-center gap-3 flex-shrink-0">
@@ -58,7 +58,7 @@
 
                     <div>
                         <dt class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-0.5">Transaction ID</dt>
-                        <dd class="font-mono font-semibold text-[#363E48]">{{ $txn->id ?? 'TXN-2024-001' }}</dd>
+                        <dd class="font-mono font-semibold text-[#363E48]">{{ $txn->code ?? 'TXN-2024-001' }}</dd>
                     </div>
 
                     <div>
@@ -158,6 +158,7 @@
                             <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Qty</th>
                             <th class="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Unit Price</th>
                             <th class="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Subtotal</th>
+                            <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Movement</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -168,6 +169,15 @@
                                 <td class="px-6 py-3 text-slate-600">{{ $item->qty }}</td>
                                 <td class="px-6 py-3 text-right text-slate-700">₱{{ number_format($item->unit_price, 2) }}</td>
                                 <td class="px-6 py-3 text-right font-semibold text-slate-800">₱{{ number_format($item->subtotal ?? ($item->unit_price * $item->qty), 2) }}</td>
+                                <td class="px-6 py-3">
+                                    @if(($item->movement ?? null) === 'Fast-Moving')
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Fast-Moving</span>
+                                    @elseif(($item->movement ?? null) === 'Slow-Moving')
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Slow-Moving</span>
+                                    @elseif(isset($item->movement))
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">No Movement</span>
+                                    @endif
+                                </td>
                             </tr>
                         @empty
                             {{-- Hardcoded sample items --}}
@@ -177,6 +187,7 @@
                                 <td class="px-6 py-3 text-slate-600">5</td>
                                 <td class="px-6 py-3 text-right text-slate-700">₱40.50</td>
                                 <td class="px-6 py-3 text-right font-semibold text-slate-800">₱202.50</td>
+                                <td class="px-6 py-3"></td>
                             </tr>
                         @endforelse
                     </tbody>

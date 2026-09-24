@@ -48,6 +48,7 @@
                 ['id' => 'supplier-orders',   'label' => 'Supplier Orders',      'route' => 'owner.suppliers.index',  'icon' => 'truck'],
                 ['id' => 'returns',           'label' => 'Returns & Warranties', 'route' => 'owner.returns.index',    'icon' => 'return'],
                 ['id' => 'reports',           'label' => 'Reports',              'route' => 'owner.reports.index',    'icon' => 'chart'],
+                ['id' => 'audit',             'label' => 'Audit Log',            'route' => 'owner.audit.index',      'icon' => 'audit'],
                 ['id' => 'users',             'label' => 'User Management',      'route' => 'owner.users.index',      'icon' => 'users'],
             ] as $item)
                 @php $isActive = $nav === $item['id']; @endphp
@@ -70,11 +71,11 @@
         <div class="flex items-center gap-3 px-3 py-2 mb-2">
             <div class="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 accent-bg">
                 <span class="text-xs font-bold accent-text">
-                    {{ strtoupper(substr(auth()->user()->name ?? 'MS', 0, 1)) }}{{ strtoupper(substr(strstr(auth()->user()->name ?? ' S', ' '), 1, 1)) }}
+                    {{ strtoupper(substr(auth()->user()->full_name, 0, 1)) }}{{ strtoupper(substr(strstr(auth()->user()->full_name, ' '), 1, 1)) }}
                 </span>
             </div>
             <div class="min-w-0">
-                <div class="text-white text-xs font-medium truncate">{{ auth()->user()->name ?? 'Maria Santos' }}</div>
+                <div class="text-white text-xs font-medium truncate">{{ auth()->user()->full_name }}</div>
                 <div class="text-white/40 text-xs truncate">Owner / Manager</div>
             </div>
         </div>
@@ -114,11 +115,11 @@
             <div class="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-slate-100 cursor-pointer">
                 <div class="w-7 h-7 rounded-full flex items-center justify-center" style="background-color:#363E48">
                     <span class="text-white text-xs font-semibold">
-                        {{ strtoupper(substr(auth()->user()->name ?? 'MS', 0, 1)) }}{{ strtoupper(substr(strstr(auth()->user()->name ?? ' S', ' '), 1, 1)) }}
+                        {{ strtoupper(substr(auth()->user()->full_name, 0, 1)) }}{{ strtoupper(substr(strstr(auth()->user()->full_name, ' '), 1, 1)) }}
                     </span>
                 </div>
                 <div class="hidden sm:block text-left">
-                    <div class="text-xs font-medium text-slate-700">{{ auth()->user()->name ?? 'Maria Santos' }}</div>
+                    <div class="text-xs font-medium text-slate-700">{{ auth()->user()->full_name }}</div>
                     <div class="text-xs text-slate-400">Owner / Manager</div>
                 </div>
                 <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

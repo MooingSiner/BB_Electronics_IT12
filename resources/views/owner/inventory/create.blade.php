@@ -62,13 +62,15 @@
                 <label for="category" class="block text-sm font-medium text-slate-700 mb-1">
                     Category <span class="text-red-500">*</span>
                 </label>
-                <select id="category" name="category" required
-                        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 @error('category') border-red-400 @enderror">
-                    <option value="">Select a category</option>
-                    @foreach(['Lighting', 'Components', 'Switches', 'Wiring', 'Adapters', 'Connectors', 'Batteries'] as $cat)
-                        <option value="{{ $cat }}" {{ old('category') === $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                <input type="text" id="category" name="category" list="category-options" value="{{ old('category') }}"
+                       required autocomplete="off" placeholder="Select or type a new category"
+                       class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 @error('category') border-red-400 @enderror">
+                <datalist id="category-options">
+                    @foreach($categories as $cat)
+                        <option value="{{ $cat }}"></option>
                     @endforeach
-                </select>
+                </datalist>
+                <p class="mt-1 text-xs text-slate-400">Not in the list? Type a new category name and it will be created.</p>
                 @error('category')
                     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                 @enderror

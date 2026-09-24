@@ -30,7 +30,7 @@
             <div class="w-20 h-20 mx-auto rounded-full flex items-center justify-center" style="background-color:#363E48">
                 <span class="font-bold text-xl" style="color:#E0CD66">
                     @php
-                        $name = auth()->user()->name ?? 'Maria Santos';
+                        $name = auth()->user()->full_name;
                         $parts = explode(' ', trim($name));
                         $initials = strtoupper(substr($parts[0], 0, 1));
                         if (count($parts) > 1) {
@@ -40,7 +40,7 @@
                     @endphp
                 </span>
             </div>
-            <p class="font-semibold text-slate-800 mt-3">{{ auth()->user()->name ?? 'Maria Santos' }}</p>
+            <p class="font-semibold text-slate-800 mt-3">{{ auth()->user()->full_name }}</p>
             <p class="text-sm text-slate-500 mt-0.5">Owner / Manager</p>
             <p class="text-xs text-slate-400 mt-0.5">{{ auth()->user()->username ?? 'msantos' }}</p>
         </div>
@@ -57,7 +57,7 @@
                     <div>
                         <label for="name" class="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
                         <input type="text" id="name" name="name"
-                               value="{{ old('name', auth()->user()->name) }}"
+                               value="{{ old('name', auth()->user()->full_name) }}"
                                class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 @error('name') border-red-400 @enderror">
                         @error('name')
                             <p class="text-xs text-red-500 mt-1">{{ $message }}</p>

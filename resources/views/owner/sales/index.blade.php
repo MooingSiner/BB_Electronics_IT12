@@ -17,13 +17,6 @@
         <h1 class="text-2xl font-bold text-[#363E48]">Sales Transactions</h1>
         <p class="mt-0.5 text-sm text-slate-500">All recorded transactions in the system</p>
     </div>
-    <a href="{{ route('owner.sales.create') }}"
-       class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#363E48] text-white text-sm font-semibold hover:bg-[#2a3039] transition-colors shadow-sm">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-        New Sale
-    </a>
 </div>
 
 {{-- Main Card --}}
@@ -96,9 +89,22 @@
                 @forelse($transactions ?? [] as $txn)
                     <tr class="hover:bg-slate-50 transition-colors">
                         <td class="px-5 py-3">
-                            <span class="font-mono text-xs text-slate-700">{{ $txn->id }}</span>
+                            <span class="font-mono text-xs text-slate-700">{{ $txn->code }}</span>
                         </td>
-                        <td class="px-5 py-3 text-slate-700 max-w-[180px] truncate">{{ $txn->products }}</td>
+                        <td class="px-5 py-3 text-slate-700 max-w-[220px]">
+                            <div class="flex flex-wrap items-center gap-x-1 gap-y-1">
+                                @foreach($txn->products as $product)
+                                    <span class="inline-flex items-center gap-1 whitespace-nowrap">
+                                        {{ $product->name }}@if(! $loop->last),@endif
+                                        @if($product->movement === 'Fast-Moving')
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-800">Fast</span>
+                                        @elseif($product->movement === 'Slow-Moving')
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-800">Slow</span>
+                                        @endif
+                                    </span>
+                                @endforeach
+                            </div>
+                        </td>
                         <td class="px-5 py-3 text-slate-600">{{ $txn->qty ?? '—' }}</td>
                         <td class="px-5 py-3 font-medium text-slate-800">{{ $txn->total }}</td>
                         <td class="px-5 py-3">
