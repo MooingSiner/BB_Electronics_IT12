@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentMethod;
 use App\Enums\SaleStatus;
 use Database\Factories\SaleFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['user_id', 'sale_date', 'total_amount', 'amount_paid', 'change_amount', 'status'])]
+#[Fillable(['user_id', 'sale_date', 'subtotal', 'discount_amount', 'total_amount', 'payment_method', 'amount_paid', 'change_amount', 'status'])]
 class Sale extends Model
 {
     /** @use HasFactory<SaleFactory> */
@@ -29,7 +30,10 @@ class Sale extends Model
     {
         return [
             'sale_date' => 'datetime',
+            'subtotal' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
             'total_amount' => 'decimal:2',
+            'payment_method' => PaymentMethod::class,
             'amount_paid' => 'decimal:2',
             'change_amount' => 'decimal:2',
             'status' => SaleStatus::class,

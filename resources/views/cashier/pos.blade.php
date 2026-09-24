@@ -16,6 +16,12 @@
         <div class="p-4 border-b border-slate-200 space-y-3">
             <h2 class="text-lg font-semibold text-slate-800">Point of Sale</h2>
 
+            @if(session('error'))
+            <div class="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">
+                {{ session('error') }}
+            </div>
+            @endif
+
             {{-- Search --}}
             <form method="GET" action="{{ route('cashier.pos') }}" class="relative">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -336,7 +342,7 @@
             @endif
             <div class="flex justify-between">
                 <span class="text-slate-500">Processed By</span>
-                <span>{{ auth()->user()->name }}</span>
+                <span>{{ auth()->user()->full_name }}</span>
             </div>
         </div>
         <div class="space-y-2">

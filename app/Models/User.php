@@ -81,9 +81,4 @@ class User extends Authenticatable
     {
         return $this->hasMany(StockAdjustment::class, 'user_id', 'user_id');
     }
-
-    public function auditLogs(): HasMany
-    {
-        return $this->hasMany(AuditLog::class, 'user_id', 'user_id');
-    }
 }

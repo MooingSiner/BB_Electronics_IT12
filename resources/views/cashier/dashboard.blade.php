@@ -9,7 +9,7 @@
 
     {{-- Welcome Heading --}}
     <div>
-        <h1 class="text-2xl font-bold text-slate-800">Welcome, {{ auth()->user()->name ?? 'Ana' }}</h1>
+        <h1 class="text-2xl font-bold text-slate-800">Welcome, {{ auth()->user()->full_name }}</h1>
         <p class="text-sm text-slate-500 mt-1">Cashier / Store Attendant — {{ now()->format('F d, Y') }}</p>
     </div>
 

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\PaymentMethod;
 use App\Enums\SaleStatus;
 use App\Models\Sale;
 use App\Models\User;
@@ -24,7 +25,10 @@ class SaleFactory extends Factory
         return [
             'user_id' => User::factory(),
             'sale_date' => fake()->dateTimeBetween('-2 months', 'now'),
+            'subtotal' => $total,
+            'discount_amount' => 0,
             'total_amount' => $total,
+            'payment_method' => fake()->randomElement(PaymentMethod::cases()),
             'amount_paid' => $total,
             'change_amount' => 0,
             'status' => SaleStatus::Completed,
