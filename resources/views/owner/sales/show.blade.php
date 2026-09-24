@@ -158,7 +158,6 @@
                             <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Qty</th>
                             <th class="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Unit Price</th>
                             <th class="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Subtotal</th>
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Movement</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -169,15 +168,6 @@
                                 <td class="px-6 py-3 text-slate-600">{{ $item->qty }}</td>
                                 <td class="px-6 py-3 text-right text-slate-700">₱{{ number_format($item->unit_price, 2) }}</td>
                                 <td class="px-6 py-3 text-right font-semibold text-slate-800">₱{{ number_format($item->subtotal ?? ($item->unit_price * $item->qty), 2) }}</td>
-                                <td class="px-6 py-3">
-                                    @if(($item->movement ?? null) === 'Fast-Moving')
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Fast-Moving</span>
-                                    @elseif(($item->movement ?? null) === 'Slow-Moving')
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Slow-Moving</span>
-                                    @elseif(isset($item->movement))
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">No Movement</span>
-                                    @endif
-                                </td>
                             </tr>
                         @empty
                             {{-- Hardcoded sample items --}}
@@ -187,7 +177,6 @@
                                 <td class="px-6 py-3 text-slate-600">5</td>
                                 <td class="px-6 py-3 text-right text-slate-700">₱40.50</td>
                                 <td class="px-6 py-3 text-right font-semibold text-slate-800">₱202.50</td>
-                                <td class="px-6 py-3"></td>
                             </tr>
                         @endforelse
                     </tbody>
