@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Cashier;
 
 use App\Enums\ReturnCondition;
 use App\Enums\ReturnResolution;
+use App\Enums\SaleStatus;
 use App\Http\Controllers\Controller;
 use App\Models\ReturnRecord;
 use App\Models\Sale;
@@ -69,9 +70,11 @@ class ReturnController extends Controller
     public function process(Request $request): View
     {
         $transactionId = $request->input('transaction_id');
-        $sale = $transactionId ? Sale::with('items.product')->find($transactionId) : null;
+        $sale = $transactionId
+            ? Sale::where('status', SaleStatus::Completed)->with('items.product')->find($transactionId)
+            : null;
 
-        return view('cashier.returns.process', ['sale' => $sale]);
+        return view('cashier.returns.process', ['sale' => $sale, 'transactionId' => $transactionId]);
     }
 
     public function store(Request $request): RedirectResponse

@@ -36,31 +36,44 @@
     </div>
     @endif
 
+    {{-- Step 1: find the transaction --}}
+    <form method="GET" action="{{ route('cashier.returns.process') }}" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-3">
+        <label class="block text-sm font-medium text-slate-700">Find Transaction</label>
+        <div class="flex gap-2">
+            <input type="number" name="transaction_id" placeholder="Transaction number, e.g. 12"
+                   value="{{ $transactionId ?? '' }}"
+                   class="flex-1 px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2"
+                   style="--tw-ring-color:#363E48;">
+            <button type="submit"
+                    class="px-5 py-2.5 text-sm font-semibold text-white rounded-xl hover:opacity-90 transition-opacity"
+                    style="background-color:#363E48;">
+                Find
+            </button>
+        </div>
+        <p class="text-xs text-slate-400">Look up the transaction number printed on the customer's receipt.</p>
+        @if(($transactionId ?? null) && ! $sale)
+        <p class="text-xs text-red-500">No completed transaction found with that number.</p>
+        @endif
+    </form>
+
+    {{-- Step 2: return details, once a transaction is loaded --}}
+    @if($sale)
     <form method="POST" action="{{ route('cashier.returns.store') }}" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
         @csrf
+        <input type="hidden" name="sale_id" value="{{ $sale->sale_id }}">
 
-        <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1.5">Transaction ID</label>
-            <input type="number" name="sale_id" required
-                   value="{{ old('sale_id', $sale->sale_id ?? '') }}"
-                   class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2"
-                   style="--tw-ring-color:#363E48;">
-            <p class="mt-1 text-xs text-slate-400">Enter the transaction number the customer is returning an item from.</p>
+        <div class="flex items-center justify-between px-3.5 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm">
+            <span class="text-slate-500">Transaction</span>
+            <span class="font-semibold text-slate-800">{{ $sale->code() }}</span>
         </div>
 
         <div>
             <label class="block text-sm font-medium text-slate-700 mb-1.5">Product</label>
-            @if($sale)
             <select name="product_id" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2" style="--tw-ring-color:#363E48;">
                 @foreach($sale->items as $item)
-                <option value="{{ $item->product_id }}">{{ $item->product->product_name ?? '—' }}</option>
+                <option value="{{ $item->product_id }}">{{ $item->product->product_name ?? '—' }} (Qty: {{ $item->quantity }})</option>
                 @endforeach
             </select>
-            @else
-            <input type="number" name="product_id" required placeholder="Product ID"
-                   class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2"
-                   style="--tw-ring-color:#363E48;">
-            @endif
         </div>
 
         <div>
@@ -105,6 +118,7 @@
             Submit Return
         </button>
     </form>
+    @endif
 
 </div>
 @endsection

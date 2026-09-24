@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Owner;
 use App\Enums\ReturnCondition;
 use App\Enums\ReturnResolution;
 use App\Enums\ReturnStatus;
+use App\Enums\SaleStatus;
 use App\Enums\WarrantyClaimStatus;
 use App\Enums\WarrantyOutcome;
 use App\Http\Controllers\Controller;
@@ -87,7 +88,9 @@ class ReturnController extends Controller
     public function process(?ReturnRecord $returnRecord = null): View
     {
         $transactionId = request('transaction_id');
-        $sale = $transactionId ? Sale::with('items.product')->find($transactionId) : null;
+        $sale = $transactionId
+            ? Sale::where('status', SaleStatus::Completed)->with('items.product')->find($transactionId)
+            : null;
 
         $txn = $sale ? (object) [
             'id' => $sale->sale_id,

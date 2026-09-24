@@ -15,7 +15,9 @@
     {{-- Page Header --}}
     <div>
         <h1 class="text-2xl font-bold text-slate-800">Process Return</h1>
-        <p class="text-sm text-slate-500 mt-1">For transaction {{ $txn->id ?? 'TXN-2024-003' }}</p>
+        <p class="text-sm text-slate-500 mt-1">
+            @if($txn) For transaction {{ $txn->code }} @else Look up a completed transaction to begin. @endif
+        </p>
     </div>
 
     {{-- Success Alert --}}
@@ -28,29 +30,43 @@
     </div>
     @endif
 
+    @if(! $txn)
+    {{-- Find Transaction --}}
+    <div class="bg-white rounded-xl border shadow-sm p-6 mb-6">
+        <form method="GET" action="{{ route('owner.returns.process') }}" class="space-y-2">
+            <label class="block text-sm font-medium text-slate-700">Find Transaction</label>
+            <div class="flex gap-2">
+                <input type="number" name="transaction_id" placeholder="Transaction number, e.g. 12"
+                       value="{{ request('transaction_id') }}"
+                       class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
+                <button type="submit"
+                        class="px-5 py-2 text-sm font-medium text-white rounded-lg transition-opacity hover:opacity-90"
+                        style="background-color:#363E48">
+                    Find
+                </button>
+            </div>
+            @if(request('transaction_id'))
+            <p class="text-xs text-red-500">No completed transaction found with that number.</p>
+            @else
+            <p class="text-xs text-slate-400">Or start a return from a transaction's detail page.</p>
+            @endif
+        </form>
+    </div>
+    @endif
+
     {{-- Form Card --}}
+    @if($txn)
     <div class="bg-white rounded-xl border shadow-sm p-6">
-        @if(! $txn)
-        <p class="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">
-            No transaction selected. Start a return from a transaction's detail page, or choose one below.
-        </p>
-        @endif
         <form id="returnForm" method="POST" action="{{ route('owner.returns.store') }}" class="space-y-5" onsubmit="handleSubmit(event)">
             @csrf
 
             {{-- Transaction ID --}}
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">Transaction ID</label>
-                @if($txn)
-                    <div class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 select-all">
-                        {{ $txn->code }}
-                    </div>
-                    <input type="hidden" name="transaction_id" value="{{ $txn->id }}">
-                @else
-                    <input type="number" name="transaction_id" value="{{ old('transaction_id') }}" required
-                           placeholder="Enter the numeric sale ID"
-                           class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
-                @endif
+                <div class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 select-all">
+                    {{ $txn->code }}
+                </div>
+                <input type="hidden" name="transaction_id" value="{{ $txn->id }}">
             </div>
 
             {{-- Product to Return --}}
@@ -181,6 +197,7 @@
             </div>
         </form>
     </div>
+    @endif
 
 </div>
 @endsection
