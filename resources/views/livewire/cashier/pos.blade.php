@@ -69,16 +69,16 @@
     </div>
 
     {{-- ===================== RIGHT PANEL ===================== --}}
-    <div class="w-96 flex flex-col bg-slate-50 border-l border-slate-200">
+    <div class="w-96 flex flex-col bg-slate-50 border-l border-slate-200 overflow-y-auto">
 
         {{-- Cart Header --}}
-        <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+        <div class="p-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
             <span class="font-semibold text-slate-800">Current Order</span>
             <button type="button" wire:click="clearCart" class="text-red-500 text-sm hover:underline transition-colors">Clear Cart</button>
         </div>
 
         {{-- Cart Items --}}
-        <div class="flex-1 overflow-y-auto p-4 space-y-2">
+        <div class="p-4 space-y-2">
             @forelse($cart as $cartKey => $item)
             <div class="bg-white rounded-lg p-3 border border-slate-200" wire:key="cart-{{ $cartKey }}">
                 <div class="flex items-start justify-between mb-2">
@@ -114,7 +114,7 @@
         </div>
 
         {{-- Discount Section --}}
-        <div class="p-4 border-t border-b border-slate-200">
+        <div class="p-4 border-t border-b border-slate-200 flex-shrink-0">
             <label class="block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">Discount</label>
             <div class="flex gap-2 mb-3">
                 @foreach(['none' => 'None', 'percent' => '% Off', 'fixed' => '₱ Off'] as $val => $label)
@@ -147,7 +147,7 @@
         </div>
 
         {{-- Totals --}}
-        <div class="p-4 bg-white border-t border-slate-200 space-y-1.5 text-sm">
+        <div class="p-4 bg-white border-t border-slate-200 space-y-1.5 text-sm flex-shrink-0">
             <div class="flex items-center justify-between text-slate-600">
                 <span>Cart Subtotal</span>
                 <span>₱{{ number_format($subtotal, 2) }}</span>
@@ -166,7 +166,7 @@
         </div>
 
         {{-- Payment Method --}}
-        <div class="p-4 border-t border-slate-200 space-y-3">
+        <div class="p-4 border-t border-slate-200 space-y-3 flex-shrink-0">
             <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide">Payment Method</label>
             <div class="flex gap-2 mb-3">
                 @foreach(['Cash', 'GCash', 'Cheque'] as $method)
