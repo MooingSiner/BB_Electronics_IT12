@@ -12,6 +12,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\ReturnRecord;
 use App\Models\Sale;
+use App\Models\SaleItem;
 use App\Models\StockAdjustment;
 use App\Models\Warranty;
 use Illuminate\Http\RedirectResponse;
@@ -99,7 +100,9 @@ class ReturnController extends Controller
                 'product_id' => $item->product_id,
                 'product_name' => $item->product->product_name ?? '—',
                 'qty' => $item->quantity,
-            ]),
+                'remaining' => $this->remainingReturnable($sale->sale_id, $item->product_id),
+            ])->filter(fn ($item) => $item->remaining > 0)
+                ->values(),
         ] : null;
 
         return view('owner.returns.process', compact('txn'));
@@ -115,6 +118,16 @@ class ReturnController extends Controller
             'resolution' => ['required', new Enum(ReturnResolution::class)],
             'condition' => ['required', new Enum(ReturnCondition::class)],
         ]);
+
+        $remaining = $this->remainingReturnable($validated['transaction_id'], $validated['product_id']);
+
+        if ($validated['qty'] > $remaining) {
+            return back()->withErrors([
+                'qty' => $remaining > 0
+                    ? "Only {$remaining} unit(s) of this product from this transaction can still be returned."
+                    : 'All units of this product from this transaction have already been returned.',
+            ])->withInput();
+        }
 
         $return = ReturnRecord::create([
             'sale_id' => $validated['transaction_id'],
@@ -213,6 +226,14 @@ class ReturnController extends Controller
         );
 
         return redirect()->route('owner.returns.warranty', $warranty->warranty_id)->with('success', 'Warranty claim updated.');
+    }
+
+    private function remainingReturnable(int $saleId, int $productId): int
+    {
+        $sold = SaleItem::where('sale_id', $saleId)->where('product_id', $productId)->sum('quantity');
+        $returned = ReturnRecord::where('sale_id', $saleId)->where('product_id', $productId)->sum('quantity');
+
+        return max(0, $sold - $returned);
     }
 
     private function warrantyStatusLabel(WarrantyClaimStatus $status): string

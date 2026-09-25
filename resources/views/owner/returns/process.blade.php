@@ -55,7 +55,11 @@
     @endif
 
     {{-- Form Card --}}
-    @if($txn)
+    @if($txn && $txn->items->isEmpty())
+    <div class="bg-white rounded-xl border shadow-sm p-6 text-sm text-slate-500">
+        Every item from this transaction has already been fully returned.
+    </div>
+    @elseif($txn)
     <div class="bg-white rounded-xl border shadow-sm p-6">
         <form id="returnForm" method="POST" action="{{ route('owner.returns.store') }}" class="space-y-5" onsubmit="handleSubmit(event)">
             @csrf
@@ -78,8 +82,8 @@
                         class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" required>
                     <option value="">Select a product...</option>
                     @foreach($txn->items ?? [] as $item)
-                        <option value="{{ $item->product_id }}" {{ old('product_id') == $item->product_id ? 'selected' : '' }}>
-                            {{ $item->product_name }} (Qty: {{ $item->qty }})
+                        <option value="{{ $item->product_id }}" data-max="{{ $item->remaining }}" {{ old('product_id') == $item->product_id ? 'selected' : '' }}>
+                            {{ $item->product_name }} ({{ $item->remaining }} returnable)
                         </option>
                     @endforeach
                 </select>
@@ -92,6 +96,7 @@
                 </label>
                 <input type="number" id="qty" name="qty" min="1" value="{{ old('qty', 1) }}"
                        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" required>
+                <p id="qtyHint" class="mt-1 text-xs text-slate-400"></p>
             </div>
 
             {{-- Reason for Return --}}
@@ -228,5 +233,25 @@
         e.preventDefault();
         document.getElementById('confirmDialog').classList.remove('hidden');
     }
+
+    (function () {
+        const productSelect = document.getElementById('product_id');
+        const qtyInput = document.getElementById('qty');
+        const hint = document.getElementById('qtyHint');
+        if (! productSelect || ! qtyInput) return;
+
+        function syncMax() {
+            const max = productSelect.options[productSelect.selectedIndex]?.dataset.max;
+            if (!max) { hint.textContent = ''; return; }
+            qtyInput.max = max;
+            hint.textContent = `Up to ${max} unit(s) can be returned for this product.`;
+            if (parseInt(qtyInput.value, 10) > parseInt(max, 10)) {
+                qtyInput.value = max;
+            }
+        }
+
+        productSelect.addEventListener('change', syncMax);
+        syncMax();
+    })();
 </script>
 @endpush

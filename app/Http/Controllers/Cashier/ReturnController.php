@@ -8,6 +8,7 @@ use App\Enums\SaleStatus;
 use App\Http\Controllers\Controller;
 use App\Models\ReturnRecord;
 use App\Models\Sale;
+use App\Models\SaleItem;
 use App\Models\Warranty;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -74,7 +75,11 @@ class ReturnController extends Controller
             ? Sale::where('status', SaleStatus::Completed)->with('items.product')->find($transactionId)
             : null;
 
-        return view('cashier.returns.process', ['sale' => $sale, 'transactionId' => $transactionId]);
+        $remaining = $sale
+            ? $sale->items->mapWithKeys(fn ($item) => [$item->product_id => $this->remainingReturnable($sale->sale_id, $item->product_id)])
+            : collect();
+
+        return view('cashier.returns.process', ['sale' => $sale, 'transactionId' => $transactionId, 'remaining' => $remaining]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -87,6 +92,16 @@ class ReturnController extends Controller
             'condition' => ['required', new Enum(ReturnCondition::class)],
             'resolution' => ['required', new Enum(ReturnResolution::class)],
         ]);
+
+        $remaining = $this->remainingReturnable($validated['sale_id'], $validated['product_id']);
+
+        if ($validated['quantity'] > $remaining) {
+            return back()->withErrors([
+                'quantity' => $remaining > 0
+                    ? "Only {$remaining} unit(s) of this product from this transaction can still be returned."
+                    : 'All units of this product from this transaction have already been returned.',
+            ])->withInput();
+        }
 
         ReturnRecord::create([
             'sale_id' => $validated['sale_id'],
@@ -108,5 +123,13 @@ class ReturnController extends Controller
         $warranty->load('saleItem.product');
 
         return view('cashier.returns.warranty', ['warranty' => $warranty]);
+    }
+
+    private function remainingReturnable(int $saleId, int $productId): int
+    {
+        $sold = SaleItem::where('sale_id', $saleId)->where('product_id', $productId)->sum('quantity');
+        $returned = ReturnRecord::where('sale_id', $saleId)->where('product_id', $productId)->sum('quantity');
+
+        return max(0, $sold - $returned);
     }
 }

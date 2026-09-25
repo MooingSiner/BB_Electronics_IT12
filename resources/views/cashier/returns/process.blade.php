@@ -57,7 +57,11 @@
     </form>
 
     {{-- Step 2: return details, once a transaction is loaded --}}
-    @if($sale)
+    @if($sale && $remaining->sum() === 0)
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 text-sm text-slate-500">
+        Every item from this transaction has already been fully returned.
+    </div>
+    @elseif($sale)
     <form method="POST" action="{{ route('cashier.returns.store') }}" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
         @csrf
         <input type="hidden" name="sale_id" value="{{ $sale->sale_id }}">
@@ -69,18 +73,22 @@
 
         <div>
             <label class="block text-sm font-medium text-slate-700 mb-1.5">Product</label>
-            <select name="product_id" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2" style="--tw-ring-color:#363E48;">
+            <select id="product_id" name="product_id" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2" style="--tw-ring-color:#363E48;">
                 @foreach($sale->items as $item)
-                <option value="{{ $item->product_id }}">{{ $item->product->product_name ?? '—' }} (Qty: {{ $item->quantity }})</option>
+                    @php $left = $remaining[$item->product_id] ?? $item->quantity; @endphp
+                    @if($left > 0)
+                    <option value="{{ $item->product_id }}" data-max="{{ $left }}">{{ $item->product->product_name ?? '—' }} ({{ $left }} returnable)</option>
+                    @endif
                 @endforeach
             </select>
         </div>
 
         <div>
             <label class="block text-sm font-medium text-slate-700 mb-1.5">Quantity</label>
-            <input type="number" name="quantity" min="1" value="{{ old('quantity', 1) }}" required
+            <input type="number" id="quantity" name="quantity" min="1" value="{{ old('quantity', 1) }}" required
                    class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2"
                    style="--tw-ring-color:#363E48;">
+            <p id="quantityHint" class="mt-1 text-xs text-slate-400"></p>
         </div>
 
         <div>
@@ -121,4 +129,27 @@
     @endif
 
 </div>
+
+@if($sale && $remaining->sum() > 0)
+<script>
+    (function () {
+        const productSelect = document.getElementById('product_id');
+        const quantityInput = document.getElementById('quantity');
+        const hint = document.getElementById('quantityHint');
+
+        function syncMax() {
+            const max = productSelect.options[productSelect.selectedIndex]?.dataset.max;
+            if (!max) return;
+            quantityInput.max = max;
+            hint.textContent = `Up to ${max} unit(s) can be returned for this product.`;
+            if (parseInt(quantityInput.value, 10) > parseInt(max, 10)) {
+                quantityInput.value = max;
+            }
+        }
+
+        productSelect.addEventListener('change', syncMax);
+        syncMax();
+    })();
+</script>
+@endif
 @endsection
