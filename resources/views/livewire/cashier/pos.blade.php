@@ -2,7 +2,7 @@
 <div class="flex h-full">
 
     {{-- ===================== LEFT PANEL ===================== --}}
-    <div class="flex-1 flex flex-col bg-white border-r border-slate-200">
+    <div class="flex-1 min-w-0 flex flex-col bg-white border-r border-slate-200">
 
         {{-- Header --}}
         <div class="p-4 border-b border-slate-200 space-y-3">
