@@ -44,7 +44,7 @@
 
         {{-- Product Grid --}}
         <div class="flex-1 overflow-y-auto p-4" wire:loading.class="opacity-60">
-            <div class="grid grid-cols-3 gap-3">
+            <div class="grid gap-3" style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));">
                 @forelse($products as $product)
                 @php $outOfStock = $product->stock <= 0; @endphp
                 <div @if(! $outOfStock) wire:click="addToCart({{ $product->id }})" @endif
@@ -61,7 +61,7 @@
                     @endif
                 </div>
                 @empty
-                <div class="col-span-3 py-16 text-center text-slate-400 text-sm">No products found.</div>
+                <div class="col-span-full py-16 text-center text-slate-400 text-sm">No products found.</div>
                 @endforelse
             </div>
         </div>
@@ -69,7 +69,7 @@
     </div>
 
     {{-- ===================== RIGHT PANEL ===================== --}}
-    <div class="w-96 flex flex-col bg-slate-50 border-l border-slate-200">
+    <div class="w-72 lg:w-80 xl:w-96 flex-shrink-0 flex flex-col bg-slate-50 border-l border-slate-200">
 
         {{-- Cart Header --}}
         <div class="p-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
