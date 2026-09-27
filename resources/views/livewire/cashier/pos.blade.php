@@ -1,4 +1,4 @@
-<div>
+<div class="h-full">
 <div class="flex h-full">
 
     {{-- ===================== LEFT PANEL ===================== --}}
@@ -69,7 +69,7 @@
     </div>
 
     {{-- ===================== RIGHT PANEL ===================== --}}
-    <div class="w-96 flex flex-col bg-slate-50 border-l border-slate-200 overflow-y-auto">
+    <div class="w-96 flex flex-col bg-slate-50 border-l border-slate-200">
 
         {{-- Cart Header --}}
         <div class="p-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
@@ -78,7 +78,7 @@
         </div>
 
         {{-- Cart Items --}}
-        <div class="p-4 space-y-2">
+        <div class="flex-1 min-h-0 overflow-y-auto p-4 space-y-2">
             @forelse($cart as $cartKey => $item)
             <div class="bg-white rounded-lg p-3 border border-slate-200" wire:key="cart-{{ $cartKey }}">
                 <div class="flex items-start justify-between mb-2">
