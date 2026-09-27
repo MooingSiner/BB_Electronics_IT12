@@ -138,12 +138,6 @@
                        style="--tw-ring-color:#363E48;">
             </div>
             @endif
-            @if($discountAmount > 0)
-            <div class="mt-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-700 flex items-center justify-between">
-                <span>Discount Applied</span>
-                <span class="font-semibold">−₱{{ number_format($discountAmount, 2) }}</span>
-            </div>
-            @endif
         </div>
 
         {{-- Totals --}}
