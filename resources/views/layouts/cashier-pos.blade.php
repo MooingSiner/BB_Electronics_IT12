@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>B&B Electronics — {{ $title ?? 'Point of Sale' }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    @vite('resources/css/app.css')
     <style>
         body { font-family: 'Inter', sans-serif; }
         .sidebar-bg { background-color: #363E48; }
