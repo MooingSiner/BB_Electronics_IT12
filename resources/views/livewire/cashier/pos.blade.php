@@ -127,8 +127,7 @@
                 </button>
                 @endforeach
             </div>
-            @if($discountType !== 'none')
-            <div class="flex gap-2">
+            <div class="flex gap-2 {{ $discountType === 'none' ? 'hidden' : '' }}">
                 <input type="number"
                        wire:model.live.debounce.400ms="discountValue"
                        min="0"
@@ -137,7 +136,6 @@
                        class="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2"
                        style="--tw-ring-color:#363E48;">
             </div>
-            @endif
         </div>
 
         {{-- Totals --}}
