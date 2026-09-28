@@ -1,5 +1,5 @@
 <div class="h-full">
-<div class="flex h-full">
+<div class="flex h-full" x-data="{ cartOpen: true }">
 
     {{-- ===================== LEFT PANEL ===================== --}}
     <div class="flex-1 min-w-0 flex flex-col bg-white border-r border-slate-200">
@@ -44,12 +44,17 @@
 
         {{-- Product Grid --}}
         <div class="flex-1 overflow-y-auto p-4" wire:loading.class="opacity-60">
-            <div class="grid gap-3" style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));">
+            <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
                 @forelse($products as $product)
                 @php $outOfStock = $product->stock <= 0; @endphp
                 <div @if(! $outOfStock) wire:click="addToCart({{ $product->id }})" @endif
-                     class="bg-white border border-slate-200 rounded-xl p-3 relative transition-shadow
+                     class="bg-white border border-slate-200 rounded-xl p-4 relative transition-shadow
                     {{ $outOfStock ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-md' }}">
+                    <div class="aspect-square w-full mb-3 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden">
+                        <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
                     <p class="font-medium text-sm text-slate-800 leading-tight mb-1">{{ $product->name }}</p>
                     <p class="font-semibold text-sm mb-2" style="color:#363E48;">₱{{ number_format($product->price, 2) }}</p>
                     @if($product->stock == 0)
@@ -68,13 +73,36 @@
 
     </div>
 
+    {{-- Floating re-show button (visible when cart is hidden) --}}
+    <button type="button"
+            x-show="!cartOpen"
+            x-cloak
+            @click="cartOpen = true"
+            class="fixed right-4 top-24 z-20 flex items-center gap-2 pl-3 pr-4 py-2 rounded-full text-white text-sm font-medium shadow-lg hover:opacity-90 transition-opacity"
+            style="background-color:#363E48;">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+        </svg>
+        Cart
+        @if(count($cart) > 0)
+        <span class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full bg-white text-xs font-bold" style="color:#363E48;">{{ count($cart) }}</span>
+        @endif
+    </button>
+
     {{-- ===================== RIGHT PANEL ===================== --}}
-    <div class="w-72 lg:w-80 xl:w-96 flex-shrink-0 flex flex-col bg-slate-50 border-l border-slate-200">
+    <div x-show="cartOpen" class="w-72 lg:w-80 xl:w-96 flex-shrink-0 flex flex-col bg-slate-50 border-l border-slate-200">
 
         {{-- Cart Header --}}
         <div class="p-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
             <span class="font-semibold text-slate-800">Current Order</span>
-            <button type="button" wire:click="clearCart" class="text-red-500 text-sm hover:underline transition-colors">Clear Cart</button>
+            <div class="flex items-center gap-3">
+                <button type="button" wire:click="clearCart" class="text-red-500 text-sm hover:underline transition-colors">Clear Cart</button>
+                <button type="button" @click="cartOpen = false" title="Hide cart" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </button>
+            </div>
         </div>
 
         {{-- Cart Items --}}
