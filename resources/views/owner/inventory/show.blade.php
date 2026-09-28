@@ -24,10 +24,14 @@
     <div class="rounded-2xl shadow-sm border border-slate-200 p-6 mb-6" style="background: linear-gradient(135deg, #363E48 0%, #454f5c 100%);">
         <div class="flex items-start justify-between gap-4 flex-wrap">
             <div class="flex items-start gap-4">
-                <div class="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 accent-bg">
-                    <svg class="w-7 h-7 accent-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
-                    </svg>
+                <div class="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 accent-bg overflow-hidden">
+                    @if($item->image_url)
+                        <img src="{{ $item->image_url }}" alt="{{ $item->name }}" class="w-full h-full object-cover">
+                    @else
+                        <svg class="w-7 h-7 accent-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
+                        </svg>
+                    @endif
                 </div>
                 <div>
                     <div class="flex items-center gap-2 flex-wrap">

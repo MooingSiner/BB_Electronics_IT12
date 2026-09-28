@@ -264,6 +264,7 @@ class Pos extends Component
             ->map(fn (Product $product) => (object) [
                 'id' => $product->product_id,
                 'name' => $product->product_name,
+                'image_url' => $product->image_url,
                 'price' => (float) $product->unit_price,
                 'stock' => $product->quantity_on_hand,
                 'reorder_level' => $product->reorder_level,
