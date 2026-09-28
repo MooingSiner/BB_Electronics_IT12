@@ -156,7 +156,6 @@
                 <span>TOTAL</span>
                 <span>₱{{ number_format($total, 2) }}</span>
             </div>
-            <p class="text-xs text-slate-400">VAT (12% included): ₱{{ number_format($vat, 2) }}</p>
         </div>
 
         {{-- Payment Method --}}

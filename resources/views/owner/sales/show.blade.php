@@ -211,9 +211,6 @@
                         </span>
                     </div>
 
-                    <p class="text-right text-xs text-slate-400">
-                        VAT (12%) included in total
-                    </p>
                 </div>
             </div>
         </div>

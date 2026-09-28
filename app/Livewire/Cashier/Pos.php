@@ -272,9 +272,8 @@ class Pos extends Component
         $subtotal = collect($this->cart)->sum(fn ($item) => $item['price'] * $item['quantity']);
         $discountAmount = $this->calculateDiscount($subtotal);
         $total = max(0, $subtotal - $discountAmount);
-        $vat = $total - ($total / 1.12);
         $change = $this->payment === 'Cash' && $this->amountReceived > 0 ? $this->amountReceived - $total : null;
 
-        return view('livewire.cashier.pos', compact('products', 'subtotal', 'discountAmount', 'total', 'vat', 'change'));
+        return view('livewire.cashier.pos', compact('products', 'subtotal', 'discountAmount', 'total', 'change'));
     }
 }
