@@ -8,18 +8,49 @@
 <div class="p-6 space-y-6">
 
     {{-- Welcome Heading --}}
-    <div>
-        <h1 class="text-2xl font-bold text-slate-800">Welcome, {{ auth()->user()->full_name }}</h1>
-        <p class="text-sm text-slate-500 mt-1">Cashier / Store Attendant — {{ now()->format('F d, Y') }}</p>
+    <div class="flex flex-wrap items-start justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">Welcome, {{ auth()->user()->full_name }}</h1>
+            <p class="text-sm text-slate-500 mt-1">Cashier / Store Attendant — {{ now()->format('F d, Y') }}</p>
+        </div>
+
+        {{-- Period Filter --}}
+        <div class="flex flex-col items-end gap-2">
+            <div class="flex gap-1 bg-white rounded-lg border border-slate-200 shadow-sm p-1">
+                @foreach(['today' => 'Today', 'week' => 'This Week', 'month' => 'This Month', 'year' => 'This Year'] as $val => $label)
+                <a href="{{ route('cashier.dashboard', ['period' => $val]) }}"
+                   class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                   {{ ($period ?? 'today') === $val ? 'text-white' : 'text-slate-600 hover:bg-slate-100' }}"
+                   @if(($period ?? 'today') === $val) style="background-color:#363E48;" @endif>
+                    {{ $label }}
+                </a>
+                @endforeach
+            </div>
+            <form method="GET" action="{{ route('cashier.dashboard') }}" class="flex items-center gap-1.5">
+                <input type="hidden" name="period" value="custom">
+                <input type="date" name="date_from" value="{{ $dateFrom ?? '' }}" required
+                       class="px-2 py-1 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-2"
+                       style="--tw-ring-color:#363E48;">
+                <span class="text-xs text-slate-400">to</span>
+                <input type="date" name="date_to" value="{{ $dateTo ?? '' }}" required
+                       class="px-2 py-1 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-2"
+                       style="--tw-ring-color:#363E48;">
+                <button type="submit"
+                        class="px-3 py-1 text-xs font-medium text-white rounded-md hover:opacity-90 transition"
+                        style="background-color:#363E48;">
+                    Apply
+                </button>
+            </form>
+        </div>
     </div>
 
     {{-- Stat Cards --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
-        {{-- Today's Sales --}}
+        {{-- Sales for the selected period --}}
         <a href="{{ route('cashier.sales.index', ['date' => 'today']) }}" class="rounded-2xl p-5 text-white hover:opacity-90 transition-opacity" style="background-color:#363E48;">
             <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-medium opacity-80">Today's Sales</span>
+                <span class="text-sm font-medium opacity-80">Sales &mdash; {{ $periodLabel ?? 'Today' }}</span>
                 <div class="w-9 h-9 rounded-full flex items-center justify-center" style="background-color:rgba(224,205,102,0.2);">
                     <svg class="w-5 h-5" style="color:#E0CD66;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -58,10 +89,10 @@
             <p class="text-xs text-slate-400 mt-1">awaiting processing</p>
         </a>
 
-        {{-- My Sales Today --}}
+        {{-- My Sales for the selected period --}}
         <a href="{{ route('cashier.sales.index', ['date' => 'today', 'mine' => 1]) }}" class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
             <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-medium text-slate-600">My Sales Today</span>
+                <span class="text-sm font-medium text-slate-600">My Sales &mdash; {{ $periodLabel ?? 'Today' }}</span>
                 <div class="w-9 h-9 bg-blue-50 rounded-full flex items-center justify-center">
                     <svg class="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
@@ -96,7 +127,10 @@
     {{-- Recent Transactions --}}
     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-            <h2 class="font-semibold text-slate-800">Recent Transactions</h2>
+            <div>
+                <h2 class="font-semibold text-slate-800">Recent Transactions</h2>
+                <p class="text-xs text-slate-400">{{ $periodLabel ?? 'Today' }}</p>
+            </div>
             <a href="{{ route('cashier.sales.index') }}" class="text-xs font-medium hover:underline" style="color:#363E48;">View all</a>
         </div>
         <div class="overflow-x-auto">
@@ -139,7 +173,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="px-6 py-12 text-center text-slate-400 text-sm">No recent transactions found.</td>
+                        <td colspan="6" class="px-6 py-12 text-center text-slate-400 text-sm">No transactions for {{ strtolower($periodLabel ?? 'today') }}.</td>
                     </tr>
                     @endforelse
                 </tbody>

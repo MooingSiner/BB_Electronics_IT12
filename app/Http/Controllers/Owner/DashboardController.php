@@ -7,20 +7,25 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\Sale;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $period = $request->input('period', 'today');
+        [$dateFrom, $dateTo, $periodLabel] = $this->resolvePeriod($request, $period);
+
         $totalProducts = Product::where('is_active', true)->count();
         $totalStock = (int) Product::where('is_active', true)->sum('quantity_on_hand');
 
-        $todaySalesTotal = Sale::whereDate('sale_date', today())
+        $periodSalesTotal = Sale::whereBetween('sale_date', [$dateFrom, $dateTo])
             ->where('status', SaleStatus::Completed)
             ->sum('total_amount');
 
-        $txnCount = Sale::whereDate('sale_date', today())->count();
+        $txnCount = Sale::whereBetween('sale_date', [$dateFrom, $dateTo])->count();
 
         $lowStockCount = Product::where('is_active', true)
             ->whereColumn('quantity_on_hand', '<=', 'reorder_level')
@@ -32,6 +37,7 @@ class DashboardController extends Controller
             ->count();
 
         $transactions = Sale::with(['user', 'items.product'])
+            ->whereBetween('sale_date', [$dateFrom, $dateTo])
             ->latest('sale_date')
             ->take(5)
             ->get()
@@ -97,7 +103,7 @@ class DashboardController extends Controller
         return view('owner.dashboard', [
             'totalProducts' => $totalProducts,
             'totalStock' => number_format($totalStock),
-            'todaySales' => '₱'.number_format((float) $todaySalesTotal, 2),
+            'todaySales' => '₱'.number_format((float) $periodSalesTotal, 2),
             'txnCount' => $txnCount,
             'lowStockCount' => $lowStockCount,
             'outOfStockCount' => $outOfStockCount,
@@ -106,6 +112,30 @@ class DashboardController extends Controller
             'recentOrders' => $recentOrders,
             'fastMoving' => $fastMoving,
             'slowMoving' => $slowMoving,
+            'period' => $period,
+            'periodLabel' => $periodLabel,
+            'dateFrom' => $dateFrom->format('Y-m-d'),
+            'dateTo' => $dateTo->format('Y-m-d'),
         ]);
+    }
+
+    /**
+     * @return array{0: Carbon, 1: Carbon, 2: string}
+     */
+    private function resolvePeriod(Request $request, string $period): array
+    {
+        if ($period === 'custom' && $request->filled('date_from') && $request->filled('date_to')) {
+            $from = Carbon::parse($request->input('date_from'))->startOfDay();
+            $to = Carbon::parse($request->input('date_to'))->endOfDay();
+
+            return [$from, $to, $from->format('M d').' – '.$to->format('M d, Y')];
+        }
+
+        return match ($period) {
+            'week' => [now()->startOfWeek(), now()->endOfWeek(), 'This Week'],
+            'month' => [now()->startOfMonth(), now()->endOfMonth(), 'This Month'],
+            'year' => [now()->startOfYear(), now()->endOfYear(), 'This Year'],
+            default => [now()->startOfDay(), now()->endOfDay(), 'Today'],
+        };
     }
 }

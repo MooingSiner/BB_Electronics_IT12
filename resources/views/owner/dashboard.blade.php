@@ -4,13 +4,44 @@
 
 @section('content')
 {{-- Page Header --}}
-<div class="mb-8">
-    <h1 class="text-2xl font-bold text-[#363E48]">
-        Welcome, {{ auth()->user()->full_name }}
-    </h1>
-    <p class="mt-1 text-sm text-slate-500">
-        Owner / Manager &mdash; {{ now()->format('F d, Y') }}
-    </p>
+<div class="flex flex-wrap items-start justify-between gap-4 mb-8">
+    <div>
+        <h1 class="text-2xl font-bold text-[#363E48]">
+            Welcome, {{ auth()->user()->full_name }}
+        </h1>
+        <p class="mt-1 text-sm text-slate-500">
+            Owner / Manager &mdash; {{ now()->format('F d, Y') }}
+        </p>
+    </div>
+
+    {{-- Period Filter --}}
+    <div class="flex flex-col items-end gap-2">
+        <div class="flex gap-1 bg-white rounded-lg border border-slate-200 shadow-sm p-1">
+            @foreach(['today' => 'Today', 'week' => 'This Week', 'month' => 'This Month', 'year' => 'This Year'] as $val => $label)
+            <a href="{{ route('owner.dashboard', ['period' => $val]) }}"
+               class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+               {{ ($period ?? 'today') === $val ? 'text-white' : 'text-slate-600 hover:bg-slate-100' }}"
+               @if(($period ?? 'today') === $val) style="background-color:#363E48;" @endif>
+                {{ $label }}
+            </a>
+            @endforeach
+        </div>
+        <form method="GET" action="{{ route('owner.dashboard') }}" class="flex items-center gap-1.5">
+            <input type="hidden" name="period" value="custom">
+            <input type="date" name="date_from" value="{{ $dateFrom ?? '' }}" required
+                   class="px-2 py-1 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-2"
+                   style="--tw-ring-color:#363E48;">
+            <span class="text-xs text-slate-400">to</span>
+            <input type="date" name="date_to" value="{{ $dateTo ?? '' }}" required
+                   class="px-2 py-1 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-2"
+                   style="--tw-ring-color:#363E48;">
+            <button type="submit"
+                    class="px-3 py-1 text-xs font-medium text-white rounded-md hover:opacity-90 transition"
+                    style="background-color:#363E48;">
+                Apply
+            </button>
+        </form>
+    </div>
 </div>
 
 {{-- Stat Cards --}}
@@ -48,10 +79,10 @@
         </div>
     </a>
 
-    {{-- Today's Sales (dark card) --}}
+    {{-- Sales for the selected period (dark card) --}}
     <div class="bg-[#363E48] rounded-xl shadow-sm p-5 flex flex-col gap-3">
         <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold uppercase tracking-wide text-slate-300">Today's Sales</span>
+            <span class="text-xs font-semibold uppercase tracking-wide text-slate-300">Sales &mdash; {{ $periodLabel ?? 'Today' }}</span>
             <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white/10 text-[#E0CD66]">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -88,7 +119,10 @@
     <div class="lg:col-span-2">
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-                <h2 class="text-sm font-semibold text-[#363E48]">Recent Transactions</h2>
+                <div>
+                    <h2 class="text-sm font-semibold text-[#363E48]">Recent Transactions</h2>
+                    <p class="text-xs text-slate-400">{{ $periodLabel ?? 'Today' }}</p>
+                </div>
                 <a href="{{ route('owner.sales.index') }}"
                    class="text-xs font-medium text-[#363E48] hover:text-[#E0CD66] transition-colors">
                     View all &rarr;
@@ -125,7 +159,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-6 py-6 text-center text-sm text-slate-400">No transactions yet.</td>
+                                <td colspan="5" class="px-6 py-6 text-center text-sm text-slate-400">No transactions for {{ strtolower($periodLabel ?? 'today') }}.</td>
                             </tr>
                         @endforelse
                     </tbody>
