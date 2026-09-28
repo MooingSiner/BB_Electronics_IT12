@@ -129,5 +129,15 @@
 </div>
 
 @livewireScripts
+<script>
+    // If this page is restored from the browser's back/forward cache, its Livewire
+    // component snapshot is stale (e.g. after completing a sale and navigating back).
+    // Force a fresh load instead of letting Livewire hydrate against old state.
+    window.addEventListener('pageshow', function (event) {
+        if (event.persisted) {
+            window.location.reload();
+        }
+    });
+</script>
 </body>
 </html>
