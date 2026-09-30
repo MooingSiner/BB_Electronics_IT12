@@ -84,7 +84,7 @@
                 @forelse($orders as $order)
                     <tr class="hover:bg-slate-50 transition">
                         <td class="px-4 py-3">
-                            <span class="font-mono text-xs text-slate-500">{{ $order->id ?? 'ORD-0001' }}</span>
+                            <span class="font-mono text-xs text-slate-500">SO-{{ str_pad($order->id ?? 0, 4, '0', STR_PAD_LEFT) }}</span>
                         </td>
                         <td class="px-4 py-3 font-medium text-slate-800">{{ $order->supplier ?? '—' }}</td>
                         <td class="px-4 py-3 text-slate-600 font-mono text-xs">{{ $order->invoice_number ?? '—' }}</td>

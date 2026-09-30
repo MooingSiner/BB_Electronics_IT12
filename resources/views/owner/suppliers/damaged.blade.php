@@ -51,7 +51,7 @@
                             @if($item->order_id ?? null)
                                 <a href="{{ route('owner.suppliers.show', $item->order_id) }}"
                                    class="font-mono text-xs hover:underline" style="color:#363E48">
-                                    #{{ $item->order_id }}
+                                    SO-{{ str_pad($item->order_id, 4, '0', STR_PAD_LEFT) }}
                                 </a>
                             @else
                                 <span class="text-xs text-slate-400">—</span>

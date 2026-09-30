@@ -20,7 +20,7 @@
                 <dt class="text-slate-500">Order</dt>
                 <dd class="text-slate-700">
                     @if($item->order_id)
-                        <a href="{{ route('owner.suppliers.show', $item->order_id) }}" class="hover:underline" style="color:#363E48">#{{ $item->order_id }}</a>
+                        <a href="{{ route('owner.suppliers.show', $item->order_id) }}" class="hover:underline" style="color:#363E48">SO-{{ str_pad($item->order_id, 4, '0', STR_PAD_LEFT) }}</a>
                     @else
                         —
                     @endif

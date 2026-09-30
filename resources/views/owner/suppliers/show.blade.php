@@ -14,7 +14,7 @@
     {{-- Page Header --}}
     <div class="flex items-start justify-between mb-6">
         <div>
-            <h1 class="text-2xl font-bold" style="color:#363E48">{{ $order->id ?? 'ORD-2024-002' }}</h1>
+            <h1 class="text-2xl font-bold" style="color:#363E48">SO-{{ str_pad($order->id ?? 0, 4, '0', STR_PAD_LEFT) }}</h1>
             <p class="text-sm text-slate-500 mt-1">{{ $order->supplier ?? 'TechWorld Distributors' }}</p>
         </div>
         <div class="flex items-center gap-2">
@@ -65,7 +65,7 @@
                 <dl class="space-y-3">
                     <div class="flex justify-between text-sm">
                         <dt class="text-slate-500">Order ID</dt>
-                        <dd class="font-mono text-slate-700 font-medium">{{ $order->id ?? 'ORD-2024-002' }}</dd>
+                        <dd class="font-mono text-slate-700 font-medium">SO-{{ str_pad($order->id ?? 0, 4, '0', STR_PAD_LEFT) }}</dd>
                     </div>
                     <div class="flex justify-between text-sm">
                         <dt class="text-slate-500">Supplier</dt>
