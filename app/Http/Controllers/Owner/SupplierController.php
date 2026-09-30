@@ -141,18 +141,29 @@ class SupplierController extends Controller
             }),
         ];
 
-        $openDamaged = ReturnRecord::where('order_id', $order->order_id)
-            ->where('status', ReturnStatus::Open)
+        $damageReports = ReturnRecord::where('order_id', $order->order_id)
             ->where('condition', ReturnCondition::Damaged)
             ->with('product')
+            ->latest('return_date')
             ->get()
             ->map(fn (ReturnRecord $r) => (object) [
                 'id' => $r->return_id,
                 'product_name' => $r->product->product_name ?? '—',
                 'quantity' => $r->quantity,
+                'date' => $r->return_date,
+                'description' => $r->reason,
+                'status' => match (true) {
+                    $r->status === ReturnStatus::Resolved && $r->resolution === ReturnResolution::Replacement => 'Replacement Received',
+                    $r->status === ReturnStatus::Resolved && $r->resolution === ReturnResolution::SupplierExchange => 'Returned to Supplier',
+                    $r->status === ReturnStatus::Resolved => 'Resolved',
+                    default => 'Reported',
+                },
             ]);
 
-        return view('owner.suppliers.show', ['order' => $item, 'openDamaged' => $openDamaged]);
+        $openDamaged = $damageReports->filter(fn ($r) => $r->status === 'Reported')
+            ->map(fn ($r) => (object) ['id' => $r->id, 'product_name' => $r->product_name, 'quantity' => $r->quantity]);
+
+        return view('owner.suppliers.show', ['order' => $item, 'openDamaged' => $openDamaged, 'damageReports' => $damageReports]);
     }
 
     public function damagedIndex(): View
