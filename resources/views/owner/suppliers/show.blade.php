@@ -329,7 +329,7 @@
 
     {{-- Report Damage Modal --}}
     <div id="damageModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-        <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+        <div class="bg-white rounded-xl p-6 max-w-lg w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-base font-semibold text-slate-800">Report Damage</h3>
                 <button type="button" id="closeDamageModal" class="text-slate-400 hover:text-slate-600 transition">
@@ -338,29 +338,47 @@
                     </svg>
                 </button>
             </div>
-            <form method="POST" action="{{ route('owner.suppliers.damage', $order->id ?? 0) }}" class="space-y-4">
+            <form method="POST" action="{{ route('owner.suppliers.damage', $order->id ?? 0) }}">
                 @csrf
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Product</label>
-                    <select name="product_id" id="damageProductSelect" required
-                            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
-                        <option value="">Select product</option>
-                        @foreach($order->items ?? [] as $item)
-                            <option value="{{ $item->product->id }}" data-max="{{ $item->qty_accepted ?? 0 }}">{{ $item->product->name }}</option>
-                        @endforeach
-                    </select>
+
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-sm font-medium text-slate-700">Products</p>
+                    <button type="button" id="addDamageItem"
+                            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition">
+                        + Add Item
+                    </button>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Quantity Damaged</label>
-                    <input type="number" name="quantity" id="damageQuantityInput" min="1" required
-                           class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
-                    <p id="damageQuantityHint" class="mt-1 text-xs text-slate-400"></p>
+
+                <div id="damageItemsContainer" class="space-y-3 max-h-[360px] overflow-y-auto pr-1 mb-4">
+                    {{-- Default row --}}
+                    <div class="damage-item-row p-3 bg-slate-50 rounded-md border border-slate-200 space-y-2">
+                        <div class="flex gap-2 items-end">
+                            <div class="flex-1">
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Product</label>
+                                <select name="items[0][product_id]" class="damage-product-select w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30" required>
+                                    <option value="">Select product</option>
+                                    @foreach($order->items ?? [] as $item)
+                                        <option value="{{ $item->product->id }}" data-max="{{ $item->qty_accepted ?? 0 }}">{{ $item->product->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="w-24">
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Qty</label>
+                                <input type="number" name="items[0][quantity]" min="1" class="damage-qty-input w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30" required>
+                            </div>
+                            <div class="pb-0.5">
+                                <button type="button" class="remove-damage-row w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 border border-slate-300 rounded-lg hover:border-red-300 transition text-lg leading-none">&times;</button>
+                            </div>
+                        </div>
+                        <p class="damage-qty-hint text-xs text-slate-400"></p>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Description</label>
+                            <input type="text" name="items[0][reason]" maxlength="255" placeholder="Describe the damage..."
+                                   class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30" required>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Description</label>
-                    <textarea name="reason" rows="2" required
-                              class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30"></textarea>
-                </div>
+
                 <div class="flex gap-2 justify-end pt-2">
                     <button type="button" onclick="document.getElementById('damageModal').classList.add('hidden')"
                             class="px-4 py-2 text-sm border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition">
@@ -506,17 +524,66 @@
             syncQtyInput();
         });
 
-        // Cap the damage-report quantity to what's actually available for the selected product
-        const damageProductSelect = document.getElementById('damageProductSelect');
-        const damageQuantityInput = document.getElementById('damageQuantityInput');
-        const damageQuantityHint = document.getElementById('damageQuantityHint');
+        // Cap each damage-report row's quantity to what's actually available for its selected product
+        function wireDamageRow(row) {
+            const productSelect = row.querySelector('.damage-product-select');
+            const qtyInput = row.querySelector('.damage-qty-input');
+            const qtyHint = row.querySelector('.damage-qty-hint');
 
-        damageProductSelect?.addEventListener('change', function () {
-            const selected = this.options[this.selectedIndex];
-            const max = selected ? parseInt(selected.dataset.max || '0', 10) : 0;
+            function syncMax() {
+                const selected = productSelect.options[productSelect.selectedIndex];
+                const max = selected ? parseInt(selected.dataset.max || '0', 10) : 0;
+                qtyInput.max = max;
+                qtyHint.textContent = productSelect.value ? `Up to ${max} unit(s) available to report.` : '';
+            }
 
-            damageQuantityInput.max = max;
-            damageQuantityHint.textContent = this.value ? `Up to ${max} unit(s) available to report.` : '';
+            productSelect.addEventListener('change', syncMax);
+            row.querySelector('.remove-damage-row')?.addEventListener('click', function () {
+                if (document.querySelectorAll('#damageItemsContainer .damage-item-row').length > 1) {
+                    row.remove();
+                }
+            });
+            syncMax();
+        }
+
+        document.querySelectorAll('#damageItemsContainer .damage-item-row').forEach(wireDamageRow);
+
+        let damageItemCount = 1;
+
+        document.getElementById('addDamageItem')?.addEventListener('click', function () {
+            const container = document.getElementById('damageItemsContainer');
+            const idx = damageItemCount++;
+
+            const productsOptions = `{!! collect($order->items ?? [])->map(fn($i) => '<option value="'.$i->product->id.'" data-max="'.($i->qty_accepted ?? 0).'">'.$i->product->name.'</option>')->implode('') !!}`;
+
+            const row = document.createElement('div');
+            row.className = 'damage-item-row p-3 bg-slate-50 rounded-md border border-slate-200 space-y-2';
+            row.innerHTML = `
+                <div class="flex gap-2 items-end">
+                    <div class="flex-1">
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Product</label>
+                        <select name="items[${idx}][product_id]" class="damage-product-select w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2" required>
+                            <option value="">Select product</option>
+                            ${productsOptions}
+                        </select>
+                    </div>
+                    <div class="w-24">
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Qty</label>
+                        <input type="number" name="items[${idx}][quantity]" min="1" class="damage-qty-input w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2" required>
+                    </div>
+                    <div class="pb-0.5">
+                        <button type="button" class="remove-damage-row w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 border border-slate-300 rounded-lg hover:border-red-300 transition text-lg leading-none">&times;</button>
+                    </div>
+                </div>
+                <p class="damage-qty-hint text-xs text-slate-400"></p>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Description</label>
+                    <input type="text" name="items[${idx}][reason]" maxlength="255" placeholder="Describe the damage..."
+                           class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2" required>
+                </div>
+            `;
+            container.appendChild(row);
+            wireDamageRow(row);
         });
 
         const damageModal = document.getElementById('damageModal');

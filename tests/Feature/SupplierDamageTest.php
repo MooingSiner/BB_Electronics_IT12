@@ -40,17 +40,17 @@ class SupplierDamageTest extends TestCase
 
         // Only 10 were received, so reporting 20 damaged must fail.
         $this->actingAs($owner)->post(route('owner.suppliers.damage', $order->order_id), [
-            'product_id' => $product->product_id,
-            'quantity' => 20,
-            'reason' => 'Crushed in transit',
-        ])->assertSessionHasErrors('quantity');
+            'items' => [
+                ['product_id' => $product->product_id, 'quantity' => 20, 'reason' => 'Crushed in transit'],
+            ],
+        ])->assertSessionHasErrors('items');
 
         $this->assertDatabaseMissing('return_record', ['product_id' => $product->product_id]);
 
         $this->actingAs($owner)->post(route('owner.suppliers.damage', $order->order_id), [
-            'product_id' => $product->product_id,
-            'quantity' => 4,
-            'reason' => 'Crushed in transit',
+            'items' => [
+                ['product_id' => $product->product_id, 'quantity' => 4, 'reason' => 'Crushed in transit'],
+            ],
         ])->assertSessionDoesntHaveErrors();
 
         $this->assertDatabaseHas('return_record', [
@@ -85,9 +85,9 @@ class SupplierDamageTest extends TestCase
         ]);
 
         $this->actingAs($owner)->post(route('owner.suppliers.damage', $order->order_id), [
-            'product_id' => $product->product_id,
-            'quantity' => 3,
-            'reason' => 'Crushed in transit',
+            'items' => [
+                ['product_id' => $product->product_id, 'quantity' => 3, 'reason' => 'Crushed in transit'],
+            ],
         ]);
 
         $response = $this->actingAs($owner)->get(route('owner.suppliers.show', $order->order_id));
@@ -124,15 +124,10 @@ class SupplierDamageTest extends TestCase
         ]);
 
         $this->actingAs($owner)->post(route('owner.suppliers.damage', $order->order_id), [
-            'product_id' => $productA->product_id,
-            'quantity' => 2,
-            'reason' => 'Crushed in transit',
-        ]);
-
-        $this->actingAs($owner)->post(route('owner.suppliers.damage', $order->order_id), [
-            'product_id' => $productB->product_id,
-            'quantity' => 3,
-            'reason' => 'Water damage',
+            'items' => [
+                ['product_id' => $productA->product_id, 'quantity' => 2, 'reason' => 'Crushed in transit'],
+                ['product_id' => $productB->product_id, 'quantity' => 3, 'reason' => 'Water damage'],
+            ],
         ]);
 
         $reportA = ReturnRecord::where('product_id', $productA->product_id)->first();
@@ -171,9 +166,9 @@ class SupplierDamageTest extends TestCase
         ]);
 
         $this->actingAs($owner)->post(route('owner.suppliers.damage', $order->order_id), [
-            'product_id' => $product->product_id,
-            'quantity' => 3,
-            'reason' => 'Reported by mistake',
+            'items' => [
+                ['product_id' => $product->product_id, 'quantity' => 3, 'reason' => 'Reported by mistake'],
+            ],
         ]);
 
         $report = ReturnRecord::where('product_id', $product->product_id)->first();
@@ -246,5 +241,47 @@ class SupplierDamageTest extends TestCase
             ->assertRedirect();
 
         $this->assertFalse($order->fresh()->is_archived);
+    }
+
+    public function test_owner_can_report_damage_on_multiple_products_in_one_submission(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        $supplier = Supplier::factory()->create();
+        $productA = Product::factory()->for(Category::factory()->state(['category_name' => 'Damage Multi Category A']))->create();
+        $productB = Product::factory()->for(Category::factory()->state(['category_name' => 'Damage Multi Category B']))->create();
+
+        $this->actingAs($owner)->post(route('owner.suppliers.store'), [
+            'supplier' => $supplier->supplier_name,
+            'order_date' => now()->format('Y-m-d'),
+            'items' => [
+                ['product_id' => $productA->product_id, 'qty' => 10, 'unit_cost' => 10],
+                ['product_id' => $productB->product_id, 'qty' => 10, 'unit_cost' => 10],
+            ],
+        ]);
+
+        $order = $supplier->purchaseOrders()->first();
+
+        $this->actingAs($owner)->post(route('owner.suppliers.receive', $order->order_id), [
+            'date_received' => now()->format('Y-m-d'),
+            'items' => $order->items->mapWithKeys(fn ($item) => [$item->order_item_id => ['qty_received' => 10]])->all(),
+        ]);
+
+        $this->actingAs($owner)->post(route('owner.suppliers.damage', $order->order_id), [
+            'items' => [
+                ['product_id' => $productA->product_id, 'quantity' => 2, 'reason' => 'Crushed in transit'],
+                ['product_id' => $productB->product_id, 'quantity' => 5, 'reason' => 'Water damage'],
+            ],
+        ])->assertSessionDoesntHaveErrors()->assertRedirect();
+
+        $this->assertDatabaseHas('return_record', [
+            'order_id' => $order->order_id,
+            'product_id' => $productA->product_id,
+            'quantity' => 2,
+        ]);
+        $this->assertDatabaseHas('return_record', [
+            'order_id' => $order->order_id,
+            'product_id' => $productB->product_id,
+            'quantity' => 5,
+        ]);
     }
 }

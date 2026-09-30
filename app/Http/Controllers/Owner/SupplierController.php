@@ -253,41 +253,59 @@ class SupplierController extends Controller
 
     public function reportDamage(Request $request, PurchaseOrder $order): RedirectResponse
     {
-        $orderItem = OrderItem::where('order_id', $order->order_id)
-            ->where('product_id', $request->input('product_id'))
-            ->first();
-
-        $alreadyDamaged = ReturnRecord::where('order_id', $order->order_id)
-            ->where('product_id', $request->input('product_id'))
-            ->where('condition', ReturnCondition::Damaged)
-            ->sum('quantity');
-
-        $maxDamageable = $orderItem ? max(0, $orderItem->quantity_received - $alreadyDamaged) : 0;
-
         $validated = $request->validate([
-            'product_id' => ['required', 'exists:product,product_id'],
-            'quantity' => ['required', 'integer', 'min:1', "max:{$maxDamageable}"],
-            'reason' => ['required', 'string', 'max:255'],
-        ], [
-            'quantity.max' => "You can report at most {$maxDamageable} unit(s) — that's what's left of this product's received quantity for this order that hasn't already been reported damaged.",
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', 'exists:product,product_id'],
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.reason' => ['required', 'string', 'max:255'],
         ]);
 
-        ReturnRecord::create([
-            'sale_id' => null,
-            'product_id' => $validated['product_id'],
-            'supplier_id' => $order->supplier_id,
-            'order_id' => $order->order_id,
-            'return_date' => now(),
-            'quantity' => $validated['quantity'],
-            'reason' => $validated['reason'],
-            'condition' => ReturnCondition::Damaged,
-            'resolution' => ReturnResolution::Pending,
-            'status' => ReturnStatus::Open,
-        ]);
+        // Multiple lines can target the same product in one submission, so check the combined quantity.
+        $requestedByProduct = collect($validated['items'])
+            ->groupBy('product_id')
+            ->map(fn ($rows) => collect($rows)->sum('quantity'));
 
-        AuditLog::record('stock_adjustment', "Reported {$validated['quantity']} damaged unit(s) from supplier delivery on order #{$order->order_id}.");
+        foreach ($requestedByProduct as $productId => $requestedQty) {
+            $orderItem = OrderItem::where('order_id', $order->order_id)
+                ->where('product_id', $productId)
+                ->first();
 
-        return back()->with('success', 'Damaged product reported.');
+            $alreadyDamaged = ReturnRecord::where('order_id', $order->order_id)
+                ->where('product_id', $productId)
+                ->where('condition', ReturnCondition::Damaged)
+                ->sum('quantity');
+
+            $maxDamageable = $orderItem ? max(0, $orderItem->quantity_received - $alreadyDamaged) : 0;
+
+            if ($requestedQty > $maxDamageable) {
+                $productName = $orderItem?->product?->product_name ?? 'That product';
+
+                return back()->withErrors([
+                    'items' => "{$productName}: you can report at most {$maxDamageable} unit(s) — that's what's left of its received quantity for this order that hasn't already been reported damaged.",
+                ])->withInput();
+            }
+        }
+
+        $created = collect();
+
+        foreach ($validated['items'] as $item) {
+            $created->push(ReturnRecord::create([
+                'sale_id' => null,
+                'product_id' => $item['product_id'],
+                'supplier_id' => $order->supplier_id,
+                'order_id' => $order->order_id,
+                'return_date' => now(),
+                'quantity' => $item['quantity'],
+                'reason' => $item['reason'],
+                'condition' => ReturnCondition::Damaged,
+                'resolution' => ReturnResolution::Pending,
+                'status' => ReturnStatus::Open,
+            ]));
+        }
+
+        AuditLog::record('stock_adjustment', "Reported damage on {$created->count()} product(s) from supplier delivery on order #{$order->order_id}.");
+
+        return back()->with('success', $created->count() === 1 ? 'Damaged product reported.' : "{$created->count()} damaged products reported.");
     }
 
     public function cancelDamage(PurchaseOrder $order, ReturnRecord $returnRecord): RedirectResponse
