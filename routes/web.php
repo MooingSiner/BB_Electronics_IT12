@@ -64,6 +64,7 @@ Route::middleware(['auth', 'role:owner_manager'])->prefix('owner')->name('owner.
     Route::get('/suppliers/damaged', [OwnerSupplierController::class, 'damagedIndex'])->name('suppliers.damaged');
     Route::get('/suppliers/damaged/{id}', [OwnerSupplierController::class, 'damagedShow'])->name('suppliers.damaged.show');
     Route::get('/suppliers/{order}', [OwnerSupplierController::class, 'show'])->name('suppliers.show');
+    Route::get('/suppliers/{order}/receipt', [OwnerSupplierController::class, 'receipt'])->name('suppliers.receipt');
     Route::post('/suppliers/{order}/damage', [OwnerSupplierController::class, 'reportDamage'])->name('suppliers.damage');
     Route::delete('/suppliers/{order}/damage/{returnRecord}', [OwnerSupplierController::class, 'cancelDamage'])->name('suppliers.damage.cancel');
     Route::patch('/suppliers/{order}/return', [OwnerSupplierController::class, 'returnToSupplier'])->name('suppliers.return');
@@ -76,6 +77,7 @@ Route::middleware(['auth', 'role:owner_manager'])->prefix('owner')->name('owner.
     Route::get('/purchase-orders/create', [OwnerPurchaseOrderController::class, 'create'])->name('purchase-orders.create');
     Route::post('/purchase-orders', [OwnerPurchaseOrderController::class, 'store'])->name('purchase-orders.store');
     Route::get('/purchase-orders/{order}', [OwnerPurchaseOrderController::class, 'show'])->name('purchase-orders.show');
+    Route::get('/purchase-orders/{order}/receipt', [OwnerPurchaseOrderController::class, 'receipt'])->name('purchase-orders.receipt');
     Route::post('/purchase-orders/{order}/damage', [OwnerPurchaseOrderController::class, 'reportDamage'])->name('purchase-orders.damage');
     Route::delete('/purchase-orders/{order}/damage/{returnRecord}', [OwnerPurchaseOrderController::class, 'cancelDamage'])->name('purchase-orders.damage.cancel');
     Route::patch('/purchase-orders/{order}/return', [OwnerPurchaseOrderController::class, 'returnToStore'])->name('purchase-orders.return');

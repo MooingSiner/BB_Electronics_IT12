@@ -200,6 +200,30 @@ class PurchaseOrderController extends Controller
         return view('owner.purchase-orders.show', ['order' => $item, 'openDamaged' => $openDamaged, 'damageReports' => $damageReports]);
     }
 
+    public function receipt(PurchaseOrder $order): View
+    {
+        abort_unless($order->store_id, 404);
+
+        $order->load(['store', 'items.product']);
+
+        $item = (object) [
+            'id' => $order->order_id,
+            'store' => $order->store->store_name ?? '—',
+            'invoice_number' => $order->invoice_number,
+            'order_date' => $order->order_date,
+            'expected_date' => $order->date_received,
+            'total_cost' => $order->items->sum(fn (OrderItem $i) => (float) $i->unit_cost * $i->quantity_ordered),
+            'items' => $order->items->map(fn (OrderItem $i) => (object) [
+                'product_name' => $i->product->product_name ?? '—',
+                'qty_ordered' => $i->quantity_ordered,
+                'qty_received' => $i->quantity_received,
+                'unit_cost' => (float) $i->unit_cost,
+            ]),
+        ];
+
+        return view('owner.purchase-orders.receipt', ['order' => $item]);
+    }
+
     public function reportDamage(Request $request, PurchaseOrder $order): RedirectResponse
     {
         abort_unless($order->store_id, 404);

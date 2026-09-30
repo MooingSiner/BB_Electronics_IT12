@@ -35,6 +35,10 @@
                 Mark Returned
             </button>
             @endif
+            <a href="{{ route('owner.purchase-orders.receipt', $order->id ?? 0) }}" target="_blank"
+               class="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition">
+                Receipt
+            </a>
             @if($order->is_archived ?? false)
             <form method="POST" action="{{ route('owner.purchase-orders.restore', $order->id ?? 0) }}">
                 @csrf

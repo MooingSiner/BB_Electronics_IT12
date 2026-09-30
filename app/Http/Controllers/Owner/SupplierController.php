@@ -206,6 +206,30 @@ class SupplierController extends Controller
         return view('owner.suppliers.show', ['order' => $item, 'openDamaged' => $openDamaged, 'damageReports' => $damageReports]);
     }
 
+    public function receipt(PurchaseOrder $order): View
+    {
+        abort_unless($order->supplier_id, 404);
+
+        $order->load(['supplier', 'items.product']);
+
+        $item = (object) [
+            'id' => $order->order_id,
+            'supplier' => $order->supplier->supplier_name ?? '—',
+            'invoice_number' => $order->invoice_number,
+            'order_date' => $order->order_date,
+            'expected_date' => $order->date_received,
+            'total_cost' => $order->items->sum(fn (OrderItem $i) => (float) $i->unit_cost * $i->quantity_ordered),
+            'items' => $order->items->map(fn (OrderItem $i) => (object) [
+                'product_name' => $i->product->product_name ?? '—',
+                'qty_ordered' => $i->quantity_ordered,
+                'qty_received' => $i->quantity_received,
+                'unit_cost' => (float) $i->unit_cost,
+            ]),
+        ];
+
+        return view('owner.suppliers.receipt', ['order' => $item]);
+    }
+
     public function damagedIndex(): View
     {
         $damaged = ReturnRecord::whereNotNull('supplier_id')
