@@ -112,57 +112,75 @@ class ReturnController extends Controller
     {
         $validated = $request->validate([
             'transaction_id' => ['required', 'exists:sale,sale_id'],
-            'product_id' => ['required', 'exists:product,product_id'],
-            'qty' => ['required', 'integer', 'min:1'],
-            'reason' => ['required', 'string', 'max:255'],
-            'resolution' => ['required', new Enum(ReturnResolution::class)],
-            'condition' => ['required', new Enum(ReturnCondition::class)],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', 'exists:product,product_id'],
+            'items.*.qty' => ['required', 'integer', 'min:1'],
+            'items.*.reason' => ['required', 'string', 'max:255'],
+            'items.*.resolution' => ['required', new Enum(ReturnResolution::class)],
+            'items.*.condition' => ['required', new Enum(ReturnCondition::class)],
         ]);
 
-        $remaining = $this->remainingReturnable($validated['transaction_id'], $validated['product_id']);
+        // Multiple lines can target the same product in one submission, so check the combined quantity.
+        $requestedByProduct = collect($validated['items'])
+            ->groupBy('product_id')
+            ->map(fn ($rows) => collect($rows)->sum('qty'));
 
-        if ($validated['qty'] > $remaining) {
-            return back()->withErrors([
-                'qty' => $remaining > 0
-                    ? "Only {$remaining} unit(s) of this product from this transaction can still be returned."
-                    : 'All units of this product from this transaction have already been returned.',
-            ])->withInput();
+        foreach ($requestedByProduct as $productId => $requestedQty) {
+            $remaining = $this->remainingReturnable($validated['transaction_id'], (int) $productId);
+
+            if ($requestedQty > $remaining) {
+                return back()->withErrors([
+                    'items' => $remaining > 0
+                        ? "Only {$remaining} unit(s) of that product from this transaction can still be returned."
+                        : 'All units of that product from this transaction have already been returned.',
+                ])->withInput();
+            }
         }
 
-        $return = ReturnRecord::create([
-            'sale_id' => $validated['transaction_id'],
-            'product_id' => $validated['product_id'],
-            'supplier_id' => null,
-            'return_date' => now(),
-            'quantity' => $validated['qty'],
-            'reason' => $validated['reason'],
-            'condition' => $validated['condition'],
-            'resolution' => $validated['resolution'],
-            'status' => ReturnStatus::Resolved,
-        ]);
+        $created = collect();
 
-        $restockable = in_array($validated['condition'], [
-            ReturnCondition::WrongItem->value,
-            ReturnCondition::CustomerChangedMind->value,
-            ReturnCondition::Other->value,
-        ], true);
-
-        if ($restockable) {
-            StockAdjustment::create([
-                'product_id' => $validated['product_id'],
-                'user_id' => Auth::id(),
-                'adjustment_date' => now(),
-                'quantity_change' => $validated['qty'],
-                'reason' => "Restocked from return #{$return->return_id}",
+        foreach ($validated['items'] as $item) {
+            $return = ReturnRecord::create([
+                'sale_id' => $validated['transaction_id'],
+                'product_id' => $item['product_id'],
+                'supplier_id' => null,
+                'return_date' => now(),
+                'quantity' => $item['qty'],
+                'reason' => $item['reason'],
+                'condition' => $item['condition'],
+                'resolution' => $item['resolution'],
+                'status' => ReturnStatus::Resolved,
             ]);
+
+            $restockable = in_array($item['condition'], [
+                ReturnCondition::WrongItem->value,
+                ReturnCondition::CustomerChangedMind->value,
+                ReturnCondition::Other->value,
+            ], true);
+
+            if ($restockable) {
+                StockAdjustment::create([
+                    'product_id' => $item['product_id'],
+                    'user_id' => Auth::id(),
+                    'adjustment_date' => now(),
+                    'quantity_change' => $item['qty'],
+                    'reason' => "Restocked from return #{$return->return_id}",
+                ]);
+            }
+
+            AuditLog::record(
+                'refund',
+                "Processed return #{$return->return_id} for {$item['qty']} unit(s) — resolution: ".ucwords(str_replace('_', ' ', $item['resolution']))
+            );
+
+            $created->push($return);
         }
 
-        AuditLog::record(
-            'refund',
-            "Processed return #{$return->return_id} for {$validated['qty']} unit(s) — resolution: ".ucwords(str_replace('_', ' ', $validated['resolution']))
-        );
+        if ($created->count() === 1) {
+            return redirect()->route('owner.returns.show', $created->first()->return_id)->with('success', 'Return processed.');
+        }
 
-        return redirect()->route('owner.returns.show', $return->return_id)->with('success', 'Return processed.');
+        return redirect()->route('owner.returns.index')->with('success', "{$created->count()} returns processed.");
     }
 
     public function resolve(ReturnRecord $returnRecord): RedirectResponse

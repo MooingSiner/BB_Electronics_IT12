@@ -4,7 +4,7 @@
 @php $activeNav = 'returns'; @endphp
 
 @section('content')
-<div class="space-y-6 max-w-xl mx-auto">
+<div class="space-y-6 max-w-2xl mx-auto">
 
     {{-- Back Link --}}
     <a href="{{ route('owner.returns.index') }}"
@@ -19,6 +19,18 @@
             @if($txn) For transaction {{ $txn->code }} @else Look up a completed transaction to begin. @endif
         </p>
     </div>
+
+    {{-- Validation Errors --}}
+    @if($errors->any())
+        <div class="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <p class="font-semibold mb-1">Please fix the following errors:</p>
+            <ul class="list-disc list-inside space-y-0.5">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     @if(! $txn)
     {{-- Find Transaction --}}
@@ -63,119 +75,75 @@
                 <input type="hidden" name="transaction_id" value="{{ $txn->id }}">
             </div>
 
-            {{-- Product to Return --}}
+            {{-- Products to Return --}}
             <div>
-                <label for="product_id" class="block text-sm font-medium text-slate-700 mb-1">
-                    Product to Return <span class="text-red-500">*</span>
-                </label>
-                <select id="product_id" name="product_id"
-                        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" required>
-                    <option value="">Select a product...</option>
-                    @foreach($txn->items ?? [] as $item)
-                        <option value="{{ $item->product_id }}" data-max="{{ $item->remaining }}" {{ old('product_id') == $item->product_id ? 'selected' : '' }}>
-                            {{ $item->product_name }} ({{ $item->remaining }} returnable)
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-            {{-- Quantity to Return --}}
-            <div>
-                <label for="qty" class="block text-sm font-medium text-slate-700 mb-1">
-                    Quantity to Return <span class="text-red-500">*</span>
-                </label>
-                <input type="number" id="qty" name="qty" min="1" value="{{ old('qty', 1) }}"
-                       class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" required>
-                <p id="qtyHint" class="mt-1 text-xs text-slate-400"></p>
-            </div>
-
-            {{-- Reason for Return --}}
-            <div>
-                <label for="reason" class="block text-sm font-medium text-slate-700 mb-1">
-                    Reason for Return <span class="text-red-500">*</span>
-                </label>
-                <textarea id="reason" name="reason" rows="3"
-                          class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                          placeholder="Describe the reason for the return..." required>{{ old('reason') }}</textarea>
-            </div>
-
-            {{-- Resolution --}}
-            <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">
-                    Resolution <span class="text-red-500">*</span>
-                </label>
-                <div class="flex flex-wrap gap-3">
-                    @foreach(['replacement' => 'Replacement', 'refund' => 'Refund', 'repair' => 'Repair', 'supplier_exchange' => 'Supplier Exchange'] as $value => $label)
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="resolution" value="{{ $value }}"
-                               {{ old('resolution') === $value ? 'checked' : '' }}
-                               class="accent-slate-700" required>
-                        <span class="text-sm text-slate-700">{{ $label }}</span>
+                <div class="flex items-center justify-between mb-2">
+                    <label class="block text-sm font-medium text-slate-700">
+                        Products to Return <span class="text-red-500">*</span>
                     </label>
-                    @endforeach
+                    <button type="button" id="addItem"
+                            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition">
+                        + Add Item
+                    </button>
                 </div>
-            </div>
 
-            {{-- Item Condition --}}
-            <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">
-                    Item Condition <span class="text-red-500">*</span>
-                </label>
-                <div class="space-y-3">
-                    <label class="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-slate-50 has-[:checked]:border-slate-700 has-[:checked]:bg-slate-50 transition-colors">
-                        <input type="radio" name="condition" value="wrong_item"
-                               {{ old('condition') === 'wrong_item' ? 'checked' : '' }}
-                               class="mt-0.5 accent-slate-700" required>
-                        <div>
-                            <p class="text-sm font-medium text-slate-800">Wrong item</p>
-                            <p class="text-xs text-slate-500 mt-0.5">Unopened/unused — re-added to inventory.</p>
+                <div id="itemsContainer" class="space-y-3">
+                    {{-- Default first row --}}
+                    <div class="item-row p-3 bg-slate-50 rounded-md border border-slate-200 space-y-3">
+                        <div class="flex gap-3 items-end">
+                            <div class="flex-1">
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Product</label>
+                                <select name="items[0][product_id]"
+                                        class="product-select w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" required>
+                                    <option value="">Select product</option>
+                                    @foreach($txn->items as $item)
+                                        <option value="{{ $item->product_id }}" data-max="{{ $item->remaining }}">
+                                            {{ $item->product_name }} ({{ $item->remaining }} returnable)
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="w-24">
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Qty</label>
+                                <input type="number" name="items[0][qty]" min="1" value="1"
+                                       class="qty-input w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" required>
+                            </div>
                         </div>
-                    </label>
-                    <label class="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-slate-50 has-[:checked]:border-slate-700 has-[:checked]:bg-slate-50 transition-colors">
-                        <input type="radio" name="condition" value="customer_changed_mind"
-                               {{ old('condition') === 'customer_changed_mind' ? 'checked' : '' }}
-                               class="mt-0.5 accent-slate-700">
-                        <div>
-                            <p class="text-sm font-medium text-slate-800">Customer changed mind</p>
-                            <p class="text-xs text-slate-500 mt-0.5">Unopened/unused — re-added to inventory.</p>
+                        <p class="qty-hint text-xs text-slate-400"></p>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Resolution</label>
+                                <select name="items[0][resolution]"
+                                        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" required>
+                                    <option value="">Select...</option>
+                                    <option value="replacement">Replacement</option>
+                                    <option value="refund">Refund</option>
+                                    <option value="repair">Repair</option>
+                                    <option value="supplier_exchange">Supplier Exchange</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Item Condition</label>
+                                <select name="items[0][condition]"
+                                        class="condition-select w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" required>
+                                    <option value="">Select...</option>
+                                    <option value="wrong_item">Wrong item</option>
+                                    <option value="customer_changed_mind">Customer changed mind</option>
+                                    <option value="defective">Defective</option>
+                                    <option value="damaged">Damaged</option>
+                                    <option value="other">Other</option>
+                                </select>
+                                <p class="condition-hint mt-1 text-xs text-slate-400"></p>
+                            </div>
                         </div>
-                    </label>
-                    <label class="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-slate-50 has-[:checked]:border-slate-700 has-[:checked]:bg-slate-50 transition-colors">
-                        <input type="radio" name="condition" value="defective"
-                               {{ old('condition') === 'defective' ? 'checked' : '' }}
-                               class="mt-0.5 accent-slate-700">
                         <div>
-                            <p class="text-sm font-medium text-slate-800">Defective</p>
-                            <p class="text-xs text-slate-500 mt-0.5">NOT added back to inventory.</p>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Reason</label>
+                            <input type="text" name="items[0][reason]" maxlength="255"
+                                   placeholder="Describe the reason for the return..."
+                                   class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" required>
                         </div>
-                    </label>
-                    <label class="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-slate-50 has-[:checked]:border-slate-700 has-[:checked]:bg-slate-50 transition-colors">
-                        <input type="radio" name="condition" value="damaged"
-                               {{ old('condition') === 'damaged' ? 'checked' : '' }}
-                               class="mt-0.5 accent-slate-700">
-                        <div>
-                            <p class="text-sm font-medium text-slate-800">Damaged</p>
-                            <p class="text-xs text-slate-500 mt-0.5">NOT added back to inventory.</p>
-                        </div>
-                    </label>
-                    <label class="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-slate-50 has-[:checked]:border-slate-700 has-[:checked]:bg-slate-50 transition-colors">
-                        <input type="radio" name="condition" value="other"
-                               {{ old('condition') === 'other' ? 'checked' : '' }}
-                               class="mt-0.5 accent-slate-700">
-                        <div>
-                            <p class="text-sm font-medium text-slate-800">Other</p>
-                            <p class="text-xs text-slate-500 mt-0.5">Re-added to inventory.</p>
-                        </div>
-                    </label>
+                    </div>
                 </div>
-            </div>
-
-            {{-- Notes --}}
-            <div>
-                <label for="notes" class="block text-sm font-medium text-slate-700 mb-1">Notes</label>
-                <textarea id="notes" name="notes" rows="2"
-                          class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                          placeholder="Optional additional notes...">{{ old('notes') }}</textarea>
             </div>
 
             {{-- Buttons --}}
@@ -224,24 +192,108 @@
         document.getElementById('confirmDialog').classList.remove('hidden');
     }
 
-    (function () {
-        const productSelect = document.getElementById('product_id');
-        const qtyInput = document.getElementById('qty');
-        const hint = document.getElementById('qtyHint');
-        if (! productSelect || ! qtyInput) return;
+    const conditionHints = {
+        wrong_item: 'Unopened/unused — re-added to inventory.',
+        customer_changed_mind: 'Unopened/unused — re-added to inventory.',
+        defective: 'NOT added back to inventory.',
+        damaged: 'NOT added back to inventory.',
+        other: 'Re-added to inventory.',
+    };
+
+    function wireItemRow(row) {
+        const productSelect = row.querySelector('.product-select');
+        const qtyInput = row.querySelector('.qty-input');
+        const qtyHint = row.querySelector('.qty-hint');
+        const conditionSelect = row.querySelector('.condition-select');
+        const conditionHint = row.querySelector('.condition-hint');
 
         function syncMax() {
             const max = productSelect.options[productSelect.selectedIndex]?.dataset.max;
-            if (!max) { hint.textContent = ''; return; }
+            if (!max) { qtyHint.textContent = ''; return; }
             qtyInput.max = max;
-            hint.textContent = `Up to ${max} unit(s) can be returned for this product.`;
+            qtyHint.textContent = `Up to ${max} unit(s) can be returned for this product.`;
             if (parseInt(qtyInput.value, 10) > parseInt(max, 10)) {
                 qtyInput.value = max;
             }
         }
 
+        function syncCondition() {
+            conditionHint.textContent = conditionHints[conditionSelect.value] || '';
+        }
+
         productSelect.addEventListener('change', syncMax);
+        conditionSelect.addEventListener('change', syncCondition);
+        row.querySelector('.remove-item')?.addEventListener('click', () => row.remove());
         syncMax();
-    })();
+        syncCondition();
+    }
+
+    document.querySelectorAll('#itemsContainer .item-row').forEach(wireItemRow);
+
+    let itemCount = 1;
+
+    document.getElementById('addItem')?.addEventListener('click', function () {
+        const container = document.getElementById('itemsContainer');
+        const idx = itemCount++;
+
+        const productsOptions = `{!! collect($txn->items ?? [])->map(fn($i) => '<option value="'.$i->product_id.'" data-max="'.$i->remaining.'">'.$i->product_name.' ('.$i->remaining.' returnable)</option>')->implode('') !!}`;
+
+        const row = document.createElement('div');
+        row.className = 'item-row p-3 bg-slate-50 rounded-md border border-slate-200 space-y-3';
+        row.innerHTML = `
+            <div class="flex gap-3 items-end">
+                <div class="flex-1">
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Product</label>
+                    <select name="items[${idx}][product_id]" class="product-select w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2" required>
+                        <option value="">Select product</option>
+                        ${productsOptions}
+                    </select>
+                </div>
+                <div class="w-24">
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Qty</label>
+                    <input type="number" name="items[${idx}][qty]" min="1" value="1"
+                           class="qty-input w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2" required>
+                </div>
+                <div class="pb-0.5">
+                    <button type="button" class="remove-item w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 border border-slate-300 rounded-lg hover:border-red-300 transition text-lg leading-none">
+                        &times;
+                    </button>
+                </div>
+            </div>
+            <p class="qty-hint text-xs text-slate-400"></p>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Resolution</label>
+                    <select name="items[${idx}][resolution]" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2" required>
+                        <option value="">Select...</option>
+                        <option value="replacement">Replacement</option>
+                        <option value="refund">Refund</option>
+                        <option value="repair">Repair</option>
+                        <option value="supplier_exchange">Supplier Exchange</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Item Condition</label>
+                    <select name="items[${idx}][condition]" class="condition-select w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2" required>
+                        <option value="">Select...</option>
+                        <option value="wrong_item">Wrong item</option>
+                        <option value="customer_changed_mind">Customer changed mind</option>
+                        <option value="defective">Defective</option>
+                        <option value="damaged">Damaged</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <p class="condition-hint mt-1 text-xs text-slate-400"></p>
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">Reason</label>
+                <input type="text" name="items[${idx}][reason]" maxlength="255"
+                       placeholder="Describe the reason for the return..."
+                       class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2" required>
+            </div>
+        `;
+        container.appendChild(row);
+        wireItemRow(row);
+    });
 </script>
 @endpush
