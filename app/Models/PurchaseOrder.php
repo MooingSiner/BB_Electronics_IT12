@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['supplier_id', 'store_id', 'user_id', 'order_date', 'status', 'is_archived', 'date_received'])]
+#[Fillable(['supplier_id', 'store_id', 'user_id', 'order_date', 'invoice_number', 'status', 'is_archived', 'date_received'])]
 class PurchaseOrder extends Model
 {
     /** @use HasFactory<PurchaseOrderFactory> */

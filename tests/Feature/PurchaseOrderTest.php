@@ -22,6 +22,7 @@ class PurchaseOrderTest extends TestCase
         $response = $this->actingAs($owner)->post(route('owner.purchase-orders.store'), [
             'store' => 'Ace Hardware',
             'order_date' => now()->format('Y-m-d'),
+            'invoice_number' => 'INV-2026-00123',
             'items' => [
                 ['product_id' => $product->product_id, 'qty' => 10, 'unit_cost' => 25.5],
             ],
@@ -36,6 +37,11 @@ class PurchaseOrderTest extends TestCase
             'product_id' => $product->product_id,
             'quantity_ordered' => 10,
         ]);
+        $this->assertSame('INV-2026-00123', $order->invoice_number);
+
+        $this->actingAs($owner)
+            ->get(route('owner.purchase-orders.index', ['search' => 'INV-2026-00123']))
+            ->assertSee('PO-'.str_pad((string) $order->order_id, 4, '0', STR_PAD_LEFT));
     }
 
     public function test_receiving_a_purchase_order_increases_product_stock(): void

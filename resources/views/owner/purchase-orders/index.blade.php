@@ -72,6 +72,7 @@
                 <tr class="bg-slate-50 border-b border-slate-200">
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Order ID</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Store</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Invoice #</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Order Date</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Received Date</th>
                     <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Items</th>
@@ -86,6 +87,7 @@
                             <span class="font-mono text-xs text-slate-500">PO-{{ str_pad($order->id, 4, '0', STR_PAD_LEFT) }}</span>
                         </td>
                         <td class="px-4 py-3 font-medium text-slate-800">{{ $order->store }}</td>
+                        <td class="px-4 py-3 text-slate-600 font-mono text-xs">{{ $order->invoice_number ?? '—' }}</td>
                         <td class="px-4 py-3 text-slate-600">
                             {{ isset($order->order_date) ? \Carbon\Carbon::parse($order->order_date)->format('M d, Y') : '—' }}
                         </td>
@@ -131,7 +133,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="px-4 py-12 text-center text-slate-400">
+                        <td colspan="8" class="px-4 py-12 text-center text-slate-400">
                             <div class="flex flex-col items-center gap-2">
                                 <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"

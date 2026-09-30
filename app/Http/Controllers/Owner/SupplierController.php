@@ -35,11 +35,27 @@ class SupplierController extends Controller
         $orders = PurchaseOrder::whereNotNull('supplier_id')
             ->where('is_archived', $showArchived)
             ->with(['supplier', 'items'])
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->string('search');
+
+                $query->where(fn ($q) => $q
+                    ->where('order_id', 'like', "%{$search}%")
+                    ->orWhere('invoice_number', 'like', "%{$search}%")
+                    ->orWhereHas('supplier', fn ($s) => $s->where('supplier_name', 'like', "%{$search}%")));
+            })
+            ->when($request->filled('status'), function ($query) use ($request, $statusLabels) {
+                $value = array_search($request->string('status'), $statusLabels, true);
+
+                if ($value !== false) {
+                    $query->where('status', $value);
+                }
+            })
             ->latest('order_date')
             ->get()
             ->map(fn (PurchaseOrder $order) => (object) [
                 'id' => $order->order_id,
                 'supplier' => $order->supplier->supplier_name ?? '—',
+                'invoice_number' => $order->invoice_number,
                 'order_date' => $order->order_date,
                 'expected_date' => $order->date_received,
                 'items_count' => $order->items->count(),
@@ -89,6 +105,7 @@ class SupplierController extends Controller
         $validated = $request->validate([
             'supplier' => ['required', 'string', 'max:150'],
             'order_date' => ['required', 'date'],
+            'invoice_number' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'exists:product,product_id'],
@@ -103,6 +120,7 @@ class SupplierController extends Controller
             'supplier_id' => $supplier->supplier_id,
             'user_id' => Auth::id(),
             'order_date' => $validated['order_date'],
+            'invoice_number' => $validated['invoice_number'] ?? null,
             'status' => PurchaseOrderStatus::Pending,
         ]);
 
@@ -143,6 +161,7 @@ class SupplierController extends Controller
             'supplier' => $order->supplier->supplier_name ?? '—',
             'supplier_id' => $order->supplier_id,
             'order_date' => $order->order_date,
+            'invoice_number' => $order->invoice_number,
             'expected_date' => $order->date_received,
             'status' => $statusLabels[$order->status->value] ?? 'Ordered',
             'is_archived' => $order->is_archived,

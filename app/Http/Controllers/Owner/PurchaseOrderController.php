@@ -35,6 +35,7 @@ class PurchaseOrderController extends Controller
 
                 $query->where(fn ($q) => $q
                     ->where('order_id', 'like', "%{$search}%")
+                    ->orWhere('invoice_number', 'like', "%{$search}%")
                     ->orWhereHas('store', fn ($s) => $s->where('store_name', 'like', "%{$search}%")));
             })
             ->when($request->filled('status'), function ($query) use ($request, $statusLabels) {
@@ -49,6 +50,7 @@ class PurchaseOrderController extends Controller
             ->map(fn (PurchaseOrder $order) => (object) [
                 'id' => $order->order_id,
                 'store' => $order->store->store_name ?? '—',
+                'invoice_number' => $order->invoice_number,
                 'order_date' => $order->order_date,
                 'expected_date' => $order->date_received,
                 'items_count' => $order->items->count(),
@@ -93,6 +95,7 @@ class PurchaseOrderController extends Controller
         $validated = $request->validate([
             'store' => ['required', 'string', 'max:150'],
             'order_date' => ['required', 'date'],
+            'invoice_number' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'exists:product,product_id'],
@@ -107,6 +110,7 @@ class PurchaseOrderController extends Controller
             'store_id' => $store->store_id,
             'user_id' => Auth::id(),
             'order_date' => $validated['order_date'],
+            'invoice_number' => $validated['invoice_number'] ?? null,
             'status' => PurchaseOrderStatus::Pending,
         ]);
 
@@ -139,6 +143,7 @@ class PurchaseOrderController extends Controller
         $item = (object) [
             'id' => $order->order_id,
             'store' => $order->store->store_name ?? '—',
+            'invoice_number' => $order->invoice_number,
             'order_date' => $order->order_date,
             'expected_date' => $order->date_received,
             'status' => $statusLabels[$order->status->value] ?? 'Ordered',

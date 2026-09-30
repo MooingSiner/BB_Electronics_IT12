@@ -72,6 +72,10 @@
                         <dd class="text-slate-700">{{ $order->supplier ?? 'TechWorld Distributors' }}</dd>
                     </div>
                     <div class="flex justify-between text-sm">
+                        <dt class="text-slate-500">Invoice Number</dt>
+                        <dd class="text-slate-700 font-mono">{{ $order->invoice_number ?? '—' }}</dd>
+                    </div>
+                    <div class="flex justify-between text-sm">
                         <dt class="text-slate-500">Order Date</dt>
                         <dd class="text-slate-700">
                             {{ isset($order->order_date) ? \Carbon\Carbon::parse($order->order_date)->format('M d, Y') : '—' }}
