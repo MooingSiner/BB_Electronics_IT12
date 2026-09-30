@@ -1,0 +1,101 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Category;
+use App\Models\Product;
+use App\Models\Supplier;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class SupplierDamageTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_reporting_damage_is_capped_to_the_quantity_received_for_that_order(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        $supplier = Supplier::factory()->create();
+        $product = Product::factory()->for(Category::factory())->create();
+
+        $this->actingAs($owner)->post(route('owner.suppliers.store'), [
+            'supplier' => $supplier->supplier_name,
+            'order_date' => now()->format('Y-m-d'),
+            'items' => [
+                ['product_id' => $product->product_id, 'qty' => 10, 'unit_cost' => 10],
+            ],
+        ]);
+
+        $order = $supplier->purchaseOrders()->first();
+        $orderItem = $order->items()->first();
+
+        $this->actingAs($owner)->post(route('owner.suppliers.receive', $order->order_id), [
+            'date_received' => now()->format('Y-m-d'),
+            'items' => [
+                $orderItem->order_item_id => ['qty_received' => 10],
+            ],
+        ]);
+
+        // Only 10 were received, so reporting 20 damaged must fail.
+        $this->actingAs($owner)->post(route('owner.suppliers.damage', $order->order_id), [
+            'product_id' => $product->product_id,
+            'quantity' => 20,
+            'reason' => 'Crushed in transit',
+        ])->assertSessionHasErrors('quantity');
+
+        $this->assertDatabaseMissing('return_record', ['product_id' => $product->product_id]);
+
+        $this->actingAs($owner)->post(route('owner.suppliers.damage', $order->order_id), [
+            'product_id' => $product->product_id,
+            'quantity' => 4,
+            'reason' => 'Crushed in transit',
+        ])->assertSessionDoesntHaveErrors();
+
+        $this->assertDatabaseHas('return_record', [
+            'order_id' => $order->order_id,
+            'product_id' => $product->product_id,
+            'quantity' => 4,
+        ]);
+    }
+
+    public function test_damaged_and_accepted_counts_show_on_the_order_page(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        $supplier = Supplier::factory()->create();
+        $product = Product::factory()->for(Category::factory())->create();
+
+        $this->actingAs($owner)->post(route('owner.suppliers.store'), [
+            'supplier' => $supplier->supplier_name,
+            'order_date' => now()->format('Y-m-d'),
+            'items' => [
+                ['product_id' => $product->product_id, 'qty' => 10, 'unit_cost' => 10],
+            ],
+        ]);
+
+        $order = $supplier->purchaseOrders()->first();
+        $orderItem = $order->items()->first();
+
+        $this->actingAs($owner)->post(route('owner.suppliers.receive', $order->order_id), [
+            'date_received' => now()->format('Y-m-d'),
+            'items' => [
+                $orderItem->order_item_id => ['qty_received' => 10],
+            ],
+        ]);
+
+        $this->actingAs($owner)->post(route('owner.suppliers.damage', $order->order_id), [
+            'product_id' => $product->product_id,
+            'quantity' => 3,
+            'reason' => 'Crushed in transit',
+        ]);
+
+        $response = $this->actingAs($owner)->get(route('owner.suppliers.show', $order->order_id));
+
+        $response->assertOk();
+        $response->assertViewHas('order', function ($viewOrder) {
+            $item = $viewOrder->items->first();
+
+            return $item->qty_damaged === 3 && $item->qty_accepted === 7;
+        });
+    }
+}

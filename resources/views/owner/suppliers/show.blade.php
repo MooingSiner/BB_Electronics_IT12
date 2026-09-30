@@ -293,18 +293,19 @@
                 @csrf
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Product</label>
-                    <select name="product_id" required
+                    <select name="product_id" id="damageProductSelect" required
                             class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
                         <option value="">Select product</option>
                         @foreach($order->items ?? [] as $item)
-                            <option value="{{ $item->product->id }}">{{ $item->product->name }}</option>
+                            <option value="{{ $item->product->id }}" data-max="{{ $item->qty_accepted ?? 0 }}">{{ $item->product->name }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Quantity Damaged</label>
-                    <input type="number" name="quantity" min="1" required
+                    <input type="number" name="quantity" id="damageQuantityInput" min="1" required
                            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
+                    <p id="damageQuantityHint" class="mt-1 text-xs text-slate-400"></p>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Description</label>
@@ -401,6 +402,19 @@
 
             checkbox.addEventListener('change', syncQtyInput);
             syncQtyInput();
+        });
+
+        // Cap the damage-report quantity to what's actually available for the selected product
+        const damageProductSelect = document.getElementById('damageProductSelect');
+        const damageQuantityInput = document.getElementById('damageQuantityInput');
+        const damageQuantityHint = document.getElementById('damageQuantityHint');
+
+        damageProductSelect?.addEventListener('change', function () {
+            const selected = this.options[this.selectedIndex];
+            const max = selected ? parseInt(selected.dataset.max || '0', 10) : 0;
+
+            damageQuantityInput.max = max;
+            damageQuantityHint.textContent = this.value ? `Up to ${max} unit(s) available to report.` : '';
         });
 
         const damageModal = document.getElementById('damageModal');

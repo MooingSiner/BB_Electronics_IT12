@@ -31,6 +31,7 @@
             <thead>
                 <tr class="bg-slate-50 border-b border-slate-200">
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Damage ID</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Order</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Supplier</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Product</th>
                     <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Qty Damaged</th>
@@ -45,6 +46,16 @@
                     <tr class="hover:bg-slate-50 transition">
                         <td class="px-4 py-3">
                             <span class="font-mono text-xs text-slate-500">{{ $item->id ?? 'DMG-0001' }}</span>
+                        </td>
+                        <td class="px-4 py-3">
+                            @if($item->order_id ?? null)
+                                <a href="{{ route('owner.suppliers.show', $item->order_id) }}"
+                                   class="font-mono text-xs hover:underline" style="color:#363E48">
+                                    #{{ $item->order_id }}
+                                </a>
+                            @else
+                                <span class="text-xs text-slate-400">—</span>
+                            @endif
                         </td>
                         <td class="px-4 py-3 text-slate-700">{{ $item->supplier ?? '—' }}</td>
                         <td class="px-4 py-3 font-medium text-slate-800">{{ $item->product->name ?? $item->product_name ?? '—' }}</td>
@@ -86,7 +97,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="px-4 py-12 text-center text-slate-400">
+                        <td colspan="9" class="px-4 py-12 text-center text-slate-400">
                             <div class="flex flex-col items-center gap-2">
                                 <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"

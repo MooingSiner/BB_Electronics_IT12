@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['sale_id', 'product_id', 'supplier_id', 'return_date', 'quantity', 'reason', 'condition', 'resolution', 'status'])]
+#[Fillable(['sale_id', 'product_id', 'supplier_id', 'order_id', 'return_date', 'quantity', 'reason', 'condition', 'resolution', 'status'])]
 class ReturnRecord extends Model
 {
     /** @use HasFactory<ReturnRecordFactory> */
@@ -50,5 +50,10 @@ class ReturnRecord extends Model
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class, 'supplier_id', 'supplier_id');
+    }
+
+    public function purchaseOrder(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrder::class, 'order_id', 'order_id');
     }
 }

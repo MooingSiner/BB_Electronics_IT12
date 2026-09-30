@@ -111,6 +111,12 @@ class SupplierController extends Controller
             PurchaseOrderStatus::Cancelled->value => 'Cancelled',
         ];
 
+        $damagedByProduct = ReturnRecord::where('order_id', $order->order_id)
+            ->where('condition', ReturnCondition::Damaged)
+            ->get()
+            ->groupBy('product_id')
+            ->map(fn ($records) => $records->sum('quantity'));
+
         $item = (object) [
             'id' => $order->order_id,
             'supplier' => $order->supplier->supplier_name ?? '—',
@@ -119,17 +125,23 @@ class SupplierController extends Controller
             'expected_date' => $order->date_received,
             'status' => $statusLabels[$order->status->value] ?? 'Ordered',
             'total_cost' => $order->items->sum(fn (OrderItem $i) => (float) $i->unit_cost * $i->quantity_ordered),
-            'items' => $order->items->map(fn (OrderItem $i) => (object) [
-                'id' => $i->order_item_id,
-                'product' => (object) ['id' => $i->product->product_id ?? null, 'name' => $i->product->product_name ?? '—'],
-                'qty_ordered' => $i->quantity_ordered,
-                'qty_received' => $i->quantity_received,
-                'unit_cost' => (float) $i->unit_cost,
-                'is_cancelled' => $i->is_cancelled,
-            ]),
+            'items' => $order->items->map(function (OrderItem $i) use ($damagedByProduct) {
+                $damaged = (int) ($damagedByProduct[$i->product_id] ?? 0);
+
+                return (object) [
+                    'id' => $i->order_item_id,
+                    'product' => (object) ['id' => $i->product->product_id ?? null, 'name' => $i->product->product_name ?? '—'],
+                    'qty_ordered' => $i->quantity_ordered,
+                    'qty_received' => $i->quantity_received,
+                    'qty_damaged' => $damaged,
+                    'qty_accepted' => max(0, $i->quantity_received - $damaged),
+                    'unit_cost' => (float) $i->unit_cost,
+                    'is_cancelled' => $i->is_cancelled,
+                ];
+            }),
         ];
 
-        $openDamaged = ReturnRecord::where('supplier_id', $order->supplier_id)
+        $openDamaged = ReturnRecord::where('order_id', $order->order_id)
             ->where('status', ReturnStatus::Open)
             ->where('condition', ReturnCondition::Damaged)
             ->with('product')
@@ -152,6 +164,7 @@ class SupplierController extends Controller
             ->map(fn (ReturnRecord $r) => (object) [
                 'id' => 'DMG-'.str_pad((string) $r->return_id, 4, '0', STR_PAD_LEFT),
                 'return_id' => $r->return_id,
+                'order_id' => $r->order_id,
                 'supplier' => $r->supplier->supplier_name ?? '—',
                 'product_name' => $r->product->product_name ?? '—',
                 'qty_damaged' => $r->quantity,
@@ -174,6 +187,7 @@ class SupplierController extends Controller
 
         $item = (object) [
             'id' => 'DMG-'.str_pad((string) $returnRecord->return_id, 4, '0', STR_PAD_LEFT),
+            'order_id' => $returnRecord->order_id,
             'supplier' => $returnRecord->supplier->supplier_name ?? '—',
             'product_name' => $returnRecord->product->product_name ?? '—',
             'qty_damaged' => $returnRecord->quantity,
@@ -188,16 +202,30 @@ class SupplierController extends Controller
 
     public function reportDamage(Request $request, PurchaseOrder $order): RedirectResponse
     {
+        $orderItem = OrderItem::where('order_id', $order->order_id)
+            ->where('product_id', $request->input('product_id'))
+            ->first();
+
+        $alreadyDamaged = ReturnRecord::where('order_id', $order->order_id)
+            ->where('product_id', $request->input('product_id'))
+            ->where('condition', ReturnCondition::Damaged)
+            ->sum('quantity');
+
+        $maxDamageable = $orderItem ? max(0, $orderItem->quantity_received - $alreadyDamaged) : 0;
+
         $validated = $request->validate([
             'product_id' => ['required', 'exists:product,product_id'],
-            'quantity' => ['required', 'integer', 'min:1'],
+            'quantity' => ['required', 'integer', 'min:1', "max:{$maxDamageable}"],
             'reason' => ['required', 'string', 'max:255'],
+        ], [
+            'quantity.max' => "You can report at most {$maxDamageable} unit(s) — that's what's left of this product's received quantity for this order that hasn't already been reported damaged.",
         ]);
 
         ReturnRecord::create([
             'sale_id' => null,
             'product_id' => $validated['product_id'],
             'supplier_id' => $order->supplier_id,
+            'order_id' => $order->order_id,
             'return_date' => now(),
             'quantity' => $validated['quantity'],
             'reason' => $validated['reason'],
@@ -213,7 +241,7 @@ class SupplierController extends Controller
 
     public function returnToSupplier(PurchaseOrder $order): RedirectResponse
     {
-        $updated = ReturnRecord::where('supplier_id', $order->supplier_id)
+        $updated = ReturnRecord::where('order_id', $order->order_id)
             ->where('status', ReturnStatus::Open)
             ->where('condition', ReturnCondition::Damaged)
             ->get();
@@ -236,7 +264,7 @@ class SupplierController extends Controller
             'return_id' => ['required', 'exists:return_record,return_id'],
         ]);
 
-        $returnRecord = ReturnRecord::where('supplier_id', $order->supplier_id)
+        $returnRecord = ReturnRecord::where('order_id', $order->order_id)
             ->where('status', ReturnStatus::Open)
             ->findOrFail($validated['return_id']);
 
