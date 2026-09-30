@@ -45,4 +45,23 @@ class StockInTest extends TestCase
 
         $response->assertSessionHasErrors('date_received');
     }
+
+    public function test_owner_can_stock_in_multiple_products_at_once(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        $productA = Product::factory()->for(Category::factory()->state(['category_name' => 'Bulk Test Category A']))->create(['quantity_on_hand' => 10]);
+        $productB = Product::factory()->for(Category::factory()->state(['category_name' => 'Bulk Test Category B']))->create(['quantity_on_hand' => 20]);
+
+        $response = $this->actingAs($owner)->post(route('owner.inventory.stockin.bulk.store'), [
+            'date_received' => now()->format('Y-m-d'),
+            'items' => [
+                ['product_id' => $productA->product_id, 'quantity' => 5, 'reason' => 'Found stock'],
+                ['product_id' => $productB->product_id, 'quantity' => 3, 'reason' => 'Count correction'],
+            ],
+        ]);
+
+        $response->assertRedirect(route('owner.inventory.index'));
+        $this->assertSame(15, $productA->fresh()->quantity_on_hand);
+        $this->assertSame(23, $productB->fresh()->quantity_on_hand);
+    }
 }

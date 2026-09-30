@@ -196,6 +196,63 @@ class InventoryController extends Controller
             ->with('success', "Added {$validated['quantity']} unit(s) to stock.");
     }
 
+    public function bulkStockIn(Request $request): View
+    {
+        $productIds = collect($request->input('product_ids', []))
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique();
+
+        $products = Product::whereIn('product_id', $productIds)
+            ->orderBy('product_name')
+            ->get()
+            ->map(fn (Product $product) => (object) [
+                'id' => $product->product_id,
+                'code' => $product->product_code,
+                'name' => $product->product_name,
+                'stock' => $product->quantity_on_hand,
+            ]);
+
+        return view('owner.inventory.stock-in-bulk', compact('products'));
+    }
+
+    public function bulkStockInStore(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'date_received' => ['required', 'date', 'before_or_equal:today'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', 'distinct', 'exists:product,product_id'],
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.reason' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $products = Product::whereIn('product_id', collect($validated['items'])->pluck('product_id'))->get()->keyBy('product_id');
+
+        foreach ($validated['items'] as $item) {
+            $product = $products->get($item['product_id']);
+
+            if (! $product) {
+                continue;
+            }
+
+            StockAdjustment::create([
+                'product_id' => $product->product_id,
+                'user_id' => Auth::id(),
+                'adjustment_date' => $validated['date_received'],
+                'quantity_change' => $item['quantity'],
+                'reason' => $item['reason'] ?? 'Manual stock-in',
+            ]);
+
+            AuditLog::record(
+                'stock_adjustment',
+                "Added {$item['quantity']} unit(s) to {$product->product_code} ({$product->product_name})".(isset($item['reason']) ? " — {$item['reason']}" : '')
+            );
+        }
+
+        return redirect()->route('owner.inventory.index')
+            ->with('success', count($validated['items']).' product(s) restocked.');
+    }
+
     public function history(Product $product): View
     {
         $adjustments = StockAdjustment::where('product_id', $product->product_id)
