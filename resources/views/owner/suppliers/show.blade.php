@@ -69,7 +69,7 @@
                         </dd>
                     </div>
                     <div class="flex justify-between text-sm items-center">
-                        <dt class="text-slate-500">Status</dt>
+                        <dt class="text-slate-500">Delivery Status</dt>
                         <dd>
                             @php $status = $order->status ?? 'Ordered'; @endphp
                             @if($status === 'Received')
@@ -83,6 +83,17 @@
                             @endif
                         </dd>
                     </div>
+                    @php $openDamageCount = ($damageReports ?? collect())->where('status', 'Reported')->count(); @endphp
+                    @if($openDamageCount > 0)
+                    <div class="flex justify-between text-sm items-center">
+                        <dt class="text-slate-500">Damage Status</dt>
+                        <dd>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                                {{ $openDamageCount }} Open Report{{ $openDamageCount === 1 ? '' : 's' }}
+                            </span>
+                        </dd>
+                    </div>
+                    @endif
                     @if(!empty($order->notes))
                         <div class="pt-2 border-t border-slate-100 text-sm">
                             <dt class="text-slate-500 mb-1">Notes</dt>
@@ -127,11 +138,21 @@
                                     ₱{{ number_format(($item->unit_cost ?? 0) * ($item->qty_ordered ?? 0), 2) }}
                                 </td>
                                 <td class="px-4 py-3 text-center">
+                                    @php
+                                        $qtyReceived = $item->qty_received ?? 0;
+                                        $qtyOrdered = $item->qty_ordered ?? 0;
+                                        $qtyDamaged = $item->qty_damaged ?? 0;
+                                        $qtyAccepted = $item->qty_accepted ?? 0;
+                                    @endphp
                                     @if($item->is_cancelled ?? false)
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Cancelled</span>
-                                    @elseif(($item->qty_received ?? 0) >= ($item->qty_ordered ?? 0))
+                                    @elseif($qtyReceived > 0 && $qtyAccepted <= 0 && $qtyDamaged > 0)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Damaged</span>
+                                    @elseif($qtyDamaged > 0)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">Partial Damage</span>
+                                    @elseif($qtyReceived >= $qtyOrdered)
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Received</span>
-                                    @elseif(($item->qty_received ?? 0) > 0)
+                                    @elseif($qtyReceived > 0)
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Partial</span>
                                     @else
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Pending</span>
