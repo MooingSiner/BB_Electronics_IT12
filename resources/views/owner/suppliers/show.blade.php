@@ -359,7 +359,7 @@
                     </button>
                 </div>
 
-                <div id="damageItemsContainer" class="space-y-3 max-h-[636px] overflow-y-auto pr-1 mb-4">
+                <div id="damageItemsContainer" class="space-y-3 h-[312px] overflow-y-auto pr-1 mb-4">
                     {{-- Default row --}}
                     <div class="damage-item-row p-3 bg-slate-50 rounded-md border border-slate-200 space-y-2">
                         <div class="flex gap-3 items-end">
