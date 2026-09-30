@@ -22,7 +22,7 @@
             <button type="button" id="openReceiveModal"
                     class="px-4 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition shadow-sm"
                     style="background-color:#363E48">
-                Receive Delivery
+                Update Delivery Status
             </button>
             @endif
             <button type="button" id="openDamageModal"
@@ -251,7 +251,7 @@
     <div id="receiveModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
         <div class="bg-white rounded-xl p-6 max-w-lg w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base font-semibold text-slate-800">Receive Delivery</h3>
+                <h3 class="text-base font-semibold text-slate-800">Update Delivery Status</h3>
                 <button type="button" id="closeReceiveModal"
                         class="text-slate-400 hover:text-slate-600 transition">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
