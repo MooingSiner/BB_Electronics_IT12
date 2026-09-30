@@ -10,6 +10,7 @@ use App\Http\Controllers\Owner\AuditController as OwnerAuditController;
 use App\Http\Controllers\Owner\DashboardController as OwnerDashboardController;
 use App\Http\Controllers\Owner\InventoryController as OwnerInventoryController;
 use App\Http\Controllers\Owner\ProfileController as OwnerProfileController;
+use App\Http\Controllers\Owner\PurchaseOrderController as OwnerPurchaseOrderController;
 use App\Http\Controllers\Owner\ReportController as OwnerReportController;
 use App\Http\Controllers\Owner\ReturnController as OwnerReturnController;
 use App\Http\Controllers\Owner\SalesController as OwnerSalesController;
@@ -65,6 +66,12 @@ Route::middleware(['auth', 'role:owner_manager'])->prefix('owner')->name('owner.
     Route::patch('/suppliers/{order}/return', [OwnerSupplierController::class, 'returnToSupplier'])->name('suppliers.return');
     Route::post('/suppliers/{order}/replacement', [OwnerSupplierController::class, 'replacement'])->name('suppliers.replacement');
     Route::post('/suppliers/{order}/receive', [OwnerSupplierController::class, 'receive'])->name('suppliers.receive');
+
+    Route::get('/purchase-orders', [OwnerPurchaseOrderController::class, 'index'])->name('purchase-orders.index');
+    Route::get('/purchase-orders/create', [OwnerPurchaseOrderController::class, 'create'])->name('purchase-orders.create');
+    Route::post('/purchase-orders', [OwnerPurchaseOrderController::class, 'store'])->name('purchase-orders.store');
+    Route::get('/purchase-orders/{order}', [OwnerPurchaseOrderController::class, 'show'])->name('purchase-orders.show');
+    Route::post('/purchase-orders/{order}/receive', [OwnerPurchaseOrderController::class, 'receive'])->name('purchase-orders.receive');
 
     Route::get('/returns', [OwnerReturnController::class, 'index'])->name('returns.index');
     Route::post('/returns', [OwnerReturnController::class, 'store'])->name('returns.store');

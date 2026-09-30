@@ -30,7 +30,8 @@ class SupplierController extends Controller
             PurchaseOrderStatus::Cancelled->value => 'Cancelled',
         ];
 
-        $orders = PurchaseOrder::with(['supplier', 'items'])
+        $orders = PurchaseOrder::whereNotNull('supplier_id')
+            ->with(['supplier', 'items'])
             ->latest('order_date')
             ->get()
             ->map(fn (PurchaseOrder $order) => (object) [
@@ -99,6 +100,8 @@ class SupplierController extends Controller
 
     public function show(PurchaseOrder $order): View
     {
+        abort_unless($order->supplier_id, 404);
+
         $order->load(['supplier', 'items.product']);
 
         $statusLabels = [
@@ -256,6 +259,8 @@ class SupplierController extends Controller
 
     public function receive(Request $request, PurchaseOrder $order): RedirectResponse
     {
+        abort_unless($order->supplier_id, 404);
+
         $validated = $request->validate([
             'date_received' => ['required', 'date'],
             'items' => ['required', 'array'],

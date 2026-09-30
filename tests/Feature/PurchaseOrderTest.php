@@ -1,0 +1,96 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Category;
+use App\Models\Product;
+use App\Models\PurchaseOrder;
+use App\Models\Store;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class PurchaseOrderTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_owner_can_create_a_purchase_order_for_a_new_store(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        $product = Product::factory()->for(Category::factory())->create(['quantity_on_hand' => 5]);
+
+        $response = $this->actingAs($owner)->post(route('owner.purchase-orders.store'), [
+            'store' => 'Ace Hardware',
+            'order_date' => now()->format('Y-m-d'),
+            'items' => [
+                ['product_id' => $product->product_id, 'qty' => 10, 'unit_cost' => 25.5],
+            ],
+        ]);
+
+        $order = Store::where('store_name', 'Ace Hardware')->first()->purchaseOrders()->first();
+
+        $response->assertRedirect(route('owner.purchase-orders.show', $order->order_id));
+        $this->assertDatabaseHas('store', ['store_name' => 'Ace Hardware']);
+        $this->assertDatabaseHas('order_item', [
+            'order_id' => $order->order_id,
+            'product_id' => $product->product_id,
+            'quantity_ordered' => 10,
+        ]);
+    }
+
+    public function test_receiving_a_purchase_order_increases_product_stock(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        $store = Store::factory()->create();
+        $product = Product::factory()->for(Category::factory())->create(['quantity_on_hand' => 5]);
+
+        $this->actingAs($owner)->post(route('owner.purchase-orders.store'), [
+            'store' => $store->store_name,
+            'order_date' => now()->format('Y-m-d'),
+            'items' => [
+                ['product_id' => $product->product_id, 'qty' => 10, 'unit_cost' => 25.5],
+            ],
+        ]);
+
+        $order = $store->purchaseOrders()->first();
+        $orderItem = $order->items()->first();
+
+        $this->actingAs($owner)->post(route('owner.purchase-orders.receive', $order->order_id), [
+            'date_received' => now()->format('Y-m-d'),
+            'items' => [
+                $orderItem->order_item_id => ['qty_received' => 10],
+            ],
+        ])->assertRedirect(route('owner.purchase-orders.show', $order->order_id));
+
+        $this->assertSame(15, $product->fresh()->quantity_on_hand);
+        $this->assertSame('received', $order->fresh()->status->value);
+    }
+
+    public function test_a_supplier_order_does_not_appear_in_purchase_orders_and_vice_versa(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        $product = Product::factory()->for(Category::factory())->create();
+
+        $this->actingAs($owner)->post(route('owner.suppliers.store'), [
+            'supplier' => 'TechWorld Distributors',
+            'order_date' => now()->format('Y-m-d'),
+            'items' => [
+                ['product_id' => $product->product_id, 'qty' => 5, 'unit_cost' => 10],
+            ],
+        ]);
+
+        $this->actingAs($owner)->post(route('owner.purchase-orders.store'), [
+            'store' => 'Ace Hardware',
+            'order_date' => now()->format('Y-m-d'),
+            'items' => [
+                ['product_id' => $product->product_id, 'qty' => 5, 'unit_cost' => 10],
+            ],
+        ]);
+
+        $supplierOrderId = PurchaseOrder::whereNotNull('supplier_id')->first()->order_id;
+        $storeOrderId = PurchaseOrder::whereNotNull('store_id')->first()->order_id;
+
+        $this->actingAs($owner)->get(route('owner.purchase-orders.show', $supplierOrderId))->assertNotFound();
+        $this->actingAs($owner)->get(route('owner.suppliers.show', $storeOrderId))->assertNotFound();
+    }
+}
