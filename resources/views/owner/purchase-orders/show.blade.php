@@ -26,11 +26,7 @@
         </div>
     </div>
 
-    {{-- Two-column layout --}}
-    <div class="grid grid-cols-3 gap-5">
-
-        {{-- LEFT: 2/3 --}}
-        <div class="col-span-2 space-y-5">
+    <div class="max-w-3xl space-y-5">
 
             {{-- Card: Order Information --}}
             <div class="bg-white rounded-xl shadow border border-slate-200 p-6">
@@ -123,21 +119,6 @@
                     </tfoot>
                 </table>
             </div>
-        </div>
-
-        {{-- RIGHT: 1/3 --}}
-        <div class="col-span-1">
-            <div class="bg-white rounded-xl shadow border border-slate-200 p-6">
-                <h2 class="text-base font-semibold text-slate-800 mb-4">Quick Actions</h2>
-                <div class="space-y-2">
-                    <button type="button" id="openReceiveModalSide"
-                            class="w-full px-4 py-2.5 text-sm font-medium text-white rounded-lg hover:opacity-90 transition text-left"
-                            style="background-color:#363E48">
-                        Receive Delivery
-                    </button>
-                </div>
-            </div>
-        </div>
     </div>
 @endsection
 
@@ -233,7 +214,6 @@
         }
 
         document.getElementById('openReceiveModal').addEventListener('click', openModal);
-        document.getElementById('openReceiveModalSide').addEventListener('click', openModal);
         document.getElementById('closeReceiveModal').addEventListener('click', closeModal);
         document.getElementById('cancelReceiveModal').addEventListener('click', closeModal);
 

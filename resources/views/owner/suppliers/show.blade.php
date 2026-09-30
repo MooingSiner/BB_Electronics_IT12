@@ -32,7 +32,7 @@
                 @method('PATCH')
                 <button type="submit"
                         class="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition"
-                        onclick="return confirm('Mark all open damaged items for this supplier as returned?')">
+                        onclick="return confirm('Mark all open damaged items for this order as returned?')">
                     Mark Returned
                 </button>
             </form>
@@ -158,30 +158,12 @@
             <div class="bg-white rounded-xl shadow border border-slate-200 p-6">
                 <h2 class="text-base font-semibold text-slate-800 mb-4">Quick Actions</h2>
                 <div class="space-y-2">
-                    <button type="button" id="openReceiveModalSide"
-                            class="w-full px-4 py-2.5 text-sm font-medium text-white rounded-lg hover:opacity-90 transition text-left"
-                            style="background-color:#363E48">
-                        Receive Delivery
-                    </button>
-                    <button type="button" id="openDamageModalSide"
-                            class="w-full px-4 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition text-left">
-                        Report Damage
-                    </button>
                     @if(($openDamaged ?? collect())->isNotEmpty())
                     <button type="button" id="openReplacementModal"
                             class="w-full px-4 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition text-left">
                         Record Replacement
                     </button>
                     @endif
-                    <form method="POST" action="{{ route('owner.suppliers.return', $order->id ?? 0) }}">
-                        @csrf
-                        @method('PATCH')
-                        <button type="submit"
-                                class="w-full px-4 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition text-left"
-                                onclick="return confirm('Mark all open damaged items for this supplier as returned?')">
-                            Mark Returned
-                        </button>
-                    </form>
                     <a href="{{ route('owner.suppliers.damaged') }}"
                        class="block w-full px-4 py-2.5 text-sm font-medium text-center hover:underline transition"
                        style="color:#363E48">
@@ -380,7 +362,6 @@
         }
 
         document.getElementById('openReceiveModal').addEventListener('click', openModal);
-        document.getElementById('openReceiveModalSide').addEventListener('click', openModal);
         document.getElementById('closeReceiveModal').addEventListener('click', closeModal);
         document.getElementById('cancelReceiveModal').addEventListener('click', closeModal);
 
@@ -419,7 +400,6 @@
 
         const damageModal = document.getElementById('damageModal');
         document.getElementById('openDamageModal')?.addEventListener('click', () => damageModal.classList.remove('hidden'));
-        document.getElementById('openDamageModalSide')?.addEventListener('click', () => damageModal.classList.remove('hidden'));
         document.getElementById('closeDamageModal').addEventListener('click', () => damageModal.classList.add('hidden'));
         damageModal.addEventListener('click', function (e) { if (e.target === this) this.classList.add('hidden'); });
 
