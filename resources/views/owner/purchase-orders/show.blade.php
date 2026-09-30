@@ -35,7 +35,7 @@
                 Mark Returned
             </button>
             @endif
-            <a href="{{ route('owner.purchase-orders.receipt', $order->id ?? 0) }}" target="_blank"
+            <a href="{{ route('owner.purchase-orders.receipt', $order->id ?? 0) }}"
                class="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition">
                 Receipt
             </a>
