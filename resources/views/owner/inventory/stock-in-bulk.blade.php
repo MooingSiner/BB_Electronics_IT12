@@ -12,8 +12,8 @@
 
     <div class="max-w-2xl mx-auto">
         <div class="text-center mb-6">
-            <h1 class="text-2xl font-bold mb-1" style="color:#363E48">Stock In — Multiple Products</h1>
-            <p class="text-sm text-slate-500">Add received stock for {{ $products->count() }} product(s) at once.</p>
+            <h1 class="text-2xl font-bold mb-1" style="color:#363E48">Stock In</h1>
+            <p class="text-sm text-slate-500">Search for a product to add it below. You can add as many as you need.</p>
         </div>
 
         @if($errors->any())
@@ -26,13 +26,18 @@
             </div>
         @endif
 
-        @if($products->isEmpty())
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 text-sm text-slate-500 text-center">
-                No products selected.
-                <a href="{{ route('owner.inventory.index') }}" class="underline" style="color:#363E48">Go back and check some products first.</a>
+        {{-- Search --}}
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-5 relative">
+            <label for="productSearch" class="block text-sm font-medium text-slate-700 mb-1">Search Product</label>
+            <div class="relative">
+                <input type="text" id="productSearch" autocomplete="off" placeholder="Type a product name or code…"
+                       class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
+                <div id="productResults"
+                     class="hidden absolute z-10 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-64 overflow-y-auto"></div>
             </div>
-        @else
-        <form method="POST" action="{{ route('owner.inventory.stockin.bulk.store') }}">
+        </div>
+
+        <form id="stockInForm" method="POST" action="{{ route('owner.inventory.stockin.bulk.store') }}">
             @csrf
 
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-5 mb-5">
@@ -55,40 +60,25 @@
                     <thead>
                         <tr class="bg-slate-50 border-b border-slate-200">
                             <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Product</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide w-28">Current</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide w-24">Current</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide w-28">Qty to Add</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Reason</th>
+                            <th class="px-4 py-3 w-10"></th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        @foreach($products as $index => $product)
-                            <tr>
-                                <td class="px-4 py-3">
-                                    <p class="font-medium text-slate-800">{{ $product->name }}</p>
-                                    <p class="font-mono text-xs text-slate-400">{{ $product->code }}</p>
-                                    <input type="hidden" name="items[{{ $index }}][product_id]" value="{{ $product->id }}">
-                                </td>
-                                <td class="px-4 py-3 text-right text-slate-500">{{ $product->stock }}</td>
-                                <td class="px-4 py-3">
-                                    <input type="number" name="items[{{ $index }}][quantity]" min="1"
-                                           value="{{ old('items.'.$index.'.quantity') }}" required
-                                           class="w-24 border border-slate-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
-                                </td>
-                                <td class="px-4 py-3">
-                                    <input type="text" name="items[{{ $index }}][reason]" maxlength="255"
-                                           value="{{ old('items.'.$index.'.reason') }}"
-                                           placeholder="e.g. Physical count correction"
-                                           class="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
-                                </td>
-                            </tr>
-                        @endforeach
+                    <tbody id="itemsBody">
+                        <tr id="emptyRow">
+                            <td colspan="5" class="px-4 py-10 text-center text-slate-400 text-sm">
+                                No products added yet. Search above to add one.
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
 
             <div class="flex items-center gap-3">
-                <button type="submit"
-                        class="px-5 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition shadow-sm"
+                <button type="submit" id="submitBtn"
+                        class="px-5 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition shadow-sm opacity-40 cursor-not-allowed" disabled
                         style="background-color:#363E48">
                     Add to Stock
                 </button>
@@ -98,6 +88,119 @@
                 </a>
             </div>
         </form>
-        @endif
     </div>
 @endsection
+
+@push('scripts')
+<script>
+    const catalog = @json($products);
+    const addedIds = new Set();
+
+    const searchInput = document.getElementById('productSearch');
+    const resultsBox = document.getElementById('productResults');
+    const itemsBody = document.getElementById('itemsBody');
+    const emptyRow = document.getElementById('emptyRow');
+    const submitBtn = document.getElementById('submitBtn');
+
+    function syncSubmitButton() {
+        const hasItems = addedIds.size > 0;
+        submitBtn.disabled = !hasItems;
+        submitBtn.classList.toggle('opacity-40', !hasItems);
+        submitBtn.classList.toggle('cursor-not-allowed', !hasItems);
+    }
+
+    function renderResults(matches) {
+        if (matches.length === 0) {
+            resultsBox.classList.add('hidden');
+            resultsBox.innerHTML = '';
+            return;
+        }
+
+        resultsBox.innerHTML = matches.map(p => `
+            <button type="button" data-id="${p.id}"
+                    class="product-result w-full text-left px-3 py-2 text-sm hover:bg-slate-50 border-b border-slate-100 last:border-b-0 flex items-center justify-between">
+                <span>
+                    <span class="font-medium text-slate-800">${p.name}</span>
+                    <span class="text-xs text-slate-400 ml-1">${p.code}</span>
+                </span>
+                <span class="text-xs text-slate-400">${p.stock} in stock</span>
+            </button>
+        `).join('');
+        resultsBox.classList.remove('hidden');
+
+        resultsBox.querySelectorAll('.product-result').forEach(btn => {
+            btn.addEventListener('click', function () {
+                addProduct(parseInt(this.dataset.id, 10));
+                searchInput.value = '';
+                resultsBox.classList.add('hidden');
+                searchInput.focus();
+            });
+        });
+    }
+
+    searchInput.addEventListener('input', function () {
+        const term = this.value.trim().toLowerCase();
+        if (term === '') {
+            resultsBox.classList.add('hidden');
+            return;
+        }
+
+        const matches = catalog
+            .filter(p => !addedIds.has(p.id))
+            .filter(p => p.name.toLowerCase().includes(term) || p.code.toLowerCase().includes(term))
+            .slice(0, 8);
+
+        renderResults(matches);
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!resultsBox.contains(e.target) && e.target !== searchInput) {
+            resultsBox.classList.add('hidden');
+        }
+    });
+
+    let rowIndex = 0;
+
+    function addProduct(productId) {
+        const product = catalog.find(p => p.id === productId);
+        if (!product || addedIds.has(productId)) return;
+
+        addedIds.add(productId);
+        emptyRow.remove();
+
+        const idx = rowIndex++;
+        const row = document.createElement('tr');
+        row.dataset.productId = productId;
+        row.innerHTML = `
+            <td class="px-4 py-3">
+                <p class="font-medium text-slate-800">${product.name}</p>
+                <p class="font-mono text-xs text-slate-400">${product.code}</p>
+                <input type="hidden" name="items[${idx}][product_id]" value="${product.id}">
+            </td>
+            <td class="px-4 py-3 text-right text-slate-500">${product.stock}</td>
+            <td class="px-4 py-3">
+                <input type="number" name="items[${idx}][quantity]" min="1" required
+                       class="w-24 border border-slate-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
+            </td>
+            <td class="px-4 py-3">
+                <input type="text" name="items[${idx}][reason]" maxlength="255" placeholder="e.g. Physical count correction"
+                       class="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
+            </td>
+            <td class="px-4 py-3 text-center">
+                <button type="button" class="remove-row text-slate-400 hover:text-red-500 transition text-lg leading-none">&times;</button>
+            </td>
+        `;
+        row.querySelector('.remove-row').addEventListener('click', function () {
+            addedIds.delete(productId);
+            row.remove();
+            if (addedIds.size === 0) {
+                itemsBody.appendChild(emptyRow);
+            }
+            syncSubmitButton();
+        });
+
+        itemsBody.appendChild(row);
+        syncSubmitButton();
+    }
+</script>
+@endpush

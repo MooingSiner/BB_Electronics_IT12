@@ -22,11 +22,13 @@
             </p>
         </div>
         <div class="flex items-center gap-2">
-            <button type="submit" form="bulkStockInForm" id="bulkStockInBtn" disabled
-                    class="px-4 py-2 text-sm font-medium text-white rounded-lg shadow-sm transition opacity-40 cursor-not-allowed"
-                    style="background-color:#363E48">
-                Stock In Selected (<span id="selectedCount">0</span>)
-            </button>
+            @unless($showArchived)
+            <a href="{{ route('owner.inventory.stockin.bulk') }}"
+               class="px-4 py-2 text-sm font-medium text-white rounded-lg shadow-sm hover:opacity-90 transition"
+               style="background-color:#363E48">
+                Stock In
+            </a>
+            @endunless
             <a href="{{ route('owner.inventory.index', $showArchived ? [] : ['archived' => 1]) }}"
                class="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition">
                 {{ $showArchived ? 'View Active' : 'View Archived' }}
@@ -83,16 +85,10 @@
     </div>
 
     {{-- Table --}}
-    <form id="bulkStockInForm" method="GET" action="{{ route('owner.inventory.stockin.bulk') }}">
     <div class="bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
         <table class="w-full text-sm">
             <thead>
                 <tr class="bg-slate-50 border-b border-slate-200">
-                    @unless($showArchived)
-                    <th class="px-4 py-3 w-10">
-                        <input type="checkbox" id="selectAllProducts" class="rounded border-slate-300">
-                    </th>
-                    @endunless
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Product ID</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Product Name</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Category</th>
@@ -106,11 +102,6 @@
             <tbody class="divide-y divide-slate-100">
                 @forelse($products as $product)
                     <tr class="hover:bg-slate-50 transition">
-                        @unless($showArchived)
-                        <td class="px-4 py-3">
-                            <input type="checkbox" name="product_ids[]" value="{{ $product->id }}" class="product-checkbox rounded border-slate-300">
-                        </td>
-                        @endunless
                         <td class="px-4 py-3">
                             <span class="font-mono text-xs text-slate-500">{{ $product->code ?? 'PRD-0001' }}</span>
                         </td>
@@ -185,7 +176,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="{{ $showArchived ? 8 : 9 }}" class="px-4 py-12 text-center text-slate-400">
+                        <td colspan="8" class="px-4 py-12 text-center text-slate-400">
                             <div class="flex flex-col items-center gap-2">
                                 <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -201,34 +192,4 @@
             </tbody>
         </table>
     </div>
-    </form>
 @endsection
-
-@push('scripts')
-<script>
-    (function () {
-        const selectAll = document.getElementById('selectAllProducts');
-        const checkboxes = document.querySelectorAll('.product-checkbox');
-        const bulkBtn = document.getElementById('bulkStockInBtn');
-        const countLabel = document.getElementById('selectedCount');
-        if (! bulkBtn) return;
-
-        function syncButton() {
-            const checked = document.querySelectorAll('.product-checkbox:checked').length;
-            countLabel.textContent = checked;
-            bulkBtn.disabled = checked === 0;
-            bulkBtn.classList.toggle('opacity-40', checked === 0);
-            bulkBtn.classList.toggle('cursor-not-allowed', checked === 0);
-            bulkBtn.classList.toggle('hover:opacity-90', checked > 0);
-        }
-
-        selectAll?.addEventListener('change', function () {
-            checkboxes.forEach(cb => { cb.checked = selectAll.checked; });
-            syncButton();
-        });
-
-        checkboxes.forEach(cb => cb.addEventListener('change', syncButton));
-        syncButton();
-    })();
-</script>
-@endpush

@@ -196,14 +196,9 @@ class InventoryController extends Controller
             ->with('success', "Added {$validated['quantity']} unit(s) to stock.");
     }
 
-    public function bulkStockIn(Request $request): View
+    public function bulkStockIn(): View
     {
-        $productIds = collect($request->input('product_ids', []))
-            ->map(fn ($id) => (int) $id)
-            ->filter()
-            ->unique();
-
-        $products = Product::whereIn('product_id', $productIds)
+        $products = Product::where('is_active', true)
             ->orderBy('product_name')
             ->get()
             ->map(fn (Product $product) => (object) [
