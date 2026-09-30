@@ -66,6 +66,40 @@ class PurchaseOrderTest extends TestCase
         $this->assertSame('received', $order->fresh()->status->value);
     }
 
+    public function test_cancelling_one_item_does_not_block_the_order_from_completing(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        $store = Store::factory()->create();
+        $available = Product::factory()->for(Category::factory())->create(['quantity_on_hand' => 0]);
+        $unavailable = Product::factory()->for(Category::factory())->create(['quantity_on_hand' => 0]);
+
+        $this->actingAs($owner)->post(route('owner.purchase-orders.store'), [
+            'store' => $store->store_name,
+            'order_date' => now()->format('Y-m-d'),
+            'items' => [
+                ['product_id' => $available->product_id, 'qty' => 10, 'unit_cost' => 25.5],
+                ['product_id' => $unavailable->product_id, 'qty' => 5, 'unit_cost' => 12],
+            ],
+        ]);
+
+        $order = $store->purchaseOrders()->first();
+        $availableItem = $order->items()->where('product_id', $available->product_id)->first();
+        $unavailableItem = $order->items()->where('product_id', $unavailable->product_id)->first();
+
+        $this->actingAs($owner)->post(route('owner.purchase-orders.receive', $order->order_id), [
+            'date_received' => now()->format('Y-m-d'),
+            'items' => [
+                $availableItem->order_item_id => ['qty_received' => 10],
+                $unavailableItem->order_item_id => ['qty_received' => 0, 'cancelled' => '1'],
+            ],
+        ])->assertRedirect(route('owner.purchase-orders.show', $order->order_id));
+
+        $this->assertSame(10, $available->fresh()->quantity_on_hand);
+        $this->assertSame(0, $unavailable->fresh()->quantity_on_hand);
+        $this->assertTrue($unavailableItem->fresh()->is_cancelled);
+        $this->assertSame('received', $order->fresh()->status->value);
+    }
+
     public function test_a_supplier_order_does_not_appear_in_purchase_orders_and_vice_versa(): void
     {
         $owner = User::factory()->ownerManager()->create();

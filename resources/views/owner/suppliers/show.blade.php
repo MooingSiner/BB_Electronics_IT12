@@ -109,6 +109,7 @@
                             <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Accepted</th>
                             <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Unit Cost</th>
                             <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Cost</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -126,12 +127,23 @@
                                 <td class="px-4 py-3 text-right font-medium text-slate-800">
                                     ₱{{ number_format(($item->unit_cost ?? 0) * ($item->qty_ordered ?? 0), 2) }}
                                 </td>
+                                <td class="px-4 py-3 text-center">
+                                    @if($item->is_cancelled ?? false)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Cancelled</span>
+                                    @elseif(($item->qty_received ?? 0) >= ($item->qty_ordered ?? 0))
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Received</span>
+                                    @elseif(($item->qty_received ?? 0) > 0)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Partial</span>
+                                    @else
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Pending</span>
+                                    @endif
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>
                     <tfoot class="border-t border-slate-200 bg-slate-50">
                         <tr>
-                            <td colspan="7" class="px-4 py-3 text-right text-sm font-semibold text-slate-700">Total Order Cost</td>
+                            <td colspan="8" class="px-4 py-3 text-right text-sm font-semibold text-slate-700">Total Order Cost</td>
                             <td class="px-4 py-3 text-right text-sm font-bold text-slate-900">
                                 ₱{{ number_format($order->total_cost ?? collect($order->items ?? [])->sum(fn($i) => ($i->unit_cost ?? 0) * ($i->qty_ordered ?? 0)), 2) }}
                             </td>
@@ -217,6 +229,7 @@
                                     <th class="px-3 py-2 text-left text-xs font-semibold text-slate-500">Product</th>
                                     <th class="px-3 py-2 text-right text-xs font-semibold text-slate-500">Ordered</th>
                                     <th class="px-3 py-2 text-right text-xs font-semibold text-slate-500">Qty Received</th>
+                                    <th class="px-3 py-2 text-center text-xs font-semibold text-slate-500">Not Available</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
@@ -228,7 +241,13 @@
                                             <input type="number" name="items[{{ $item->id ?? 0 }}][qty_received]"
                                                    value="{{ $item->qty_ordered ?? 0 }}" min="0"
                                                    max="{{ $item->qty_ordered ?? 9999 }}"
-                                                   class="w-20 border border-slate-300 rounded-md px-2 py-1 text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
+                                                   {{ ($item->is_cancelled ?? false) ? 'readonly' : '' }}
+                                                   class="qty-received-input w-20 border border-slate-300 rounded-md px-2 py-1 text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
+                                        </td>
+                                        <td class="px-3 py-2 text-center">
+                                            <input type="checkbox" name="items[{{ $item->id ?? 0 }}][cancelled]" value="1"
+                                                   {{ ($item->is_cancelled ?? false) ? 'checked' : '' }}
+                                                   class="cancel-item-checkbox w-4 h-4 rounded border-slate-300 text-red-500 focus:ring-red-400">
                                         </td>
                                     </tr>
                                 @endforeach
@@ -367,6 +386,21 @@
         // Close on backdrop click
         modal.addEventListener('click', function (e) {
             if (e.target === this) closeModal();
+        });
+
+        // Toggle the qty-received input when a product is marked not available
+        document.querySelectorAll('.cancel-item-checkbox').forEach(function (checkbox) {
+            const row = checkbox.closest('tr');
+            const qtyInput = row.querySelector('.qty-received-input');
+
+            function syncQtyInput() {
+                qtyInput.readOnly = checkbox.checked;
+                qtyInput.classList.toggle('bg-slate-100', checkbox.checked);
+                qtyInput.classList.toggle('text-slate-400', checkbox.checked);
+            }
+
+            checkbox.addEventListener('change', syncQtyInput);
+            syncQtyInput();
         });
 
         const damageModal = document.getElementById('damageModal');

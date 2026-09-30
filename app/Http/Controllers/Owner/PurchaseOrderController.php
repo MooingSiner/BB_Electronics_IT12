@@ -128,6 +128,7 @@ class PurchaseOrderController extends Controller
                 'qty_ordered' => $i->quantity_ordered,
                 'qty_received' => $i->quantity_received,
                 'unit_cost' => (float) $i->unit_cost,
+                'is_cancelled' => $i->is_cancelled,
             ]),
         ];
 
@@ -142,6 +143,7 @@ class PurchaseOrderController extends Controller
             'date_received' => ['required', 'date'],
             'items' => ['required', 'array'],
             'items.*.qty_received' => ['required', 'integer', 'min:0'],
+            'items.*.cancelled' => ['sometimes', 'boolean'],
         ]);
 
         $order->load('items');
@@ -153,17 +155,28 @@ class PurchaseOrderController extends Controller
                 continue;
             }
 
+            $cancelled = (bool) ($data['cancelled'] ?? false);
+
             $orderItem->update([
-                'quantity_received' => min($data['qty_received'], $orderItem->quantity_ordered),
+                // Cancelling never rolls back quantity already received; it only stops the item from blocking completion.
+                'quantity_received' => $cancelled ? $orderItem->quantity_received : min($data['qty_received'], $orderItem->quantity_ordered),
+                'is_cancelled' => $cancelled,
             ]);
         }
 
         $order->load('items');
-        $allReceived = $order->items->every(fn (OrderItem $i) => $i->quantity_received >= $i->quantity_ordered);
-        $anyReceived = $order->items->sum('quantity_received') > 0;
+        $activeItems = $order->items->reject(fn (OrderItem $i) => $i->is_cancelled);
+        $allCancelled = $activeItems->isEmpty();
+        $allReceived = $activeItems->isNotEmpty() && $activeItems->every(fn (OrderItem $i) => $i->quantity_received >= $i->quantity_ordered);
+        $anyReceived = $activeItems->sum('quantity_received') > 0;
 
         $order->update([
-            'status' => $allReceived ? PurchaseOrderStatus::Received : ($anyReceived ? PurchaseOrderStatus::PartiallyReceived : PurchaseOrderStatus::Pending),
+            'status' => match (true) {
+                $allCancelled => PurchaseOrderStatus::Cancelled,
+                $allReceived => PurchaseOrderStatus::Received,
+                $anyReceived => PurchaseOrderStatus::PartiallyReceived,
+                default => PurchaseOrderStatus::Pending,
+            },
             'date_received' => $validated['date_received'],
         ]);
 
