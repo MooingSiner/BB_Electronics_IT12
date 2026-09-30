@@ -31,10 +31,10 @@
     <form id="orderForm" method="POST" action="{{ route('owner.purchase-orders.store') }}">
         @csrf
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-5">
 
             {{-- LEFT: Products to Order --}}
-            <div class="lg:col-span-2 bg-white rounded-xl shadow border border-slate-200 p-6">
+            <div class="lg:col-span-3 bg-white rounded-xl shadow border border-slate-200 p-6">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-base font-semibold text-slate-800">Products to Order</h2>
                     <button type="button" id="addItem"
@@ -43,7 +43,7 @@
                     </button>
                 </div>
 
-                <div id="itemsContainer" class="space-y-3 max-h-[520px] overflow-y-auto pr-1">
+                <div id="itemsContainer" class="space-y-3 max-h-[380px] overflow-y-auto pr-1">
                     {{-- Default empty row --}}
                     <div class="item-row flex gap-3 items-end p-3 bg-slate-50 rounded-md border border-slate-200">
                         <div class="flex-1">
@@ -77,7 +77,7 @@
             </div>
 
             {{-- RIGHT: Order Information --}}
-            <div class="lg:col-span-1 bg-white rounded-xl shadow border border-slate-200 p-6 space-y-5 self-start">
+            <div class="lg:col-span-2 bg-white rounded-xl shadow border border-slate-200 p-6 space-y-5 self-start">
                 <h2 class="text-base font-semibold text-slate-800">Order Information</h2>
 
                 {{-- Store --}}
