@@ -14,12 +14,6 @@
         ← Back to Inventory
     </a>
 
-    @if(session('success'))
-        <div class="mb-4 px-4 py-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
-            {{ session('success') }}
-        </div>
-    @endif
-
     {{-- Header Card --}}
     <div class="rounded-2xl shadow-sm border border-slate-200 p-6 mb-6" style="background: linear-gradient(135deg, #363E48 0%, #454f5c 100%);">
         <div class="flex items-start justify-between gap-4 flex-wrap">

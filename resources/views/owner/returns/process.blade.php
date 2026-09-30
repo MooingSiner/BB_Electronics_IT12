@@ -20,16 +20,6 @@
         </p>
     </div>
 
-    {{-- Success Alert --}}
-    @if(session('success'))
-    <div class="flex items-center gap-3 px-4 py-3 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm">
-        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-        </svg>
-        {{ session('success') }}
-    </div>
-    @endif
-
     @if(! $txn)
     {{-- Find Transaction --}}
     <div class="bg-white rounded-xl border shadow-sm p-6 mb-6">

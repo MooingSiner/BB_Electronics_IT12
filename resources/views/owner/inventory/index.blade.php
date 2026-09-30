@@ -34,12 +34,6 @@
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="mb-4 px-4 py-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
-            {{ session('success') }}
-        </div>
-    @endif
-
     {{-- Filter Card --}}
     <div class="bg-white rounded-xl shadow border border-slate-200 p-4 mb-5">
         <form method="GET" action="{{ route('owner.inventory.index') }}" class="flex flex-wrap gap-3 items-end">
