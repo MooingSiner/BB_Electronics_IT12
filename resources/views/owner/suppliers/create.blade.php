@@ -11,7 +11,7 @@
         ← Back to Supplier Orders
     </a>
 
-    <div class="max-w-2xl mx-auto">
+    <div class="max-w-5xl mx-auto">
 
     {{-- Page Header --}}
     <h1 class="text-2xl font-bold mb-6 text-center" style="color:#363E48">New Supplier Order</h1>
@@ -28,107 +28,110 @@
         </div>
     @endif
 
-    <form id="orderForm" method="POST" action="{{ route('owner.suppliers.store') }}" class="space-y-5">
+    <form id="orderForm" method="POST" action="{{ route('owner.suppliers.store') }}">
         @csrf
 
-        {{-- Card: Order Information --}}
-        <div class="bg-white rounded-xl shadow border border-slate-200 p-6 space-y-5">
-            <h2 class="text-base font-semibold text-slate-800">Order Information</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
 
-            {{-- Supplier --}}
-            <div>
-                <label for="supplier" class="block text-sm font-medium text-slate-700 mb-1">
-                    Supplier <span class="text-red-500">*</span>
-                </label>
-                <input type="text" id="supplier" name="supplier" list="supplier-options" value="{{ old('supplier') }}" required
-                       autocomplete="off"
-                       placeholder="e.g. TechWorld Distributors"
-                       class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 @error('supplier') border-red-400 @enderror">
-                <datalist id="supplier-options">
-                    @foreach($suppliers ?? [] as $s)
-                        <option value="{{ $s }}"></option>
-                    @endforeach
-                </datalist>
-                <p class="mt-1 text-xs text-slate-400">Type a new supplier name to add them automatically.</p>
-                @error('supplier')
-                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
+            {{-- LEFT: Products to Order --}}
+            <div class="lg:col-span-2 bg-white rounded-xl shadow border border-slate-200 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-base font-semibold text-slate-800">Products to Order</h2>
+                    <button type="button" id="addItem"
+                            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition">
+                        + Add Item
+                    </button>
+                </div>
 
-            {{-- Order Date --}}
-            <div>
-                <label for="order_date" class="block text-sm font-medium text-slate-700 mb-1">
-                    Order Date <span class="text-red-500">*</span>
-                </label>
-                <input type="date" id="order_date" name="order_date"
-                       value="{{ old('order_date', date('Y-m-d')) }}" required
-                       class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 @error('order_date') border-red-400 @enderror">
-                @error('order_date')
-                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-
-            {{-- Invoice Number --}}
-            <div>
-                <label for="invoice_number" class="block text-sm font-medium text-slate-700 mb-1">Invoice Number</label>
-                <input type="text" id="invoice_number" name="invoice_number" value="{{ old('invoice_number') }}"
-                       placeholder="e.g. INV-2026-00123"
-                       class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 @error('invoice_number') border-red-400 @enderror">
-                @error('invoice_number')
-                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-
-            {{-- Notes --}}
-            <div>
-                <label for="notes" class="block text-sm font-medium text-slate-700 mb-1">Notes</label>
-                <textarea id="notes" name="notes" rows="3"
-                          class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 resize-none @error('notes') border-red-400 @enderror">{{ old('notes') }}</textarea>
-                @error('notes')
-                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-        </div>
-
-        {{-- Card: Products to Order --}}
-        <div class="bg-white rounded-xl shadow border border-slate-200 p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-base font-semibold text-slate-800">Products to Order</h2>
-                <button type="button" id="addItem"
-                        class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition">
-                    + Add Item
-                </button>
-            </div>
-
-            <div id="itemsContainer" class="space-y-3">
-                {{-- Default empty row --}}
-                <div class="item-row flex gap-3 items-end p-3 bg-slate-50 rounded-md border border-slate-200">
-                    <div class="flex-1">
-                        <label class="block text-xs font-medium text-slate-600 mb-1">Product</label>
-                        <select name="items[0][product_id]"
-                                class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
-                            <option value="">Select product</option>
-                            @foreach($products ?? [] as $product)
-                                <option value="{{ $product->id }}">{{ $product->name }}</option>
-                            @endforeach
-                        </select>
+                <div id="itemsContainer" class="space-y-3 max-h-[520px] overflow-y-auto pr-1">
+                    {{-- Default empty row --}}
+                    <div class="item-row flex gap-3 items-end p-3 bg-slate-50 rounded-md border border-slate-200">
+                        <div class="flex-1">
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Product</label>
+                            <select name="items[0][product_id]"
+                                    class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
+                                <option value="">Select product</option>
+                                @foreach($products ?? [] as $product)
+                                    <option value="{{ $product->id }}">{{ $product->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="w-24">
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Qty</label>
+                            <input type="number" name="items[0][qty]" min="1" placeholder="Qty"
+                                   class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
+                        </div>
+                        <div class="w-36">
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Unit Cost (₱)</label>
+                            <input type="number" name="items[0][unit_cost]" step="0.01" min="0" placeholder="0.00"
+                                   class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
+                        </div>
+                        <div class="pb-0.5">
+                            <button type="button" onclick="this.closest('.item-row').remove()"
+                                    class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 border border-slate-300 rounded-lg hover:border-red-300 transition text-lg leading-none">
+                                &times;
+                            </button>
+                        </div>
                     </div>
-                    <div class="w-24">
-                        <label class="block text-xs font-medium text-slate-600 mb-1">Qty</label>
-                        <input type="number" name="items[0][qty]" min="1" placeholder="Qty"
-                               class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
-                    </div>
-                    <div class="w-36">
-                        <label class="block text-xs font-medium text-slate-600 mb-1">Unit Cost (₱)</label>
-                        <input type="number" name="items[0][unit_cost]" step="0.01" min="0" placeholder="0.00"
-                               class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
-                    </div>
-                    <div class="pb-0.5">
-                        <button type="button" onclick="this.closest('.item-row').remove()"
-                                class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 border border-slate-300 rounded-lg hover:border-red-300 transition text-lg leading-none">
-                            &times;
-                        </button>
-                    </div>
+                </div>
+            </div>
+
+            {{-- RIGHT: Order Information --}}
+            <div class="lg:col-span-1 bg-white rounded-xl shadow border border-slate-200 p-6 space-y-5 self-start">
+                <h2 class="text-base font-semibold text-slate-800">Order Information</h2>
+
+                {{-- Supplier --}}
+                <div>
+                    <label for="supplier" class="block text-sm font-medium text-slate-700 mb-1">
+                        Supplier <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="supplier" name="supplier" list="supplier-options" value="{{ old('supplier') }}" required
+                           autocomplete="off"
+                           placeholder="e.g. TechWorld Distributors"
+                           class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 @error('supplier') border-red-400 @enderror">
+                    <datalist id="supplier-options">
+                        @foreach($suppliers ?? [] as $s)
+                            <option value="{{ $s }}"></option>
+                        @endforeach
+                    </datalist>
+                    <p class="mt-1 text-xs text-slate-400">Type a new supplier name to add them automatically.</p>
+                    @error('supplier')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- Order Date --}}
+                <div>
+                    <label for="order_date" class="block text-sm font-medium text-slate-700 mb-1">
+                        Order Date <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date" id="order_date" name="order_date"
+                           value="{{ old('order_date', date('Y-m-d')) }}" required
+                           class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 @error('order_date') border-red-400 @enderror">
+                    @error('order_date')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- Invoice Number --}}
+                <div>
+                    <label for="invoice_number" class="block text-sm font-medium text-slate-700 mb-1">Invoice Number</label>
+                    <input type="text" id="invoice_number" name="invoice_number" value="{{ old('invoice_number') }}"
+                           placeholder="e.g. INV-2026-00123"
+                           class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 @error('invoice_number') border-red-400 @enderror">
+                    @error('invoice_number')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- Notes --}}
+                <div>
+                    <label for="notes" class="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+                    <textarea id="notes" name="notes" rows="3"
+                              class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 resize-none @error('notes') border-red-400 @enderror">{{ old('notes') }}</textarea>
+                    @error('notes')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
         </div>
