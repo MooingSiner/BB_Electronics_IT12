@@ -329,7 +329,7 @@
 
     {{-- Report Damage Modal --}}
     <div id="damageModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-        <div class="bg-white rounded-xl p-6 max-w-lg w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
+        <div class="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-base font-semibold text-slate-800">Report Damage</h3>
                 <button type="button" id="closeDamageModal" class="text-slate-400 hover:text-slate-600 transition">
@@ -341,6 +341,16 @@
             <form method="POST" action="{{ route('owner.suppliers.damage', $order->id ?? 0) }}">
                 @csrf
 
+                {{-- Date Reported --}}
+                <div class="mb-4">
+                    <label for="damageDate" class="block text-sm font-medium text-slate-700 mb-1">
+                        Date Reported <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date" id="damageDate" name="date" value="{{ date('Y-m-d') }}" max="{{ date('Y-m-d') }}" required
+                           class="w-full sm:w-56 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
+                    <p class="mt-1 text-xs text-slate-400">Backdate this if the damage was actually found earlier.</p>
+                </div>
+
                 <div class="flex items-center justify-between mb-2">
                     <p class="text-sm font-medium text-slate-700">Products</p>
                     <button type="button" id="addDamageItem"
@@ -349,10 +359,10 @@
                     </button>
                 </div>
 
-                <div id="damageItemsContainer" class="space-y-3 max-h-[360px] overflow-y-auto pr-1 mb-4">
+                <div id="damageItemsContainer" class="space-y-3 max-h-[636px] overflow-y-auto pr-1 mb-4">
                     {{-- Default row --}}
                     <div class="damage-item-row p-3 bg-slate-50 rounded-md border border-slate-200 space-y-2">
-                        <div class="flex gap-2 items-end">
+                        <div class="flex gap-3 items-end">
                             <div class="flex-1">
                                 <label class="block text-xs font-medium text-slate-600 mb-1">Product</label>
                                 <select name="items[0][product_id]" class="damage-product-select w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30" required>
@@ -362,7 +372,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="w-24">
+                            <div class="w-28">
                                 <label class="block text-xs font-medium text-slate-600 mb-1">Qty</label>
                                 <input type="number" name="items[0][quantity]" min="1" class="damage-qty-input w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30" required>
                             </div>
@@ -559,7 +569,7 @@
             const row = document.createElement('div');
             row.className = 'damage-item-row p-3 bg-slate-50 rounded-md border border-slate-200 space-y-2';
             row.innerHTML = `
-                <div class="flex gap-2 items-end">
+                <div class="flex gap-3 items-end">
                     <div class="flex-1">
                         <label class="block text-xs font-medium text-slate-600 mb-1">Product</label>
                         <select name="items[${idx}][product_id]" class="damage-product-select w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2" required>
@@ -567,7 +577,7 @@
                             ${productsOptions}
                         </select>
                     </div>
-                    <div class="w-24">
+                    <div class="w-28">
                         <label class="block text-xs font-medium text-slate-600 mb-1">Qty</label>
                         <input type="number" name="items[${idx}][quantity]" min="1" class="damage-qty-input w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2" required>
                     </div>

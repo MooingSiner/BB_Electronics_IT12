@@ -40,6 +40,7 @@ class SupplierDamageTest extends TestCase
 
         // Only 10 were received, so reporting 20 damaged must fail.
         $this->actingAs($owner)->post(route('owner.suppliers.damage', $order->order_id), [
+            'date' => now()->format('Y-m-d'),
             'items' => [
                 ['product_id' => $product->product_id, 'quantity' => 20, 'reason' => 'Crushed in transit'],
             ],
@@ -48,6 +49,7 @@ class SupplierDamageTest extends TestCase
         $this->assertDatabaseMissing('return_record', ['product_id' => $product->product_id]);
 
         $this->actingAs($owner)->post(route('owner.suppliers.damage', $order->order_id), [
+            'date' => now()->format('Y-m-d'),
             'items' => [
                 ['product_id' => $product->product_id, 'quantity' => 4, 'reason' => 'Crushed in transit'],
             ],
@@ -85,6 +87,7 @@ class SupplierDamageTest extends TestCase
         ]);
 
         $this->actingAs($owner)->post(route('owner.suppliers.damage', $order->order_id), [
+            'date' => now()->format('Y-m-d'),
             'items' => [
                 ['product_id' => $product->product_id, 'quantity' => 3, 'reason' => 'Crushed in transit'],
             ],
@@ -124,6 +127,7 @@ class SupplierDamageTest extends TestCase
         ]);
 
         $this->actingAs($owner)->post(route('owner.suppliers.damage', $order->order_id), [
+            'date' => now()->format('Y-m-d'),
             'items' => [
                 ['product_id' => $productA->product_id, 'quantity' => 2, 'reason' => 'Crushed in transit'],
                 ['product_id' => $productB->product_id, 'quantity' => 3, 'reason' => 'Water damage'],
@@ -166,6 +170,7 @@ class SupplierDamageTest extends TestCase
         ]);
 
         $this->actingAs($owner)->post(route('owner.suppliers.damage', $order->order_id), [
+            'date' => now()->format('Y-m-d'),
             'items' => [
                 ['product_id' => $product->product_id, 'quantity' => 3, 'reason' => 'Reported by mistake'],
             ],
@@ -267,6 +272,7 @@ class SupplierDamageTest extends TestCase
         ]);
 
         $this->actingAs($owner)->post(route('owner.suppliers.damage', $order->order_id), [
+            'date' => now()->format('Y-m-d'),
             'items' => [
                 ['product_id' => $productA->product_id, 'quantity' => 2, 'reason' => 'Crushed in transit'],
                 ['product_id' => $productB->product_id, 'quantity' => 5, 'reason' => 'Water damage'],

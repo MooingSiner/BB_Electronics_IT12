@@ -254,6 +254,7 @@ class SupplierController extends Controller
     public function reportDamage(Request $request, PurchaseOrder $order): RedirectResponse
     {
         $validated = $request->validate([
+            'date' => ['required', 'date', 'before_or_equal:today'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'exists:product,product_id'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
@@ -294,7 +295,7 @@ class SupplierController extends Controller
                 'product_id' => $item['product_id'],
                 'supplier_id' => $order->supplier_id,
                 'order_id' => $order->order_id,
-                'return_date' => now(),
+                'return_date' => $validated['date'],
                 'quantity' => $item['quantity'],
                 'reason' => $item['reason'],
                 'condition' => ReturnCondition::Damaged,
