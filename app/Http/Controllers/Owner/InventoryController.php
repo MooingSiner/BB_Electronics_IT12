@@ -176,12 +176,13 @@ class InventoryController extends Controller
         $validated = $request->validate([
             'quantity' => ['required', 'integer', 'min:1'],
             'reason' => ['nullable', 'string', 'max:255'],
+            'date_received' => ['required', 'date', 'before_or_equal:today'],
         ]);
 
         StockAdjustment::create([
             'product_id' => $product->product_id,
             'user_id' => Auth::id(),
-            'adjustment_date' => now(),
+            'adjustment_date' => $validated['date_received'],
             'quantity_change' => $validated['quantity'],
             'reason' => $validated['reason'] ?? 'Manual stock-in',
         ]);
