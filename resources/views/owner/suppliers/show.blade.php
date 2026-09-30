@@ -39,7 +39,10 @@
         </div>
     </div>
 
-    <div class="max-w-4xl space-y-5">
+    <div class="grid grid-cols-3 gap-5">
+
+        {{-- LEFT: 2/3 --}}
+        <div class="col-span-2 space-y-5">
 
             {{-- Card: Order Information --}}
             <div class="bg-white rounded-xl shadow border border-slate-200 p-6">
@@ -147,57 +150,47 @@
                     </tfoot>
                 </table>
             </div>
+        </div>
 
-            {{-- Card: Damage Reports --}}
+        {{-- RIGHT: 1/3 --}}
+        <div class="col-span-1">
             <div class="bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
                     <h2 class="text-base font-semibold text-slate-800">Damage Reports</h2>
                     @if(($openDamaged ?? collect())->isNotEmpty())
                     <button type="button" id="openReplacementModal"
-                            class="px-3 py-1.5 text-xs font-medium border border-slate-300 rounded-md text-slate-600 hover:bg-slate-50 transition">
-                        Record Replacement
+                            class="px-2.5 py-1 text-xs font-medium border border-slate-300 rounded-md text-slate-600 hover:bg-slate-50 transition">
+                        Replace
                     </button>
                     @endif
                 </div>
                 @if(($damageReports ?? collect())->isEmpty())
-                    <p class="px-6 py-8 text-center text-sm text-slate-400">No damage reported for this order.</p>
+                    <p class="px-5 py-8 text-center text-sm text-slate-400">No damage reported for this order.</p>
                 @else
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="bg-slate-50 border-b border-slate-200">
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Product</th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Qty</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Date</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Description</th>
-                                <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            @foreach($damageReports as $report)
-                                <tr class="hover:bg-slate-50 transition">
-                                    <td class="px-4 py-3 font-medium text-slate-800">{{ $report->product_name }}</td>
-                                    <td class="px-4 py-3 text-right text-red-600">{{ $report->quantity }}</td>
-                                    <td class="px-4 py-3 text-slate-600">{{ optional($report->date)->format('M d, Y') }}</td>
-                                    <td class="px-4 py-3 text-slate-600 max-w-[240px]">
-                                        <p class="truncate" title="{{ $report->description }}">{{ $report->description }}</p>
-                                    </td>
-                                    <td class="px-4 py-3 text-center">
-                                        @if($report->status === 'Returned to Supplier')
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Returned to Supplier</span>
-                                        @elseif($report->status === 'Replacement Received')
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Replacement Received</span>
-                                        @elseif($report->status === 'Resolved')
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Resolved</span>
-                                        @else
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Reported</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                    <div class="divide-y divide-slate-100 max-h-[480px] overflow-y-auto">
+                        @foreach($damageReports as $report)
+                            <div class="px-5 py-3">
+                                <div class="flex items-start justify-between gap-2 mb-1">
+                                    <p class="text-sm font-medium text-slate-800">{{ $report->product_name }}</p>
+                                    <span class="text-xs font-semibold text-red-600 flex-shrink-0">{{ $report->quantity }} pcs</span>
+                                </div>
+                                <p class="text-xs text-slate-400 mb-1">{{ optional($report->date)->format('M d, Y') }}</p>
+                                <p class="text-xs text-slate-600 mb-2">{{ $report->description }}</p>
+                                @if($report->status === 'Returned to Supplier')
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Returned to Supplier</span>
+                                @elseif($report->status === 'Replacement Received')
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Replacement Received</span>
+                                @elseif($report->status === 'Resolved')
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Resolved</span>
+                                @else
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Reported</span>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
                 @endif
             </div>
+        </div>
     </div>
 @endsection
 
