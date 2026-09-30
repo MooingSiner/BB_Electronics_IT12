@@ -3,11 +3,16 @@
 namespace App\Http\Controllers\Owner;
 
 use App\Enums\PurchaseOrderStatus;
+use App\Enums\ReturnCondition;
+use App\Enums\ReturnResolution;
+use App\Enums\ReturnStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
+use App\Models\ReturnRecord;
+use App\Models\StockAdjustment;
 use App\Models\Store;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -140,6 +145,12 @@ class PurchaseOrderController extends Controller
             PurchaseOrderStatus::Cancelled->value => 'Cancelled',
         ];
 
+        $damagedByProduct = ReturnRecord::where('order_id', $order->order_id)
+            ->where('condition', ReturnCondition::Damaged)
+            ->get()
+            ->groupBy('product_id')
+            ->map(fn ($records) => $records->sum('quantity'));
+
         $item = (object) [
             'id' => $order->order_id,
             'store' => $order->store->store_name ?? '—',
@@ -149,17 +160,171 @@ class PurchaseOrderController extends Controller
             'status' => $statusLabels[$order->status->value] ?? 'Ordered',
             'is_archived' => $order->is_archived,
             'total_cost' => $order->items->sum(fn (OrderItem $i) => (float) $i->unit_cost * $i->quantity_ordered),
-            'items' => $order->items->map(fn (OrderItem $i) => (object) [
-                'id' => $i->order_item_id,
-                'product' => (object) ['id' => $i->product->product_id ?? null, 'name' => $i->product->product_name ?? '—'],
-                'qty_ordered' => $i->quantity_ordered,
-                'qty_received' => $i->quantity_received,
-                'unit_cost' => (float) $i->unit_cost,
-                'is_cancelled' => $i->is_cancelled,
-            ]),
+            'items' => $order->items->map(function (OrderItem $i) use ($damagedByProduct) {
+                $damaged = (int) ($damagedByProduct[$i->product_id] ?? 0);
+
+                return (object) [
+                    'id' => $i->order_item_id,
+                    'product' => (object) ['id' => $i->product->product_id ?? null, 'name' => $i->product->product_name ?? '—'],
+                    'qty_ordered' => $i->quantity_ordered,
+                    'qty_received' => $i->quantity_received,
+                    'qty_damaged' => $damaged,
+                    'qty_accepted' => max(0, $i->quantity_received - $damaged),
+                    'unit_cost' => (float) $i->unit_cost,
+                    'is_cancelled' => $i->is_cancelled,
+                ];
+            }),
         ];
 
-        return view('owner.purchase-orders.show', ['order' => $item]);
+        $damageReports = ReturnRecord::where('order_id', $order->order_id)
+            ->where('condition', ReturnCondition::Damaged)
+            ->with('product')
+            ->latest('return_date')
+            ->get()
+            ->map(fn (ReturnRecord $r) => (object) [
+                'id' => $r->return_id,
+                'product_name' => $r->product->product_name ?? '—',
+                'quantity' => $r->quantity,
+                'date' => $r->return_date,
+                'description' => $r->reason,
+                'status' => match (true) {
+                    $r->status === ReturnStatus::Resolved && $r->resolution === ReturnResolution::Replacement => 'Replacement Received',
+                    $r->status === ReturnStatus::Resolved && $r->resolution === ReturnResolution::SupplierExchange => 'Returned to Store',
+                    $r->status === ReturnStatus::Resolved => 'Resolved',
+                    default => 'Reported',
+                },
+            ]);
+
+        $openDamaged = $damageReports->filter(fn ($r) => $r->status === 'Reported')->values();
+
+        return view('owner.purchase-orders.show', ['order' => $item, 'openDamaged' => $openDamaged, 'damageReports' => $damageReports]);
+    }
+
+    public function reportDamage(Request $request, PurchaseOrder $order): RedirectResponse
+    {
+        abort_unless($order->store_id, 404);
+
+        $validated = $request->validate([
+            'date' => ['required', 'date', 'before_or_equal:today'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', 'exists:product,product_id'],
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.reason' => ['required', 'string', 'max:255'],
+        ]);
+
+        // Multiple lines can target the same product in one submission, so check the combined quantity.
+        $requestedByProduct = collect($validated['items'])
+            ->groupBy('product_id')
+            ->map(fn ($rows) => collect($rows)->sum('quantity'));
+
+        foreach ($requestedByProduct as $productId => $requestedQty) {
+            $orderItem = OrderItem::where('order_id', $order->order_id)
+                ->where('product_id', $productId)
+                ->first();
+
+            $alreadyDamaged = ReturnRecord::where('order_id', $order->order_id)
+                ->where('product_id', $productId)
+                ->where('condition', ReturnCondition::Damaged)
+                ->sum('quantity');
+
+            $maxDamageable = $orderItem ? max(0, $orderItem->quantity_received - $alreadyDamaged) : 0;
+
+            if ($requestedQty > $maxDamageable) {
+                $productName = $orderItem?->product?->product_name ?? 'That product';
+
+                return back()->withErrors([
+                    'items' => "{$productName}: you can report at most {$maxDamageable} unit(s) — that's what's left of its received quantity for this order that hasn't already been reported damaged.",
+                ])->withInput();
+            }
+        }
+
+        $created = collect();
+
+        foreach ($validated['items'] as $item) {
+            $created->push(ReturnRecord::create([
+                'sale_id' => null,
+                'product_id' => $item['product_id'],
+                'supplier_id' => null,
+                'order_id' => $order->order_id,
+                'return_date' => $validated['date'],
+                'quantity' => $item['quantity'],
+                'reason' => $item['reason'],
+                'condition' => ReturnCondition::Damaged,
+                'resolution' => ReturnResolution::Pending,
+                'status' => ReturnStatus::Open,
+            ]));
+        }
+
+        AuditLog::record('stock_adjustment', "Reported damage on {$created->count()} product(s) from purchase order #{$order->order_id}.");
+
+        return back()->with('success', $created->count() === 1 ? 'Damaged product reported.' : "{$created->count()} damaged products reported.");
+    }
+
+    public function cancelDamage(PurchaseOrder $order, ReturnRecord $returnRecord): RedirectResponse
+    {
+        abort_unless($returnRecord->order_id === $order->order_id, 404);
+        abort_unless($returnRecord->status === ReturnStatus::Open, 403);
+
+        $returnRecord->delete();
+
+        AuditLog::record('stock_adjustment', "Cancelled a damage report for order #{$order->order_id}.");
+
+        return back()->with('success', 'Damage report cancelled.');
+    }
+
+    public function returnToStore(Request $request, PurchaseOrder $order): RedirectResponse
+    {
+        $validated = $request->validate([
+            'return_ids' => ['required', 'array', 'min:1'],
+            'return_ids.*' => ['integer'],
+        ], [
+            'return_ids.required' => 'Select at least one damage report to mark as returned.',
+        ]);
+
+        $updated = ReturnRecord::where('order_id', $order->order_id)
+            ->where('status', ReturnStatus::Open)
+            ->where('condition', ReturnCondition::Damaged)
+            ->whereIn('return_id', $validated['return_ids'])
+            ->get();
+
+        foreach ($updated as $returnRecord) {
+            $returnRecord->update([
+                'status' => ReturnStatus::Resolved,
+                'resolution' => ReturnResolution::SupplierExchange,
+            ]);
+        }
+
+        AuditLog::record('refund', "Marked {$updated->count()} damaged item(s) as returned to store for order #{$order->order_id}.");
+
+        return back()->with('success', "{$updated->count()} damaged item(s) marked as returned to store.");
+    }
+
+    public function replacement(Request $request, PurchaseOrder $order): RedirectResponse
+    {
+        $validated = $request->validate([
+            'return_id' => ['required', 'exists:return_record,return_id'],
+        ]);
+
+        $returnRecord = ReturnRecord::where('order_id', $order->order_id)
+            ->where('status', ReturnStatus::Open)
+            ->findOrFail($validated['return_id']);
+
+        $returnRecord->update([
+            'status' => ReturnStatus::Resolved,
+            'resolution' => ReturnResolution::Replacement,
+        ]);
+
+        StockAdjustment::create([
+            'product_id' => $returnRecord->product_id,
+            'user_id' => Auth::id(),
+            'adjustment_date' => now(),
+            'quantity_change' => $returnRecord->quantity,
+            'reason' => "Replacement received from store for damaged report #{$returnRecord->return_id}",
+        ]);
+
+        AuditLog::record('stock_adjustment', "Received {$returnRecord->quantity} replacement unit(s) from store for order #{$order->order_id}.");
+
+        return back()->with('success', 'Replacement recorded and stock updated.');
     }
 
     public function receive(Request $request, PurchaseOrder $order): RedirectResponse

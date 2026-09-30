@@ -76,6 +76,10 @@ Route::middleware(['auth', 'role:owner_manager'])->prefix('owner')->name('owner.
     Route::get('/purchase-orders/create', [OwnerPurchaseOrderController::class, 'create'])->name('purchase-orders.create');
     Route::post('/purchase-orders', [OwnerPurchaseOrderController::class, 'store'])->name('purchase-orders.store');
     Route::get('/purchase-orders/{order}', [OwnerPurchaseOrderController::class, 'show'])->name('purchase-orders.show');
+    Route::post('/purchase-orders/{order}/damage', [OwnerPurchaseOrderController::class, 'reportDamage'])->name('purchase-orders.damage');
+    Route::delete('/purchase-orders/{order}/damage/{returnRecord}', [OwnerPurchaseOrderController::class, 'cancelDamage'])->name('purchase-orders.damage.cancel');
+    Route::patch('/purchase-orders/{order}/return', [OwnerPurchaseOrderController::class, 'returnToStore'])->name('purchase-orders.return');
+    Route::post('/purchase-orders/{order}/replacement', [OwnerPurchaseOrderController::class, 'replacement'])->name('purchase-orders.replacement');
     Route::post('/purchase-orders/{order}/receive', [OwnerPurchaseOrderController::class, 'receive'])->name('purchase-orders.receive');
     Route::post('/purchase-orders/{order}/archive', [OwnerPurchaseOrderController::class, 'archive'])->name('purchase-orders.archive');
     Route::post('/purchase-orders/{order}/restore', [OwnerPurchaseOrderController::class, 'restore'])->name('purchase-orders.restore');
