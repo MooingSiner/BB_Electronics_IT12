@@ -65,6 +65,7 @@ Route::middleware(['auth', 'role:owner_manager'])->prefix('owner')->name('owner.
     Route::get('/suppliers/damaged/{id}', [OwnerSupplierController::class, 'damagedShow'])->name('suppliers.damaged.show');
     Route::get('/suppliers/{order}', [OwnerSupplierController::class, 'show'])->name('suppliers.show');
     Route::post('/suppliers/{order}/damage', [OwnerSupplierController::class, 'reportDamage'])->name('suppliers.damage');
+    Route::delete('/suppliers/{order}/damage/{returnRecord}', [OwnerSupplierController::class, 'cancelDamage'])->name('suppliers.damage.cancel');
     Route::patch('/suppliers/{order}/return', [OwnerSupplierController::class, 'returnToSupplier'])->name('suppliers.return');
     Route::post('/suppliers/{order}/replacement', [OwnerSupplierController::class, 'replacement'])->name('suppliers.replacement');
     Route::post('/suppliers/{order}/receive', [OwnerSupplierController::class, 'receive'])->name('suppliers.receive');

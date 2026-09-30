@@ -145,4 +145,73 @@ class SupplierDamageTest extends TestCase
         $this->assertSame('resolved', $reportA->fresh()->status->value);
         $this->assertSame('open', $reportB->fresh()->status->value);
     }
+
+    public function test_owner_can_cancel_an_open_damage_report(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        $supplier = Supplier::factory()->create();
+        $product = Product::factory()->for(Category::factory())->create();
+
+        $this->actingAs($owner)->post(route('owner.suppliers.store'), [
+            'supplier' => $supplier->supplier_name,
+            'order_date' => now()->format('Y-m-d'),
+            'items' => [
+                ['product_id' => $product->product_id, 'qty' => 10, 'unit_cost' => 10],
+            ],
+        ]);
+
+        $order = $supplier->purchaseOrders()->first();
+        $orderItem = $order->items()->first();
+
+        $this->actingAs($owner)->post(route('owner.suppliers.receive', $order->order_id), [
+            'date_received' => now()->format('Y-m-d'),
+            'items' => [
+                $orderItem->order_item_id => ['qty_received' => 10],
+            ],
+        ]);
+
+        $this->actingAs($owner)->post(route('owner.suppliers.damage', $order->order_id), [
+            'product_id' => $product->product_id,
+            'quantity' => 3,
+            'reason' => 'Reported by mistake',
+        ]);
+
+        $report = ReturnRecord::where('product_id', $product->product_id)->first();
+
+        $this->actingAs($owner)
+            ->delete(route('owner.suppliers.damage.cancel', [$order->order_id, $report->return_id]))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('return_record', ['return_id' => $report->return_id]);
+    }
+
+    public function test_receive_delivery_is_hidden_once_the_order_is_fully_received(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        $supplier = Supplier::factory()->create();
+        $product = Product::factory()->for(Category::factory())->create();
+
+        $this->actingAs($owner)->post(route('owner.suppliers.store'), [
+            'supplier' => $supplier->supplier_name,
+            'order_date' => now()->format('Y-m-d'),
+            'items' => [
+                ['product_id' => $product->product_id, 'qty' => 10, 'unit_cost' => 10],
+            ],
+        ]);
+
+        $order = $supplier->purchaseOrders()->first();
+        $orderItem = $order->items()->first();
+
+        $this->actingAs($owner)->post(route('owner.suppliers.receive', $order->order_id), [
+            'date_received' => now()->format('Y-m-d'),
+            'items' => [
+                $orderItem->order_item_id => ['qty_received' => 10],
+            ],
+        ]);
+
+        $response = $this->actingAs($owner)->get(route('owner.suppliers.show', $order->order_id));
+
+        $response->assertOk();
+        $response->assertDontSee('id="openReceiveModal"', false);
+    }
 }

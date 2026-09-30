@@ -18,11 +18,13 @@
             <p class="text-sm text-slate-500 mt-1">{{ $order->store }}</p>
         </div>
         <div class="flex items-center gap-2">
+            @if($order->status !== 'Received' && $order->status !== 'Cancelled')
             <button type="button" id="openReceiveModal"
                     class="px-4 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition shadow-sm"
                     style="background-color:#363E48">
                 Receive Delivery
             </button>
+            @endif
         </div>
     </div>
 
@@ -213,7 +215,7 @@
             modal.classList.add('hidden');
         }
 
-        document.getElementById('openReceiveModal').addEventListener('click', openModal);
+        document.getElementById('openReceiveModal')?.addEventListener('click', openModal);
         document.getElementById('closeReceiveModal').addEventListener('click', closeModal);
         document.getElementById('cancelReceiveModal').addEventListener('click', closeModal);
 

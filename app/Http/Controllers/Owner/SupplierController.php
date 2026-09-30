@@ -249,6 +249,18 @@ class SupplierController extends Controller
         return back()->with('success', 'Damaged product reported.');
     }
 
+    public function cancelDamage(PurchaseOrder $order, ReturnRecord $returnRecord): RedirectResponse
+    {
+        abort_unless($returnRecord->order_id === $order->order_id, 404);
+        abort_unless($returnRecord->status === ReturnStatus::Open, 403);
+
+        $returnRecord->delete();
+
+        AuditLog::record('stock_adjustment', "Cancelled a damage report for order #{$order->order_id}.");
+
+        return back()->with('success', 'Damage report cancelled.');
+    }
+
     public function returnToSupplier(Request $request, PurchaseOrder $order): RedirectResponse
     {
         $validated = $request->validate([

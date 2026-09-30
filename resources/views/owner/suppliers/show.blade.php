@@ -18,11 +18,13 @@
             <p class="text-sm text-slate-500 mt-1">{{ $order->supplier ?? 'TechWorld Distributors' }}</p>
         </div>
         <div class="flex items-center gap-2">
+            @if(($order->status ?? 'Ordered') !== 'Received' && ($order->status ?? 'Ordered') !== 'Cancelled')
             <button type="button" id="openReceiveModal"
                     class="px-4 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition shadow-sm"
                     style="background-color:#363E48">
                 Receive Delivery
             </button>
+            @endif
             <button type="button" id="openDamageModal"
                     class="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition">
                 Report Damage
@@ -194,15 +196,23 @@
                                 </div>
                                 <p class="text-xs text-slate-400 mb-1">{{ optional($report->date)->format('M d, Y') }}</p>
                                 <p class="text-xs text-slate-600 mb-2">{{ $report->description }}</p>
-                                @if($report->status === 'Returned to Supplier')
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Returned to Supplier</span>
-                                @elseif($report->status === 'Replacement Received')
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Replacement Received</span>
-                                @elseif($report->status === 'Resolved')
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Resolved</span>
-                                @else
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Reported</span>
-                                @endif
+                                <div class="flex items-center justify-between gap-2">
+                                    @if($report->status === 'Returned to Supplier')
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Returned to Supplier</span>
+                                    @elseif($report->status === 'Replacement Received')
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Replacement Received</span>
+                                    @elseif($report->status === 'Resolved')
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Resolved</span>
+                                    @else
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Reported</span>
+                                        <form method="POST" action="{{ route('owner.suppliers.damage.cancel', [$order->id, $report->id]) }}"
+                                              onsubmit="return confirm('Cancel this damage report? This cannot be undone.')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-xs text-slate-400 hover:text-red-600 transition">Cancel</button>
+                                        </form>
+                                    @endif
+                                </div>
                             </div>
                         @endforeach
                     </div>
@@ -452,7 +462,7 @@
             modal.classList.add('hidden');
         }
 
-        document.getElementById('openReceiveModal').addEventListener('click', openModal);
+        document.getElementById('openReceiveModal')?.addEventListener('click', openModal);
         document.getElementById('closeReceiveModal').addEventListener('click', closeModal);
         document.getElementById('cancelReceiveModal').addEventListener('click', closeModal);
 
