@@ -25,6 +25,22 @@
                 Receive Delivery
             </button>
             @endif
+            @if($order->is_archived ?? false)
+            <form method="POST" action="{{ route('owner.purchase-orders.restore', $order->id) }}">
+                @csrf
+                <button type="submit" class="px-4 py-2 text-sm font-medium rounded-lg border border-green-200 text-green-700 bg-green-50 hover:bg-green-100 transition">
+                    Restore
+                </button>
+            </form>
+            @else
+            <form method="POST" action="{{ route('owner.purchase-orders.archive', $order->id) }}"
+                  onsubmit="return confirm('Archive this order? It will be hidden from the active list but its records are kept.')">
+                @csrf
+                <button type="submit" class="px-4 py-2 text-sm font-medium rounded-lg border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition">
+                    Archive
+                </button>
+            </form>
+            @endif
         </div>
     </div>
 

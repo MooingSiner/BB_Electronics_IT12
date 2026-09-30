@@ -25,7 +25,10 @@ class PurchaseOrderController extends Controller
             PurchaseOrderStatus::Cancelled->value => 'Cancelled',
         ];
 
+        $showArchived = $request->boolean('archived');
+
         $orders = PurchaseOrder::whereNotNull('store_id')
+            ->where('is_archived', $showArchived)
             ->with(['store', 'items'])
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->string('search');
@@ -52,7 +55,25 @@ class PurchaseOrderController extends Controller
                 'status' => $statusLabels[$order->status->value] ?? 'Ordered',
             ]);
 
-        return view('owner.purchase-orders.index', compact('orders'));
+        return view('owner.purchase-orders.index', compact('orders', 'showArchived'));
+    }
+
+    public function archive(PurchaseOrder $order): RedirectResponse
+    {
+        abort_unless($order->store_id, 404);
+
+        $order->update(['is_archived' => true]);
+
+        return back()->with('success', 'Order archived.');
+    }
+
+    public function restore(PurchaseOrder $order): RedirectResponse
+    {
+        abort_unless($order->store_id, 404);
+
+        $order->update(['is_archived' => false]);
+
+        return back()->with('success', 'Order restored.');
     }
 
     public function create(): View
@@ -121,6 +142,7 @@ class PurchaseOrderController extends Controller
             'order_date' => $order->order_date,
             'expected_date' => $order->date_received,
             'status' => $statusLabels[$order->status->value] ?? 'Ordered',
+            'is_archived' => $order->is_archived,
             'total_cost' => $order->items->sum(fn (OrderItem $i) => (float) $i->unit_cost * $i->quantity_ordered),
             'items' => $order->items->map(fn (OrderItem $i) => (object) [
                 'id' => $i->order_item_id,

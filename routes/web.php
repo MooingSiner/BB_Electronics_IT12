@@ -69,12 +69,16 @@ Route::middleware(['auth', 'role:owner_manager'])->prefix('owner')->name('owner.
     Route::patch('/suppliers/{order}/return', [OwnerSupplierController::class, 'returnToSupplier'])->name('suppliers.return');
     Route::post('/suppliers/{order}/replacement', [OwnerSupplierController::class, 'replacement'])->name('suppliers.replacement');
     Route::post('/suppliers/{order}/receive', [OwnerSupplierController::class, 'receive'])->name('suppliers.receive');
+    Route::post('/suppliers/{order}/archive', [OwnerSupplierController::class, 'archive'])->name('suppliers.archive');
+    Route::post('/suppliers/{order}/restore', [OwnerSupplierController::class, 'restore'])->name('suppliers.restore');
 
     Route::get('/purchase-orders', [OwnerPurchaseOrderController::class, 'index'])->name('purchase-orders.index');
     Route::get('/purchase-orders/create', [OwnerPurchaseOrderController::class, 'create'])->name('purchase-orders.create');
     Route::post('/purchase-orders', [OwnerPurchaseOrderController::class, 'store'])->name('purchase-orders.store');
     Route::get('/purchase-orders/{order}', [OwnerPurchaseOrderController::class, 'show'])->name('purchase-orders.show');
     Route::post('/purchase-orders/{order}/receive', [OwnerPurchaseOrderController::class, 'receive'])->name('purchase-orders.receive');
+    Route::post('/purchase-orders/{order}/archive', [OwnerPurchaseOrderController::class, 'archive'])->name('purchase-orders.archive');
+    Route::post('/purchase-orders/{order}/restore', [OwnerPurchaseOrderController::class, 'restore'])->name('purchase-orders.restore');
 
     Route::get('/returns', [OwnerReturnController::class, 'index'])->name('returns.index');
     Route::post('/returns', [OwnerReturnController::class, 'store'])->name('returns.store');

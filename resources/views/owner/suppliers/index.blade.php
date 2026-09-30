@@ -8,19 +8,36 @@
     {{-- Page Header --}}
     <div class="flex items-center justify-between mb-6">
         <div>
-            <h1 class="text-2xl font-bold" style="color:#363E48">Supplier Orders</h1>
-            <p class="text-sm text-slate-500 mt-1">Track and manage purchase orders from suppliers.</p>
+            <h1 class="text-2xl font-bold" style="color:#363E48">{{ $showArchived ? 'Archived Supplier Orders' : 'Supplier Orders' }}</h1>
+            <p class="text-sm text-slate-500 mt-1">
+                @if($showArchived)
+                    Orders hidden from the active list. Restore to bring them back.
+                @else
+                    Track and manage purchase orders from suppliers.
+                @endif
+            </p>
         </div>
-        <a href="{{ route('owner.suppliers.create') }}"
-           class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg shadow-sm hover:opacity-90 transition"
-           style="background-color:#363E48">
-            + New Order
-        </a>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('owner.suppliers.index', $showArchived ? [] : ['archived' => 1]) }}"
+               class="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition">
+                {{ $showArchived ? 'View Active' : 'View Archived' }}
+            </a>
+            @unless($showArchived)
+            <a href="{{ route('owner.suppliers.create') }}"
+               class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg shadow-sm hover:opacity-90 transition"
+               style="background-color:#363E48">
+                + New Order
+            </a>
+            @endunless
+        </div>
     </div>
 
     {{-- Filter --}}
     <div class="bg-white rounded-xl shadow border border-slate-200 p-4 mb-5">
         <form method="GET" action="{{ route('owner.suppliers.index') }}" class="flex flex-wrap gap-3 items-end">
+            @if($showArchived)
+                <input type="hidden" name="archived" value="1">
+            @endif
             <div class="flex-1 min-w-[200px]">
                 <label class="block text-xs font-medium text-slate-600 mb-1">Search</label>
                 <input type="text" name="search" value="{{ request('search') }}"
@@ -90,11 +107,29 @@
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Ordered</span>
                             @endif
                         </td>
-                        <td class="px-4 py-3 text-center">
-                            <a href="{{ route('owner.suppliers.show', $order->id) }}"
-                               class="px-3 py-1 text-xs border border-slate-300 rounded-md text-slate-600 hover:bg-slate-100 transition">
-                                View
-                            </a>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center justify-center gap-1">
+                                <a href="{{ route('owner.suppliers.show', $order->id) }}"
+                                   class="px-3 py-1 text-xs border border-slate-300 rounded-md text-slate-600 hover:bg-slate-100 transition">
+                                    View
+                                </a>
+                                @if($showArchived)
+                                <form method="POST" action="{{ route('owner.suppliers.restore', $order->id) }}">
+                                    @csrf
+                                    <button type="submit" class="px-2.5 py-1 text-xs border border-green-200 rounded-md text-green-700 bg-green-50 hover:bg-green-100 transition">
+                                        Restore
+                                    </button>
+                                </form>
+                                @else
+                                <form method="POST" action="{{ route('owner.suppliers.archive', $order->id) }}"
+                                      onsubmit="return confirm('Archive this order? It will be hidden from the active list but its records are kept.')">
+                                    @csrf
+                                    <button type="submit" class="px-2.5 py-1 text-xs border border-red-200 rounded-md text-red-600 bg-red-50 hover:bg-red-100 transition">
+                                        Archive
+                                    </button>
+                                </form>
+                                @endif
+                            </div>
                         </td>
                     </tr>
                 @empty

@@ -21,7 +21,7 @@ use Illuminate\View\View;
 
 class SupplierController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
         $statusLabels = [
             PurchaseOrderStatus::Pending->value => 'Ordered',
@@ -30,7 +30,10 @@ class SupplierController extends Controller
             PurchaseOrderStatus::Cancelled->value => 'Cancelled',
         ];
 
+        $showArchived = $request->boolean('archived');
+
         $orders = PurchaseOrder::whereNotNull('supplier_id')
+            ->where('is_archived', $showArchived)
             ->with(['supplier', 'items'])
             ->latest('order_date')
             ->get()
@@ -43,7 +46,25 @@ class SupplierController extends Controller
                 'status' => $statusLabels[$order->status->value] ?? 'Ordered',
             ]);
 
-        return view('owner.suppliers.index', compact('orders'));
+        return view('owner.suppliers.index', compact('orders', 'showArchived'));
+    }
+
+    public function archive(PurchaseOrder $order): RedirectResponse
+    {
+        abort_unless($order->supplier_id, 404);
+
+        $order->update(['is_archived' => true]);
+
+        return back()->with('success', 'Order archived.');
+    }
+
+    public function restore(PurchaseOrder $order): RedirectResponse
+    {
+        abort_unless($order->supplier_id, 404);
+
+        $order->update(['is_archived' => false]);
+
+        return back()->with('success', 'Order restored.');
     }
 
     public function orders(): RedirectResponse
@@ -124,6 +145,7 @@ class SupplierController extends Controller
             'order_date' => $order->order_date,
             'expected_date' => $order->date_received,
             'status' => $statusLabels[$order->status->value] ?? 'Ordered',
+            'is_archived' => $order->is_archived,
             'total_cost' => $order->items->sum(fn (OrderItem $i) => (float) $i->unit_cost * $i->quantity_ordered),
             'items' => $order->items->map(function (OrderItem $i) use ($damagedByProduct) {
                 $damaged = (int) ($damagedByProduct[$i->product_id] ?? 0);

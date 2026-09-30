@@ -127,4 +127,37 @@ class PurchaseOrderTest extends TestCase
         $this->actingAs($owner)->get(route('owner.purchase-orders.show', $supplierOrderId))->assertNotFound();
         $this->actingAs($owner)->get(route('owner.suppliers.show', $storeOrderId))->assertNotFound();
     }
+
+    public function test_owner_can_archive_and_restore_a_purchase_order(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        $store = Store::factory()->create();
+        $product = Product::factory()->for(Category::factory())->create();
+
+        $this->actingAs($owner)->post(route('owner.purchase-orders.store'), [
+            'store' => $store->store_name,
+            'order_date' => now()->format('Y-m-d'),
+            'items' => [
+                ['product_id' => $product->product_id, 'qty' => 5, 'unit_cost' => 10],
+            ],
+        ]);
+
+        $order = $store->purchaseOrders()->first();
+
+        $this->actingAs($owner)->post(route('owner.purchase-orders.archive', $order->order_id))
+            ->assertRedirect();
+
+        $this->assertTrue($order->fresh()->is_archived);
+
+        $activeList = $this->actingAs($owner)->get(route('owner.purchase-orders.index'));
+        $activeList->assertDontSee('PO-'.str_pad((string) $order->order_id, 4, '0', STR_PAD_LEFT));
+
+        $archivedList = $this->actingAs($owner)->get(route('owner.purchase-orders.index', ['archived' => 1]));
+        $archivedList->assertSee('PO-'.str_pad((string) $order->order_id, 4, '0', STR_PAD_LEFT));
+
+        $this->actingAs($owner)->post(route('owner.purchase-orders.restore', $order->order_id))
+            ->assertRedirect();
+
+        $this->assertFalse($order->fresh()->is_archived);
+    }
 }

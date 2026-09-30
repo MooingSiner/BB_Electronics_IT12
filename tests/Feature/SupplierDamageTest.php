@@ -214,4 +214,37 @@ class SupplierDamageTest extends TestCase
         $response->assertOk();
         $response->assertDontSee('id="openReceiveModal"', false);
     }
+
+    public function test_owner_can_archive_and_restore_a_supplier_order(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        $supplier = Supplier::factory()->create();
+        $product = Product::factory()->for(Category::factory())->create();
+
+        $this->actingAs($owner)->post(route('owner.suppliers.store'), [
+            'supplier' => $supplier->supplier_name,
+            'order_date' => now()->format('Y-m-d'),
+            'items' => [
+                ['product_id' => $product->product_id, 'qty' => 5, 'unit_cost' => 10],
+            ],
+        ]);
+
+        $order = $supplier->purchaseOrders()->first();
+
+        $this->actingAs($owner)->post(route('owner.suppliers.archive', $order->order_id))
+            ->assertRedirect();
+
+        $this->assertTrue($order->fresh()->is_archived);
+
+        $activeList = $this->actingAs($owner)->get(route('owner.suppliers.index'));
+        $activeList->assertDontSee($supplier->supplier_name);
+
+        $archivedList = $this->actingAs($owner)->get(route('owner.suppliers.index', ['archived' => 1]));
+        $archivedList->assertSee($supplier->supplier_name);
+
+        $this->actingAs($owner)->post(route('owner.suppliers.restore', $order->order_id))
+            ->assertRedirect();
+
+        $this->assertFalse($order->fresh()->is_archived);
+    }
 }
