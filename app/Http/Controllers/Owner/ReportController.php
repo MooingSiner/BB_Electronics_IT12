@@ -99,10 +99,19 @@ class ReportController extends Controller
                 ];
             });
 
+        $topMovers = $products->sortByDesc('units_sold')
+            ->filter(fn (array $row) => $row['units_sold'] > 0)
+            ->take(5)
+            ->values();
+
         return [
             'total_products' => $products->count(),
             'total_stock_value' => (float) Product::where('is_active', true)->get()->sum(fn (Product $p) => $p->quantity_on_hand * (float) $p->unit_price),
             'low_stock_count' => Product::where('is_active', true)->whereColumn('quantity_on_hand', '<=', 'reorder_level')->count(),
+            'fast_moving_count' => $products->where('movement', 'Fast-Moving')->count(),
+            'slow_moving_count' => $products->where('movement', 'Slow-Moving')->count(),
+            'no_movement_count' => $products->where('movement', 'No Movement')->count(),
+            'top_movers' => $topMovers,
             'rows' => $products,
         ];
     }

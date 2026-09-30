@@ -7,13 +7,21 @@
 <div class="space-y-6">
 
     {{-- Page Header --}}
-    <div>
+    <div class="print:hidden">
         <h1 class="text-2xl font-bold text-slate-800">Reports</h1>
         <p class="text-sm text-slate-500 mt-1">Generate sales and inventory reports.</p>
     </div>
 
+    {{-- Print-only letterhead --}}
+    @if($report)
+    <div class="hidden print:block">
+        <h1 class="text-lg font-bold text-slate-800">B&amp;B Electronics</h1>
+        <p class="text-xs text-slate-500">Generated {{ now()->format('M d, Y g:i A') }}</p>
+    </div>
+    @endif
+
     {{-- Filter Card --}}
-    <div class="bg-white rounded-xl border shadow-sm p-6">
+    <div class="bg-white rounded-xl border shadow-sm p-6 print:hidden">
         <h2 class="font-semibold text-slate-800 mb-4">Generate Report</h2>
         <form method="GET" action="{{ route('owner.reports.index') }}" class="space-y-4">
             <div>
@@ -54,7 +62,7 @@
             <h2 class="font-semibold text-slate-800">
                 Sales Report &mdash; {{ $dateFrom->format('M d, Y') }} to {{ $dateTo->format('M d, Y') }}
             </h2>
-            <button onclick="window.print()" class="text-sm font-medium hover:underline" style="color:#363E48">Print</button>
+            <button onclick="window.print()" class="text-sm font-medium hover:underline print:hidden" style="color:#363E48">Print</button>
         </div>
 
         {{-- Summary Stats --}}
@@ -107,7 +115,7 @@
             <h2 class="font-semibold text-slate-800">
                 Inventory Report &mdash; movement from {{ $dateFrom->format('M d, Y') }} to {{ $dateTo->format('M d, Y') }}
             </h2>
-            <button onclick="window.print()" class="text-sm font-medium hover:underline" style="color:#363E48">Print</button>
+            <button onclick="window.print()" class="text-sm font-medium hover:underline print:hidden" style="color:#363E48">Print</button>
         </div>
 
         {{-- Summary Stats --}}
@@ -124,6 +132,39 @@
                 <p class="text-xs text-slate-500 uppercase tracking-wide font-medium">Low / Out of Stock</p>
                 <p class="text-2xl font-bold text-slate-800 mt-1">{{ $report['low_stock_count'] }}</p>
             </div>
+        </div>
+
+        {{-- Movement Summary --}}
+        <div class="px-6 py-5 border-b">
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Movement Summary</p>
+            <div class="grid grid-cols-3 gap-4 mb-5">
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Fast-Moving</span>
+                    <span class="text-sm font-semibold text-slate-800">{{ $report['fast_moving_count'] }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Slow-Moving</span>
+                    <span class="text-sm font-semibold text-slate-800">{{ $report['slow_moving_count'] }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">No Movement</span>
+                    <span class="text-sm font-semibold text-slate-800">{{ $report['no_movement_count'] }}</span>
+                </div>
+            </div>
+
+            @if($report['top_movers']->isNotEmpty())
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Top Moving Products</p>
+                <ol class="space-y-1.5">
+                    @foreach($report['top_movers'] as $i => $mover)
+                        <li class="flex items-center justify-between text-sm">
+                            <span class="text-slate-700">{{ $i + 1 }}. {{ $mover['name'] }} <span class="text-slate-400">({{ $mover['code'] }})</span></span>
+                            <span class="font-medium text-slate-800">{{ $mover['units_sold'] }} sold</span>
+                        </li>
+                    @endforeach
+                </ol>
+            @else
+                <p class="text-sm text-slate-400">No units sold in this date range.</p>
+            @endif
         </div>
 
         {{-- Table --}}

@@ -13,10 +13,10 @@
     </style>
     @stack('styles')
 </head>
-<body class="bg-slate-100 flex h-screen overflow-hidden">
+<body class="bg-slate-100 flex h-screen overflow-hidden print:block print:h-auto print:overflow-visible">
 
 {{-- ── Sidebar ─────────────────────────────────────────────────────────────── --}}
-<aside class="w-60 flex-shrink-0 flex flex-col h-full sidebar-bg">
+<aside class="w-60 flex-shrink-0 flex flex-col h-full sidebar-bg print:hidden">
 
     {{-- Logo --}}
     <div class="px-5 py-5 border-b border-white/10 flex items-center gap-2.5">
@@ -100,10 +100,10 @@
 </aside>
 
 {{-- ── Main area ────────────────────────────────────────────────────────────── --}}
-<div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+<div class="flex-1 flex flex-col min-w-0 overflow-hidden print:block print:overflow-visible">
 
     {{-- Header --}}
-    <header class="bg-white border-b border-slate-200 px-5 h-14 flex items-center justify-between flex-shrink-0">
+    <header class="bg-white border-b border-slate-200 px-5 h-14 flex items-center justify-between flex-shrink-0 print:hidden">
         <div class="text-sm text-slate-500">@yield('breadcrumb')</div>
         <div class="flex items-center gap-3">
             <div class="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-slate-100 cursor-pointer">
@@ -124,7 +124,7 @@
     </header>
 
     {{-- Page content --}}
-    <main class="flex-1 overflow-y-auto p-5 lg:p-6">
+    <main class="flex-1 overflow-y-auto p-5 lg:p-6 print:overflow-visible print:p-0">
         @yield('content')
     </main>
 </div>
