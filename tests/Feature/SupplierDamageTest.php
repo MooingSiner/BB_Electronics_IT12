@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ReturnRecord;
 use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -97,5 +98,51 @@ class SupplierDamageTest extends TestCase
 
             return $item->qty_damaged === 3 && $item->qty_accepted === 7;
         });
+    }
+
+    public function test_mark_returned_only_resolves_the_selected_reports(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        $supplier = Supplier::factory()->create();
+        $productA = Product::factory()->for(Category::factory()->state(['category_name' => 'Return Select Category A']))->create();
+        $productB = Product::factory()->for(Category::factory()->state(['category_name' => 'Return Select Category B']))->create();
+
+        $this->actingAs($owner)->post(route('owner.suppliers.store'), [
+            'supplier' => $supplier->supplier_name,
+            'order_date' => now()->format('Y-m-d'),
+            'items' => [
+                ['product_id' => $productA->product_id, 'qty' => 10, 'unit_cost' => 10],
+                ['product_id' => $productB->product_id, 'qty' => 10, 'unit_cost' => 10],
+            ],
+        ]);
+
+        $order = $supplier->purchaseOrders()->first();
+
+        $this->actingAs($owner)->post(route('owner.suppliers.receive', $order->order_id), [
+            'date_received' => now()->format('Y-m-d'),
+            'items' => $order->items->mapWithKeys(fn ($item) => [$item->order_item_id => ['qty_received' => 10]])->all(),
+        ]);
+
+        $this->actingAs($owner)->post(route('owner.suppliers.damage', $order->order_id), [
+            'product_id' => $productA->product_id,
+            'quantity' => 2,
+            'reason' => 'Crushed in transit',
+        ]);
+
+        $this->actingAs($owner)->post(route('owner.suppliers.damage', $order->order_id), [
+            'product_id' => $productB->product_id,
+            'quantity' => 3,
+            'reason' => 'Water damage',
+        ]);
+
+        $reportA = ReturnRecord::where('product_id', $productA->product_id)->first();
+        $reportB = ReturnRecord::where('product_id', $productB->product_id)->first();
+
+        $this->actingAs($owner)->patch(route('owner.suppliers.return', $order->order_id), [
+            'return_ids' => [$reportA->return_id],
+        ])->assertSessionHasNoErrors();
+
+        $this->assertSame('resolved', $reportA->fresh()->status->value);
+        $this->assertSame('open', $reportB->fresh()->status->value);
     }
 }

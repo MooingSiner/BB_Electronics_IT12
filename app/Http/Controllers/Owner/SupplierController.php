@@ -160,8 +160,7 @@ class SupplierController extends Controller
                 },
             ]);
 
-        $openDamaged = $damageReports->filter(fn ($r) => $r->status === 'Reported')
-            ->map(fn ($r) => (object) ['id' => $r->id, 'product_name' => $r->product_name, 'quantity' => $r->quantity]);
+        $openDamaged = $damageReports->filter(fn ($r) => $r->status === 'Reported')->values();
 
         return view('owner.suppliers.show', ['order' => $item, 'openDamaged' => $openDamaged, 'damageReports' => $damageReports]);
     }
@@ -250,11 +249,19 @@ class SupplierController extends Controller
         return back()->with('success', 'Damaged product reported.');
     }
 
-    public function returnToSupplier(PurchaseOrder $order): RedirectResponse
+    public function returnToSupplier(Request $request, PurchaseOrder $order): RedirectResponse
     {
+        $validated = $request->validate([
+            'return_ids' => ['required', 'array', 'min:1'],
+            'return_ids.*' => ['integer'],
+        ], [
+            'return_ids.required' => 'Select at least one damage report to mark as returned.',
+        ]);
+
         $updated = ReturnRecord::where('order_id', $order->order_id)
             ->where('status', ReturnStatus::Open)
             ->where('condition', ReturnCondition::Damaged)
+            ->whereIn('return_id', $validated['return_ids'])
             ->get();
 
         foreach ($updated as $returnRecord) {
@@ -266,7 +273,7 @@ class SupplierController extends Controller
 
         AuditLog::record('refund', "Marked {$updated->count()} damaged item(s) as returned to supplier for order #{$order->order_id}.");
 
-        return back()->with('success', 'Damaged items marked as returned to supplier.');
+        return back()->with('success', "{$updated->count()} damaged item(s) marked as returned to supplier.");
     }
 
     public function replacement(Request $request, PurchaseOrder $order): RedirectResponse

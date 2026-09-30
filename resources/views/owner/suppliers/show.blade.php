@@ -27,15 +27,12 @@
                     class="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition">
                 Report Damage
             </button>
-            <form method="POST" action="{{ route('owner.suppliers.return', $order->id ?? 0) }}" class="inline">
-                @csrf
-                @method('PATCH')
-                <button type="submit"
-                        class="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition"
-                        onclick="return confirm('Mark all open damaged items for this order as returned?')">
-                    Mark Returned
-                </button>
-            </form>
+            @if(($openDamaged ?? collect())->isNotEmpty())
+            <button type="button" id="openReturnModal"
+                    class="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition">
+                Mark Returned
+            </button>
+            @endif
         </div>
     </div>
 
@@ -387,6 +384,60 @@
             </form>
         </div>
     </div>
+
+    {{-- Mark Returned Modal --}}
+    <div id="returnModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl p-6 max-w-lg w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-semibold text-slate-800">Mark Returned to Supplier</h3>
+                <button type="button" id="closeReturnModal" class="text-slate-400 hover:text-slate-600 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <form method="POST" action="{{ route('owner.suppliers.return', $order->id ?? 0) }}">
+                @csrf
+                @method('PATCH')
+
+                <p class="text-sm text-slate-500 mb-3">Select which open damage report(s) you're sending back to the supplier.</p>
+
+                <label class="flex items-center gap-2 mb-2 text-xs font-medium text-slate-600">
+                    <input type="checkbox" id="selectAllReturns" class="rounded border-slate-300">
+                    Select all
+                </label>
+
+                <div class="border border-slate-200 rounded-lg divide-y divide-slate-100 mb-5 max-h-72 overflow-y-auto">
+                    @foreach($openDamaged ?? [] as $dmg)
+                        <label class="flex items-start gap-3 p-3 cursor-pointer hover:bg-slate-50 transition">
+                            <input type="checkbox" name="return_ids[]" value="{{ $dmg->id }}"
+                                   class="return-checkbox mt-0.5 rounded border-slate-300">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="text-sm font-medium text-slate-800">{{ $dmg->product_name }}</p>
+                                    <span class="text-xs font-semibold text-red-600 flex-shrink-0">{{ $dmg->quantity }} pcs</span>
+                                </div>
+                                <p class="text-xs text-slate-400">{{ optional($dmg->date)->format('M d, Y') }}</p>
+                                <p class="text-xs text-slate-600">{{ $dmg->description }}</p>
+                            </div>
+                        </label>
+                    @endforeach
+                </div>
+
+                <div class="flex gap-2 justify-end">
+                    <button type="button" id="cancelReturnModal"
+                            class="px-4 py-2 text-sm border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 text-sm text-white rounded-lg hover:opacity-90 transition"
+                            style="background-color:#363E48">
+                        Mark Selected as Returned
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 @endpush
 
 @push('scripts')
@@ -447,5 +498,17 @@
         document.getElementById('openReplacementModal')?.addEventListener('click', () => replacementModal.classList.remove('hidden'));
         document.getElementById('closeReplacementModal').addEventListener('click', () => replacementModal.classList.add('hidden'));
         replacementModal.addEventListener('click', function (e) { if (e.target === this) this.classList.add('hidden'); });
+
+        const returnModal = document.getElementById('returnModal');
+        document.getElementById('openReturnModal')?.addEventListener('click', () => returnModal.classList.remove('hidden'));
+        document.getElementById('closeReturnModal').addEventListener('click', () => returnModal.classList.add('hidden'));
+        document.getElementById('cancelReturnModal').addEventListener('click', () => returnModal.classList.add('hidden'));
+        returnModal.addEventListener('click', function (e) { if (e.target === this) this.classList.add('hidden'); });
+
+        const selectAllReturns = document.getElementById('selectAllReturns');
+        const returnCheckboxes = document.querySelectorAll('.return-checkbox');
+        selectAllReturns?.addEventListener('change', function () {
+            returnCheckboxes.forEach(cb => { cb.checked = selectAllReturns.checked; });
+        });
     </script>
 @endpush
