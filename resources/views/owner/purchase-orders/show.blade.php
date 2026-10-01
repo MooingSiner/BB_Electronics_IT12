@@ -212,9 +212,19 @@
                                 <p class="text-xs text-slate-600 mb-2">{{ $report->description }}</p>
                                 <div class="flex items-center justify-between gap-2">
                                     @if($report->status === 'Returned to Store')
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Returned to Store</span>
+                                        <div>
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Returned to Store</span>
+                                            @if($report->resolved_date)
+                                                <p class="text-[11px] text-slate-400 mt-1">{{ abs($report->resolved_qty_change) }} unit(s) removed from stock on {{ \Carbon\Carbon::parse($report->resolved_date)->format('M d, Y') }}</p>
+                                            @endif
+                                        </div>
                                     @elseif($report->status === 'Replacement Received')
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Replacement Received</span>
+                                        <div>
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Replacement Received</span>
+                                            @if($report->resolved_date)
+                                                <p class="text-[11px] text-slate-400 mt-1">{{ $report->resolved_qty_change }} unit(s) added to stock on {{ \Carbon\Carbon::parse($report->resolved_date)->format('M d, Y') }}</p>
+                                            @endif
+                                        </div>
                                     @elseif($report->status === 'Resolved')
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Resolved</span>
                                     @else
