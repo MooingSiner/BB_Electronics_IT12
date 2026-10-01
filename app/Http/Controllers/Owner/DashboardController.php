@@ -123,7 +123,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * @return array<int, array{label: string, value: float}>
+     * @return array{unit: string, points: array<int, array{label: string, value: float}>}
      */
     private function buildSalesTrend(Carbon $dateFrom, Carbon $dateTo): array
     {
@@ -134,12 +134,14 @@ class DashboardController extends Controller
         if ($dateFrom->isSameDay($dateTo)) {
             $grouped = $sales->groupBy(fn (Sale $s) => $s->sale_date->format('H'));
 
-            return collect(range(0, 23))
+            $points = collect(range(0, 23))
                 ->map(fn (int $hour) => [
                     'label' => Carbon::createFromTime($hour)->format('ga'),
                     'value' => (float) ($grouped->get(str_pad((string) $hour, 2, '0', STR_PAD_LEFT)) ?? collect())->sum('total_amount'),
                 ])
                 ->all();
+
+            return ['unit' => 'hour', 'points' => $points];
         }
 
         if ($dateFrom->diffInDays($dateTo) > 60) {
@@ -154,7 +156,7 @@ class DashboardController extends Controller
                 ];
             }
 
-            return $points;
+            return ['unit' => 'month', 'points' => $points];
         }
 
         $grouped = $sales->groupBy(fn (Sale $s) => $s->sale_date->format('Y-m-d'));
@@ -168,7 +170,7 @@ class DashboardController extends Controller
             ];
         }
 
-        return $points;
+        return ['unit' => 'day', 'points' => $points];
     }
 
     /**

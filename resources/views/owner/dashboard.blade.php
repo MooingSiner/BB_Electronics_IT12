@@ -169,32 +169,72 @@
 
         {{-- Sales Trend --}}
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-            <div class="flex items-center justify-between mb-5">
+            <div class="flex items-center justify-between mb-1">
                 <h2 class="text-sm font-semibold text-[#363E48]">Sales Trend</h2>
                 <p class="text-xs text-slate-400">{{ $periodLabel ?? 'Today' }}</p>
             </div>
-            @php $trendTotal = collect($salesTrend ?? [])->sum('value'); @endphp
+            @php
+                $trendPoints = collect($salesTrend['points'] ?? []);
+                $trendUnit = $salesTrend['unit'] ?? 'day';
+                $trendTotal = $trendPoints->sum('value');
+            @endphp
             @if($trendTotal > 0)
                 @php
-                    $maxVal = collect($salesTrend)->max('value') ?: 1;
-                    $pointCount = count($salesTrend);
+                    $maxVal = $trendPoints->max('value') ?: 1;
+                    $pointCount = $trendPoints->count();
                     $labelStep = max(1, intdiv($pointCount, 8));
+                    $activePoints = $trendPoints->where('value', '>', 0);
+                    $peakPoint = $activePoints->sortByDesc('value')->first();
+                    $avgValue = $activePoints->count() > 0 ? $trendTotal / $activePoints->count() : 0;
+                    $showBarLabels = $pointCount <= 14;
                 @endphp
-                <div class="flex items-end gap-1 h-44">
-                    @foreach($salesTrend as $point)
-                        <div class="flex-1 h-full flex items-end" title="{{ $point['label'] }}: ₱{{ number_format($point['value'], 2) }}">
-                            <div class="w-full rounded-t transition-colors hover:opacity-80"
-                                 style="height: {{ $point['value'] > 0 ? max(4, ($point['value'] / $maxVal) * 100) : 1 }}%; background-color: {{ $point['value'] > 0 ? '#363E48' : '#E2E8F0' }};">
-                            </div>
+
+                {{-- Summary --}}
+                <p class="text-xs text-slate-500 mb-4">
+                    Total <span class="font-semibold text-slate-700">₱{{ number_format($trendTotal, 2) }}</span>
+                    &middot; Peak <span class="font-semibold text-slate-700">{{ $peakPoint['label'] }}</span> (₱{{ number_format($peakPoint['value'], 2) }})
+                    &middot; Avg <span class="font-semibold text-slate-700">₱{{ number_format($avgValue, 2) }}</span> / active {{ $trendUnit }}
+                </p>
+
+                {{-- Chart --}}
+                <div class="flex gap-2">
+                    <div class="flex flex-col justify-between text-[10px] text-slate-400 h-44 py-0.5 text-right w-12 flex-shrink-0">
+                        <span>₱{{ number_format($maxVal, 0) }}</span>
+                        <span>₱0</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-end gap-1 h-44 border-b border-slate-100">
+                            @foreach($trendPoints as $point)
+                                <div class="flex-1 h-full flex flex-col items-center justify-end" title="{{ $point['label'] }}: ₱{{ number_format($point['value'], 2) }}">
+                                    @if($showBarLabels && $point['value'] > 0)
+                                        <span class="text-[9px] text-slate-500 mb-0.5 whitespace-nowrap">₱{{ number_format($point['value'], 0) }}</span>
+                                    @endif
+                                    <div class="w-full rounded-t transition-colors hover:opacity-80"
+                                         style="height: {{ $point['value'] > 0 ? max(4, ($point['value'] / $maxVal) * 100) : 1 }}%; background-color: {{ $point['value'] > 0 ? '#363E48' : '#E2E8F0' }};">
+                                    </div>
+                                </div>
+                            @endforeach
                         </div>
-                    @endforeach
+                        <div class="flex gap-1 mt-2">
+                            @foreach($trendPoints as $i => $point)
+                                <div class="flex-1 text-center text-[10px] text-slate-400 truncate">
+                                    {{ $i % $labelStep === 0 ? $point['label'] : '' }}
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
                 </div>
-                <div class="flex gap-1 mt-2">
-                    @foreach($salesTrend as $i => $point)
-                        <div class="flex-1 text-center text-[10px] text-slate-400 truncate">
-                            {{ $i % $labelStep === 0 ? $point['label'] : '' }}
-                        </div>
-                    @endforeach
+
+                {{-- Legend --}}
+                <div class="flex items-center gap-4 mt-4 pt-3 border-t border-slate-100">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-sm" style="background-color:#363E48"></span>
+                        <span class="text-xs text-slate-500">Revenue</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-sm bg-slate-200"></span>
+                        <span class="text-xs text-slate-500">No sales</span>
+                    </div>
                 </div>
             @else
                 <p class="text-sm text-slate-400 text-center py-14">No sales recorded for {{ strtolower($periodLabel ?? 'today') }}.</p>
