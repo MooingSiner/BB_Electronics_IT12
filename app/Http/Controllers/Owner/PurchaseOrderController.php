@@ -316,6 +316,16 @@ class PurchaseOrderController extends Controller
                 'status' => ReturnStatus::Resolved,
                 'resolution' => ReturnResolution::SupplierExchange,
             ]);
+
+            // The damaged units were already added to stock when the delivery was received, so sending
+            // them back to the store must take them back out.
+            StockAdjustment::create([
+                'product_id' => $returnRecord->product_id,
+                'user_id' => Auth::id(),
+                'adjustment_date' => now(),
+                'quantity_change' => -$returnRecord->quantity,
+                'reason' => "Returned to store for damaged report #{$returnRecord->return_id}",
+            ]);
         }
 
         AuditLog::record('refund', "Marked {$updated->count()} damaged item(s) as returned to store for order #{$order->order_id}.");
