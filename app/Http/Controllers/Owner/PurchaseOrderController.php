@@ -145,11 +145,25 @@ class PurchaseOrderController extends Controller
             PurchaseOrderStatus::Cancelled->value => 'Cancelled',
         ];
 
-        $damagedByProduct = ReturnRecord::where('order_id', $order->order_id)
+        $damageInfoByProduct = ReturnRecord::where('order_id', $order->order_id)
             ->where('condition', ReturnCondition::Damaged)
             ->get()
             ->groupBy('product_id')
-            ->map(fn ($records) => $records->sum('quantity'));
+            ->map(function ($records) {
+                $resolvedRecords = $records->where('status', ReturnStatus::Resolved);
+                $resolutions = $resolvedRecords->pluck('resolution')->unique();
+
+                return (object) [
+                    'total' => $records->sum('quantity'),
+                    'open' => $records->where('status', ReturnStatus::Open)->sum('quantity'),
+                    'resolution_label' => match (true) {
+                        $resolvedRecords->isEmpty() => null,
+                        $resolutions->count() === 1 && $resolutions->first() === ReturnResolution::Replacement => 'Replaced',
+                        $resolutions->count() === 1 && $resolutions->first() === ReturnResolution::SupplierExchange => 'Returned to Store',
+                        default => 'Resolved',
+                    },
+                ];
+            });
 
         $item = (object) [
             'id' => $order->order_id,
@@ -160,8 +174,9 @@ class PurchaseOrderController extends Controller
             'status' => $statusLabels[$order->status->value] ?? 'Ordered',
             'is_archived' => $order->is_archived,
             'total_cost' => $order->items->sum(fn (OrderItem $i) => (float) $i->unit_cost * $i->quantity_ordered),
-            'items' => $order->items->map(function (OrderItem $i) use ($damagedByProduct) {
-                $damaged = (int) ($damagedByProduct[$i->product_id] ?? 0);
+            'items' => $order->items->map(function (OrderItem $i) use ($damageInfoByProduct) {
+                $info = $damageInfoByProduct->get($i->product_id);
+                $damaged = $info->total ?? 0;
 
                 return (object) [
                     'id' => $i->order_item_id,
@@ -169,7 +184,9 @@ class PurchaseOrderController extends Controller
                     'qty_ordered' => $i->quantity_ordered,
                     'qty_received' => $i->quantity_received,
                     'qty_damaged' => $damaged,
+                    'qty_open_damaged' => $info->open ?? 0,
                     'qty_accepted' => max(0, $i->quantity_received - $damaged),
+                    'damage_resolution_label' => $info->resolution_label ?? null,
                     'unit_cost' => (float) $i->unit_cost,
                     'is_cancelled' => $i->is_cancelled,
                 ];

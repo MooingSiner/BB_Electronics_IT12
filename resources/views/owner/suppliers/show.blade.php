@@ -165,14 +165,22 @@
                                         $qtyReceived = $item->qty_received ?? 0;
                                         $qtyOrdered = $item->qty_ordered ?? 0;
                                         $qtyDamaged = $item->qty_damaged ?? 0;
+                                        $qtyOpenDamaged = $item->qty_open_damaged ?? 0;
                                         $qtyAccepted = $item->qty_accepted ?? 0;
+                                        $resolutionLabel = $item->damage_resolution_label ?? null;
                                     @endphp
                                     @if($item->is_cancelled ?? false)
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Cancelled</span>
-                                    @elseif($qtyReceived > 0 && $qtyAccepted <= 0 && $qtyDamaged > 0)
+                                    @elseif($qtyOpenDamaged > 0 && $qtyReceived > 0 && $qtyAccepted <= 0)
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Damaged</span>
-                                    @elseif($qtyDamaged > 0)
+                                    @elseif($qtyOpenDamaged > 0)
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">Partial Damage</span>
+                                    @elseif($qtyDamaged > 0 && $resolutionLabel === 'Replaced')
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Replaced</span>
+                                    @elseif($qtyDamaged > 0 && $resolutionLabel === 'Returned to Supplier')
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Returned to Supplier</span>
+                                    @elseif($qtyDamaged > 0 && $resolutionLabel)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Resolved</span>
                                     @elseif($qtyReceived >= $qtyOrdered)
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Received</span>
                                     @elseif($qtyReceived > 0)
