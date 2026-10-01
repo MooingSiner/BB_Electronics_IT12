@@ -90,7 +90,7 @@ class PurchaseOrderController extends Controller
         $products = Product::where('is_active', true)
             ->orderBy('product_name')
             ->get()
-            ->map(fn (Product $product) => (object) ['id' => $product->product_id, 'name' => $product->product_name]);
+            ->map(fn (Product $product) => (object) ['id' => $product->product_id, 'name' => $product->product_name, 'cost_price' => (float) $product->cost_price]);
 
         return view('owner.purchase-orders.create', compact('stores', 'products'));
     }

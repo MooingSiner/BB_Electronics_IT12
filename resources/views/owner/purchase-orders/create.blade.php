@@ -48,11 +48,10 @@
                     <div class="item-row flex gap-3 items-end p-3 bg-slate-50 rounded-md border border-slate-200">
                         <div class="flex-1">
                             <label class="block text-xs font-medium text-slate-600 mb-1">Product</label>
-                            <select name="items[0][product_id]"
-                                    class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
+                            <select name="items[0][product_id]" class="item-product-select w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
                                 <option value="">Select product</option>
                                 @foreach($products ?? [] as $product)
-                                    <option value="{{ $product->id }}">{{ $product->name }}</option>
+                                    <option value="{{ $product->id }}" data-cost="{{ $product->cost_price }}">{{ $product->name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -64,7 +63,7 @@
                         <div class="w-36">
                             <label class="block text-xs font-medium text-slate-600 mb-1">Unit Cost (₱)</label>
                             <input type="number" name="items[0][unit_cost]" step="0.01" min="0" placeholder="0.00"
-                                   class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
+                                   class="item-cost-input w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
                         </div>
                         <div class="pb-0.5">
                             <button type="button" onclick="this.closest('.item-row').remove()"
@@ -198,7 +197,7 @@
             const container = document.getElementById('itemsContainer');
             const idx = itemCount++;
 
-            const productsOptions = `{!! collect($products ?? [])->map(fn($p) => '<option value="'.$p->id.'">'.$p->name.'</option>')->implode('') !!}`;
+            const productsOptions = `{!! collect($products ?? [])->map(fn($p) => '<option value="'.$p->id.'" data-cost="'.$p->cost_price.'">'.$p->name.'</option>')->implode('') !!}`;
 
             const row = document.createElement('div');
             row.className = 'item-row flex gap-3 items-end p-3 bg-slate-50 rounded-md border border-slate-200';
@@ -206,7 +205,7 @@
                 <div class="flex-1">
                     <label class="block text-xs font-medium text-slate-600 mb-1">Product</label>
                     <select name="items[${idx}][product_id]"
-                            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2">
+                            class="item-product-select w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2">
                         <option value="">Select product</option>
                         ${productsOptions}
                     </select>
@@ -219,7 +218,7 @@
                 <div class="w-36">
                     <label class="block text-xs font-medium text-slate-600 mb-1">Unit Cost (₱)</label>
                     <input type="number" name="items[${idx}][unit_cost]" step="0.01" min="0" placeholder="0.00"
-                           class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2">
+                           class="item-cost-input w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2">
                 </div>
                 <div class="pb-0.5">
                     <button type="button" onclick="this.closest('.item-row').remove()"
@@ -229,6 +228,21 @@
                 </div>
             `;
             container.appendChild(row);
+            wireCostAutofill(row);
         });
+
+        // Auto-fill Unit Cost from the product's cost_price in Inventory when a product is picked
+        function wireCostAutofill(row) {
+            const productSelect = row.querySelector('.item-product-select');
+            const costInput = row.querySelector('.item-cost-input');
+
+            productSelect.addEventListener('change', function () {
+                const selected = productSelect.options[productSelect.selectedIndex];
+                const cost = selected ? selected.dataset.cost : '';
+                costInput.value = cost ? parseFloat(cost).toFixed(2) : '';
+            });
+        }
+
+        document.querySelectorAll('#itemsContainer .item-row').forEach(wireCostAutofill);
     </script>
 @endpush
