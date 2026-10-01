@@ -14,32 +14,35 @@
         ← Back to Inventory
     </a>
 
-    {{-- Header Card --}}
-    <div class="rounded-2xl shadow-sm border border-slate-200 p-6 mb-6" style="background: linear-gradient(135deg, #363E48 0%, #454f5c 100%);">
-        <div class="flex items-start justify-between gap-4 flex-wrap">
-            <div class="flex items-start gap-4">
-                <div class="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 accent-bg overflow-hidden">
-                    @if($item->image_url)
-                        <img src="{{ $item->image_url }}" alt="{{ $item->name }}" class="w-full h-full object-cover">
+    {{-- Header --}}
+    <div class="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-4 mb-6">
+        {{-- Product Image --}}
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-3">
+            <div class="w-full aspect-square rounded-xl flex items-center justify-center flex-shrink-0 accent-bg overflow-hidden">
+                @if($item->image_url)
+                    <img src="{{ $item->image_url }}" alt="{{ $item->name }}" class="w-full h-full object-cover">
+                @else
+                    <svg class="w-16 h-16 accent-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
+                    </svg>
+                @endif
+            </div>
+        </div>
+
+        {{-- Info Card --}}
+        <div class="rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between gap-4" style="background: linear-gradient(135deg, #363E48 0%, #454f5c 100%);">
+            <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <h1 class="text-2xl font-bold text-white">{{ $item->name }}</h1>
+                    @if(! $item->is_active)
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/15 text-white">Archived</span>
                     @else
-                        <svg class="w-7 h-7 accent-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
-                        </svg>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-400/20 text-green-300">Active</span>
                     @endif
                 </div>
-                <div>
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <h1 class="text-2xl font-bold text-white">{{ $item->name }}</h1>
-                        @if(! $item->is_active)
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/15 text-white">Archived</span>
-                        @else
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-400/20 text-green-300">Active</span>
-                        @endif
-                    </div>
-                    <p class="text-sm text-white/60 mt-1 font-mono">{{ $item->code }} &middot; {{ $item->category }}</p>
-                </div>
+                <p class="text-sm text-white/60 mt-1 font-mono">{{ $item->code }} &middot; {{ $item->category }}</p>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
                 <a href="{{ route('owner.inventory.edit', $item->id) }}"
                    class="px-3 py-1.5 text-xs font-medium rounded-md bg-white/10 text-white hover:bg-white/20 transition">
                     Edit
