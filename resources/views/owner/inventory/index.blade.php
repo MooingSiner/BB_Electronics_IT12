@@ -151,6 +151,10 @@
                                    class="px-2.5 py-1 text-xs border border-slate-300 rounded-md text-slate-600 hover:bg-slate-100 transition">
                                     Stock In ↓
                                 </a>
+                                <a href="{{ route('owner.inventory.stockout', $product->id) }}"
+                                   class="px-2.5 py-1 text-xs border border-slate-300 rounded-md text-slate-600 hover:bg-slate-100 transition">
+                                    Stock Out ↑
+                                </a>
                                 <a href="{{ route('owner.inventory.history', $product->id) }}"
                                    class="px-2.5 py-1 text-xs border border-slate-300 rounded-md text-slate-600 hover:bg-slate-100 transition">
                                     History

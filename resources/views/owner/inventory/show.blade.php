@@ -52,6 +52,10 @@
                    class="px-3 py-1.5 text-xs font-medium rounded-md bg-white/10 text-white hover:bg-white/20 transition">
                     Stock In
                 </a>
+                <a href="{{ route('owner.inventory.stockout', $item->id) }}"
+                   class="px-3 py-1.5 text-xs font-medium rounded-md bg-white/10 text-white hover:bg-white/20 transition">
+                    Stock Out
+                </a>
                 <a href="{{ route('owner.inventory.history', $item->id) }}"
                    class="px-3 py-1.5 text-xs font-medium rounded-md bg-white/10 text-white hover:bg-white/20 transition">
                     History

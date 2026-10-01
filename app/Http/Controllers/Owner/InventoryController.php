@@ -196,6 +196,43 @@ class InventoryController extends Controller
             ->with('success', "Added {$validated['quantity']} unit(s) to stock.");
     }
 
+    public function stockOut(Product $product): View
+    {
+        return view('owner.inventory.stock-out', ['item' => (object) [
+            'id' => $product->product_id,
+            'code' => $product->product_code,
+            'name' => $product->product_name,
+            'stock' => $product->quantity_on_hand,
+        ]]);
+    }
+
+    public function stockOutStore(Request $request, Product $product): RedirectResponse
+    {
+        $validated = $request->validate([
+            'quantity' => ['required', 'integer', 'min:1', 'max:'.$product->quantity_on_hand],
+            'reason' => ['required', 'string', 'max:255'],
+            'date_adjusted' => ['required', 'date', 'before_or_equal:today'],
+        ], [
+            'quantity.max' => 'Quantity can\'t be more than the '.$product->quantity_on_hand.' unit(s) currently in stock.',
+        ]);
+
+        StockAdjustment::create([
+            'product_id' => $product->product_id,
+            'user_id' => Auth::id(),
+            'adjustment_date' => $validated['date_adjusted'],
+            'quantity_change' => -$validated['quantity'],
+            'reason' => $validated['reason'],
+        ]);
+
+        AuditLog::record(
+            'stock_adjustment',
+            "Removed {$validated['quantity']} unit(s) from {$product->product_code} ({$product->product_name}) — {$validated['reason']}"
+        );
+
+        return redirect()->route('owner.inventory.show', $product->product_id)
+            ->with('success', "Removed {$validated['quantity']} unit(s) from stock.");
+    }
+
     public function bulkStockIn(): View
     {
         $products = Product::where('is_active', true)

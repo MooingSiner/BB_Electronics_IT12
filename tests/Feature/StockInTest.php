@@ -64,4 +64,52 @@ class StockInTest extends TestCase
         $this->assertSame(15, $productA->fresh()->quantity_on_hand);
         $this->assertSame(23, $productB->fresh()->quantity_on_hand);
     }
+
+    public function test_owner_can_stock_out_to_correct_a_miscount(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        $product = Product::factory()->for(Category::factory())->create(['quantity_on_hand' => 10]);
+
+        $response = $this->actingAs($owner)->post(route('owner.inventory.stockout.store', $product->product_id), [
+            'quantity' => 4,
+            'reason' => 'Accidentally added extra during stock-in',
+            'date_adjusted' => now()->format('Y-m-d'),
+        ]);
+
+        $response->assertRedirect(route('owner.inventory.show', $product->product_id));
+        $this->assertSame(6, $product->fresh()->quantity_on_hand);
+        $this->assertDatabaseHas('stock_adjustment', [
+            'product_id' => $product->product_id,
+            'quantity_change' => -4,
+        ]);
+    }
+
+    public function test_stock_out_cannot_exceed_current_stock(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        $product = Product::factory()->for(Category::factory())->create(['quantity_on_hand' => 5]);
+
+        $response = $this->actingAs($owner)->post(route('owner.inventory.stockout.store', $product->product_id), [
+            'quantity' => 6,
+            'reason' => 'Too many',
+            'date_adjusted' => now()->format('Y-m-d'),
+        ]);
+
+        $response->assertSessionHasErrors('quantity');
+        $this->assertSame(5, $product->fresh()->quantity_on_hand);
+    }
+
+    public function test_stock_out_requires_a_reason(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        $product = Product::factory()->for(Category::factory())->create(['quantity_on_hand' => 10]);
+
+        $response = $this->actingAs($owner)->post(route('owner.inventory.stockout.store', $product->product_id), [
+            'quantity' => 2,
+            'date_adjusted' => now()->format('Y-m-d'),
+        ]);
+
+        $response->assertSessionHasErrors('reason');
+        $this->assertSame(10, $product->fresh()->quantity_on_hand);
+    }
 }

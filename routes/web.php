@@ -53,6 +53,8 @@ Route::middleware(['auth', 'role:owner_manager'])->prefix('owner')->name('owner.
     Route::put('/inventory/{product}', [OwnerInventoryController::class, 'update'])->name('inventory.update');
     Route::get('/inventory/{product}/stock-in', [OwnerInventoryController::class, 'stockIn'])->name('inventory.stockin');
     Route::post('/inventory/{product}/stock-in', [OwnerInventoryController::class, 'stockInStore'])->name('inventory.stockin.store');
+    Route::get('/inventory/{product}/stock-out', [OwnerInventoryController::class, 'stockOut'])->name('inventory.stockout');
+    Route::post('/inventory/{product}/stock-out', [OwnerInventoryController::class, 'stockOutStore'])->name('inventory.stockout.store');
     Route::get('/inventory/{product}/history', [OwnerInventoryController::class, 'history'])->name('inventory.history');
     Route::post('/inventory/{product}/archive', [OwnerInventoryController::class, 'archive'])->name('inventory.archive');
     Route::post('/inventory/{product}/restore', [OwnerInventoryController::class, 'restore'])->name('inventory.restore');
