@@ -30,19 +30,20 @@
         </div>
 
         {{-- Info Card --}}
-        <div class="rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between gap-4" style="background: linear-gradient(135deg, #363E48 0%, #454f5c 100%);">
-            <div>
-                <div class="flex items-center gap-2 flex-wrap">
-                    <h1 class="text-2xl font-bold text-white">{{ $item->name }}</h1>
-                    @if(! $item->is_active)
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/15 text-white">Archived</span>
-                    @else
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-400/20 text-green-300">Active</span>
-                    @endif
+        <div class="rounded-2xl shadow-sm border border-slate-200 p-6" style="background: linear-gradient(135deg, #363E48 0%, #454f5c 100%);">
+            <div class="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h1 class="text-2xl font-bold text-white">{{ $item->name }}</h1>
+                        @if(! $item->is_active)
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/15 text-white">Archived</span>
+                        @else
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-400/20 text-green-300">Active</span>
+                        @endif
+                    </div>
+                    <p class="text-sm text-white/60 mt-1 font-mono">{{ $item->code }} &middot; {{ $item->category }}</p>
                 </div>
-                <p class="text-sm text-white/60 mt-1 font-mono">{{ $item->code }} &middot; {{ $item->category }}</p>
-            </div>
-            <div class="flex items-center gap-2 flex-wrap">
+                <div class="flex items-center gap-2 flex-wrap">
                 <a href="{{ route('owner.inventory.edit', $item->id) }}"
                    class="px-3 py-1.5 text-xs font-medium rounded-md bg-white/10 text-white hover:bg-white/20 transition">
                     Edit
@@ -71,6 +72,7 @@
                     </button>
                 </form>
                 @endif
+                </div>
             </div>
         </div>
     </div>
