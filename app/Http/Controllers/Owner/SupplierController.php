@@ -304,10 +304,9 @@ class SupplierController extends Controller
 
             if ($requestedQty > $maxDamageable) {
                 $productName = $orderItem?->product?->product_name ?? 'That product';
+                $message = "{$productName}: you can report at most {$maxDamageable} unit(s) — that's what's left of its received quantity for this order that hasn't already been reported damaged.";
 
-                return back()->withErrors([
-                    'items' => "{$productName}: you can report at most {$maxDamageable} unit(s) — that's what's left of its received quantity for this order that hasn't already been reported damaged.",
-                ])->withInput();
+                return back()->withErrors(['items' => $message])->withInput()->with('error', $message);
             }
         }
 
@@ -423,6 +422,12 @@ class SupplierController extends Controller
 
         $order->load('items');
 
+        $damagedByProduct = ReturnRecord::where('order_id', $order->order_id)
+            ->where('condition', ReturnCondition::Damaged)
+            ->get()
+            ->groupBy('product_id')
+            ->map(fn ($records) => $records->sum('quantity'));
+
         foreach ($validated['items'] as $orderItemId => $data) {
             $orderItem = $order->items->firstWhere('order_item_id', (int) $orderItemId);
 
@@ -431,6 +436,17 @@ class SupplierController extends Controller
             }
 
             $cancelled = (bool) ($data['cancelled'] ?? false);
+
+            if (! $cancelled) {
+                $alreadyDamaged = (int) ($damagedByProduct[$orderItem->product_id] ?? 0);
+
+                if ($alreadyDamaged > 0 && $data['qty_received'] < $alreadyDamaged) {
+                    $productName = $orderItem->product->product_name ?? 'That product';
+                    $message = "{$productName}: quantity received can't be set below {$alreadyDamaged} — that many units already have a damage report against this order.";
+
+                    return back()->withErrors(['items' => $message])->withInput()->with('error', $message);
+                }
+            }
 
             $orderItem->update([
                 // Cancelling never rolls back quantity already received; it only stops the item from blocking completion.
