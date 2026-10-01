@@ -115,8 +115,8 @@
 {{-- Main Grid --}}
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-    {{-- Recent Transactions (col-span-2) --}}
-    <div class="lg:col-span-2">
+    {{-- Recent Transactions + Sales Trend (col-span-2) --}}
+    <div class="lg:col-span-2 space-y-6">
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
                 <div>
@@ -165,6 +165,40 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+
+        {{-- Sales Trend --}}
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <div class="flex items-center justify-between mb-5">
+                <h2 class="text-sm font-semibold text-[#363E48]">Sales Trend</h2>
+                <p class="text-xs text-slate-400">{{ $periodLabel ?? 'Today' }}</p>
+            </div>
+            @php $trendTotal = collect($salesTrend ?? [])->sum('value'); @endphp
+            @if($trendTotal > 0)
+                @php
+                    $maxVal = collect($salesTrend)->max('value') ?: 1;
+                    $pointCount = count($salesTrend);
+                    $labelStep = max(1, intdiv($pointCount, 8));
+                @endphp
+                <div class="flex items-end gap-1 h-44">
+                    @foreach($salesTrend as $point)
+                        <div class="flex-1 h-full flex items-end" title="{{ $point['label'] }}: ₱{{ number_format($point['value'], 2) }}">
+                            <div class="w-full rounded-t transition-colors hover:opacity-80"
+                                 style="height: {{ $point['value'] > 0 ? max(4, ($point['value'] / $maxVal) * 100) : 1 }}%; background-color: {{ $point['value'] > 0 ? '#363E48' : '#E2E8F0' }};">
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+                <div class="flex gap-1 mt-2">
+                    @foreach($salesTrend as $i => $point)
+                        <div class="flex-1 text-center text-[10px] text-slate-400 truncate">
+                            {{ $i % $labelStep === 0 ? $point['label'] : '' }}
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <p class="text-sm text-slate-400 text-center py-14">No sales recorded for {{ strtolower($periodLabel ?? 'today') }}.</p>
+            @endif
         </div>
     </div>
 

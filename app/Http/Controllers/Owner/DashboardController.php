@@ -100,6 +100,8 @@ class DashboardController extends Controller
             ->take(5)
             ->values();
 
+        $salesTrend = $this->buildSalesTrend($dateFrom, $dateTo);
+
         return view('owner.dashboard', [
             'totalProducts' => $totalProducts,
             'totalStock' => number_format($totalStock),
@@ -112,11 +114,61 @@ class DashboardController extends Controller
             'recentOrders' => $recentOrders,
             'fastMoving' => $fastMoving,
             'slowMoving' => $slowMoving,
+            'salesTrend' => $salesTrend,
             'period' => $period,
             'periodLabel' => $periodLabel,
             'dateFrom' => $dateFrom->format('Y-m-d'),
             'dateTo' => $dateTo->format('Y-m-d'),
         ]);
+    }
+
+    /**
+     * @return array<int, array{label: string, value: float}>
+     */
+    private function buildSalesTrend(Carbon $dateFrom, Carbon $dateTo): array
+    {
+        $sales = Sale::where('status', SaleStatus::Completed)
+            ->whereBetween('sale_date', [$dateFrom, $dateTo])
+            ->get(['sale_date', 'total_amount']);
+
+        if ($dateFrom->isSameDay($dateTo)) {
+            $grouped = $sales->groupBy(fn (Sale $s) => $s->sale_date->format('H'));
+
+            return collect(range(0, 23))
+                ->map(fn (int $hour) => [
+                    'label' => Carbon::createFromTime($hour)->format('ga'),
+                    'value' => (float) ($grouped->get(str_pad((string) $hour, 2, '0', STR_PAD_LEFT)) ?? collect())->sum('total_amount'),
+                ])
+                ->all();
+        }
+
+        if ($dateFrom->diffInDays($dateTo) > 60) {
+            $grouped = $sales->groupBy(fn (Sale $s) => $s->sale_date->format('Y-m'));
+            $points = [];
+
+            for ($cursor = $dateFrom->copy()->startOfMonth(), $end = $dateTo->copy()->startOfMonth(); $cursor <= $end; $cursor->addMonth()) {
+                $key = $cursor->format('Y-m');
+                $points[] = [
+                    'label' => $cursor->format('M'),
+                    'value' => (float) ($grouped->get($key) ?? collect())->sum('total_amount'),
+                ];
+            }
+
+            return $points;
+        }
+
+        $grouped = $sales->groupBy(fn (Sale $s) => $s->sale_date->format('Y-m-d'));
+        $points = [];
+
+        for ($cursor = $dateFrom->copy()->startOfDay(), $end = $dateTo->copy()->startOfDay(); $cursor <= $end; $cursor->addDay()) {
+            $key = $cursor->format('Y-m-d');
+            $points[] = [
+                'label' => $cursor->format('M j'),
+                'value' => (float) ($grouped->get($key) ?? collect())->sum('total_amount'),
+            ];
+        }
+
+        return $points;
     }
 
     /**
