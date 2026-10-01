@@ -1,8 +1,8 @@
 <div class="h-full">
-<div class="flex h-full" x-data="{ cartOpen: true }">
+<div class="flex h-full" x-data="{ cartOpen: false }">
 
     {{-- ===================== LEFT PANEL ===================== --}}
-    <div class="flex-1 min-w-0 flex flex-col bg-white border-r border-slate-200">
+    <div class="flex-1 min-w-0 flex flex-col bg-white">
 
         {{-- Header --}}
         <div class="p-4 border-b border-slate-200 space-y-3">
@@ -93,8 +93,28 @@
         @endif
     </button>
 
-    {{-- ===================== RIGHT PANEL ===================== --}}
-    <div x-show="cartOpen" class="w-72 lg:w-80 xl:w-96 flex-shrink-0 flex flex-col bg-slate-50 border-l border-slate-200">
+    {{-- Backdrop (click to close) --}}
+    <div x-show="cartOpen"
+         x-cloak
+         @click="cartOpen = false"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 bg-black/40 z-30"></div>
+
+    {{-- ===================== RIGHT PANEL (popup drawer) ===================== --}}
+    <div x-show="cartOpen"
+         x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="translate-x-full"
+         x-transition:enter-end="translate-x-0"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="translate-x-0"
+         x-transition:leave-end="translate-x-full"
+         class="fixed inset-y-0 right-0 z-40 w-72 sm:w-80 lg:w-96 flex-shrink-0 flex flex-col bg-slate-50 border-l border-slate-200 shadow-2xl">
 
         {{-- Cart Header --}}
         <div class="p-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
