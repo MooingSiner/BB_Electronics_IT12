@@ -12,6 +12,7 @@ use App\Models\StockAdjustment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class InventoryController extends Controller
@@ -78,7 +79,7 @@ class InventoryController extends Controller
             'product_code' => Product::generateCode($category),
             'product_name' => $validated['name'],
             'description' => $validated['description'] ?? null,
-            'image_url' => $validated['image_url'] ?? null,
+            'image_url' => $this->resolveImageUrl($request, $validated),
             'unit_price' => $validated['unit_price'],
             'cost_price' => $validated['cost_price'] ?? 0,
             'quantity_on_hand' => $validated['initial_qty'],
@@ -143,7 +144,7 @@ class InventoryController extends Controller
             'category_id' => $this->resolveCategory($validated['category'])->category_id,
             'product_name' => $validated['name'],
             'description' => $validated['description'] ?? null,
-            'image_url' => $validated['image_url'] ?? null,
+            'image_url' => $this->resolveImageUrl($request, $validated),
             'unit_price' => $validated['unit_price'],
             'cost_price' => $validated['cost_price'] ?? 0,
             'reorder_level' => $validated['reorder_level'],
@@ -355,12 +356,27 @@ class InventoryController extends Controller
             'category' => ['required', 'string', 'max:80'],
             'description' => ['nullable', 'string'],
             'image_url' => ['nullable', 'url', 'max:500'],
+            'image_file' => ['nullable', 'image', 'max:4096'],
             'unit_price' => ['required', 'numeric', 'min:0'],
             'cost_price' => ['nullable', 'numeric', 'min:0'],
             'initial_qty' => [$forUpdate ? 'sometimes' : 'required', 'integer', 'min:0'],
             'reorder_level' => ['required', 'integer', 'min:0'],
             'warranty_period' => ['nullable', 'string', 'max:50'],
         ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     */
+    private function resolveImageUrl(Request $request, array $validated): ?string
+    {
+        if ($request->hasFile('image_file')) {
+            $path = $request->file('image_file')->store('products', 'public');
+
+            return Storage::disk('public')->url($path);
+        }
+
+        return $validated['image_url'] ?? null;
     }
 
     private function resolveCategory(string $label): Category

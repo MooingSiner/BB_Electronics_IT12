@@ -29,7 +29,7 @@
     @endif
 
     {{-- Form --}}
-    <form method="POST" action="{{ route('owner.inventory.update', $item->id) }}">
+    <form method="POST" action="{{ route('owner.inventory.update', $item->id) }}" enctype="multipart/form-data">
         @csrf
         @method('PUT')
 
@@ -76,13 +76,27 @@
                 @enderror
             </div>
 
-            {{-- Image URL --}}
+            {{-- Image --}}
             <div>
+                <label for="image_file" class="block text-sm font-medium text-slate-700 mb-1">Upload Image</label>
+                <input type="file" id="image_file" name="image_file" accept="image/*"
+                       class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-slate-100 file:text-slate-600 hover:file:bg-slate-200 @error('image_file') border-red-400 @enderror">
+                <p class="mt-1 text-xs text-slate-400">JPG, PNG, or GIF up to 4MB. Replaces the current photo below.</p>
+                @error('image_file')
+                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                @enderror
+
+                <div class="flex items-center gap-2 my-3">
+                    <div class="flex-1 h-px bg-slate-200"></div>
+                    <span class="text-xs text-slate-400">or</span>
+                    <div class="flex-1 h-px bg-slate-200"></div>
+                </div>
+
                 <label for="image_url" class="block text-sm font-medium text-slate-700 mb-1">Image URL</label>
                 <input type="url" id="image_url" name="image_url" value="{{ old('image_url', $item->image_url) }}"
                        placeholder="https://example.com/product-photo.jpg"
                        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 @error('image_url') border-red-400 @enderror">
-                <p class="mt-1 text-xs text-slate-400">Link to a hosted photo of this product. Leave blank to use a placeholder.</p>
+                <p class="mt-1 text-xs text-slate-400">Link to a hosted photo instead. Uploading a file above takes priority.</p>
                 @error('image_url')
                     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                 @enderror
