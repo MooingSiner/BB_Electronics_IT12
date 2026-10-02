@@ -116,7 +116,7 @@
          x-transition:leave-end="opacity-0 scale-95"
          @click.self="cartOpen = false"
          class="fixed inset-0 z-40 flex items-center justify-center p-4">
-        <div class="bg-slate-50 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[88vh] flex flex-col overflow-hidden">
+        <div class="bg-slate-50 rounded-2xl shadow-2xl w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden">
 
             {{-- Cart Header --}}
             <div class="p-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0 bg-white">
@@ -134,7 +134,8 @@
             <div class="flex-1 min-h-0 flex flex-col md:flex-row">
 
                 {{-- Cart Items (left) --}}
-                <div class="flex-1 min-h-0 overflow-y-auto p-4 space-y-2 md:border-r border-slate-200">
+                <div class="flex-1 min-h-0 overflow-y-auto p-4 md:border-r border-slate-200">
+                    <div class="grid gap-2 lg:grid-cols-2">
                     @forelse($cart as $cartKey => $item)
                     <div class="bg-white rounded-lg p-3 border border-slate-200" wire:key="cart-{{ $cartKey }}">
                         <div class="flex items-start justify-between mb-2">
@@ -160,17 +161,18 @@
                         </div>
                     </div>
                     @empty
-                    <div class="py-16 text-center text-slate-400 text-sm">
+                    <div class="lg:col-span-2 py-16 text-center text-slate-400 text-sm">
                         <svg class="w-10 h-10 mx-auto mb-2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                         </svg>
                         No items added yet.
                     </div>
                     @endforelse
+                    </div>
                 </div>
 
                 {{-- Discount / Totals / Payment (right) --}}
-                <div class="w-full md:w-80 flex-shrink-0 overflow-y-auto flex flex-col">
+                <div class="w-full md:w-96 flex-shrink-0 overflow-y-auto flex flex-col">
 
                     {{-- Discount Section --}}
                     <div class="p-4 border-b border-slate-200 flex-shrink-0">
