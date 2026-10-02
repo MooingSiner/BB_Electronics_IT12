@@ -126,7 +126,7 @@
          x-transition:leave-end="opacity-0 scale-95"
          @click.self="cartOpen = false"
          class="fixed inset-0 z-40 flex items-center justify-center p-4">
-        <div class="bg-slate-50 rounded-2xl shadow-2xl w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden">
+        <div class="bg-slate-50 rounded-2xl shadow-2xl w-full max-w-7xl max-h-[95vh] flex flex-col overflow-hidden">
 
             {{-- Cart Header --}}
             <div class="p-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0 bg-white">
@@ -144,30 +144,41 @@
             <div class="flex-1 min-h-0 flex flex-col md:flex-row">
 
                 {{-- Cart Items (left) --}}
-                <div class="flex-1 min-h-0 overflow-y-auto p-4 md:border-r border-slate-200">
+                <div class="flex-1 h-[554px] overflow-y-auto p-4 md:border-r border-slate-200">
                     <div class="grid gap-2 lg:grid-cols-2">
                     @forelse($cart as $cartKey => $item)
-                    <div class="bg-white rounded-lg p-3 border border-slate-200" wire:key="cart-{{ $cartKey }}">
-                        <div class="flex items-start justify-between mb-2">
-                            <div class="flex-1 min-w-0 mr-2">
-                                <p class="font-medium text-sm text-slate-800 truncate">{{ $item['name'] }}</p>
-                                <p class="text-xs text-slate-500">₱{{ number_format($item['price'], 2) }} each</p>
-                            </div>
-                            <button type="button" wire:click="removeFromCart('{{ $cartKey }}')" class="text-slate-400 hover:text-red-500 transition-colors flex-shrink-0">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    <div class="bg-white rounded-lg p-3 border border-slate-200 flex gap-3" wire:key="cart-{{ $cartKey }}">
+                        <div class="w-14 h-14 flex-shrink-0 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden">
+                            @if($item['image_url'] ?? null)
+                                <img src="{{ $item['image_url'] }}" alt="{{ $item['name'] }}" class="w-full h-full object-cover" loading="lazy">
+                            @else
+                                <svg class="w-6 h-6 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                 </svg>
-                            </button>
+                            @endif
                         </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-1">
-                                <input type="number"
-                                       value="{{ $item['quantity'] }}"
-                                       min="1"
-                                       wire:change="updateQuantity('{{ $cartKey }}', $event.target.value)"
-                                       class="w-16 h-7 text-center text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-1">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-start justify-between mb-2">
+                                <div class="flex-1 min-w-0 mr-2">
+                                    <p class="font-medium text-sm text-slate-800 truncate">{{ $item['name'] }}</p>
+                                    <p class="text-xs text-slate-500">₱{{ number_format($item['price'], 2) }} each</p>
+                                </div>
+                                <button type="button" wire:click="removeFromCart('{{ $cartKey }}')" class="text-slate-400 hover:text-red-500 transition-colors flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
                             </div>
-                            <span class="font-medium text-sm text-slate-800">₱{{ number_format($item['price'] * $item['quantity'], 2) }}</span>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-1">
+                                    <input type="number"
+                                           value="{{ $item['quantity'] }}"
+                                           min="1"
+                                           wire:change="updateQuantity('{{ $cartKey }}', $event.target.value)"
+                                           class="w-16 h-7 text-center text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-1">
+                                </div>
+                                <span class="font-medium text-sm text-slate-800">₱{{ number_format($item['price'] * $item['quantity'], 2) }}</span>
+                            </div>
                         </div>
                     </div>
                     @empty

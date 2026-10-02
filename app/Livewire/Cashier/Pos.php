@@ -22,7 +22,7 @@ class Pos extends Component
 
     public string $category = '';
 
-    /** @var array<string, array{product_id: int, name: string, price: float, quantity: int}> */
+    /** @var array<string, array{product_id: int, name: string, price: float, quantity: int, image_url: ?string}> */
     public array $cart = [];
 
     public string $discountType = 'none';
@@ -69,6 +69,7 @@ class Pos extends Component
             'name' => $product->product_name,
             'price' => (float) $product->unit_price,
             'quantity' => $currentQty + 1,
+            'image_url' => $product->image_url,
         ];
 
         $this->errorMessage = null;
