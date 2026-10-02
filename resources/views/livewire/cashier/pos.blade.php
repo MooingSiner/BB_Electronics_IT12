@@ -105,154 +105,165 @@
          x-transition:leave-end="opacity-0"
          class="fixed inset-0 bg-black/40 z-30"></div>
 
-    {{-- ===================== RIGHT PANEL (popup drawer) ===================== --}}
+    {{-- ===================== CART MODAL ===================== --}}
     <div x-show="cartOpen"
          x-cloak
          x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="translate-x-full"
-         x-transition:enter-end="translate-x-0"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
          x-transition:leave="transition ease-in duration-150"
-         x-transition:leave-start="translate-x-0"
-         x-transition:leave-end="translate-x-full"
-         class="fixed inset-y-0 right-0 z-40 w-72 sm:w-80 lg:w-96 flex-shrink-0 flex flex-col bg-slate-50 border-l border-slate-200 shadow-2xl">
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         @click.self="cartOpen = false"
+         class="fixed inset-0 z-40 flex items-center justify-center p-4">
+        <div class="bg-slate-50 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[88vh] flex flex-col overflow-hidden">
 
-        {{-- Cart Header --}}
-        <div class="p-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
-            <span class="font-semibold text-slate-800">Current Order</span>
-            <div class="flex items-center gap-3">
-                <button type="button" wire:click="clearCart" class="text-red-500 text-sm hover:underline transition-colors">Clear Cart</button>
-                <button type="button" @click="cartOpen = false" title="Hide cart" class="text-slate-400 hover:text-slate-600 transition-colors">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-                    </svg>
-                </button>
-            </div>
-        </div>
-
-        {{-- Cart Items --}}
-        <div class="flex-1 min-h-0 overflow-y-auto p-4 space-y-2">
-            @forelse($cart as $cartKey => $item)
-            <div class="bg-white rounded-lg p-3 border border-slate-200" wire:key="cart-{{ $cartKey }}">
-                <div class="flex items-start justify-between mb-2">
-                    <div class="flex-1 min-w-0 mr-2">
-                        <p class="font-medium text-sm text-slate-800 truncate">{{ $item['name'] }}</p>
-                        <p class="text-xs text-slate-500">₱{{ number_format($item['price'], 2) }} each</p>
-                    </div>
-                    <button type="button" wire:click="removeFromCart('{{ $cartKey }}')" class="text-slate-400 hover:text-red-500 transition-colors flex-shrink-0">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            {{-- Cart Header --}}
+            <div class="p-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0 bg-white">
+                <span class="font-semibold text-slate-800">Current Order</span>
+                <div class="flex items-center gap-3">
+                    <button type="button" wire:click="clearCart" class="text-red-500 text-sm hover:underline transition-colors">Clear Cart</button>
+                    <button type="button" @click="cartOpen = false" title="Close" class="text-slate-400 hover:text-slate-600 transition-colors">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
                     </button>
                 </div>
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-1">
-                        <input type="number"
-                               value="{{ $item['quantity'] }}"
-                               min="1"
-                               wire:change="updateQuantity('{{ $cartKey }}', $event.target.value)"
-                               class="w-16 h-7 text-center text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-1">
+            </div>
+
+            <div class="flex-1 min-h-0 flex flex-col md:flex-row">
+
+                {{-- Cart Items (left) --}}
+                <div class="flex-1 min-h-0 overflow-y-auto p-4 space-y-2 md:border-r border-slate-200">
+                    @forelse($cart as $cartKey => $item)
+                    <div class="bg-white rounded-lg p-3 border border-slate-200" wire:key="cart-{{ $cartKey }}">
+                        <div class="flex items-start justify-between mb-2">
+                            <div class="flex-1 min-w-0 mr-2">
+                                <p class="font-medium text-sm text-slate-800 truncate">{{ $item['name'] }}</p>
+                                <p class="text-xs text-slate-500">₱{{ number_format($item['price'], 2) }} each</p>
+                            </div>
+                            <button type="button" wire:click="removeFromCart('{{ $cartKey }}')" class="text-slate-400 hover:text-red-500 transition-colors flex-shrink-0">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-1">
+                                <input type="number"
+                                       value="{{ $item['quantity'] }}"
+                                       min="1"
+                                       wire:change="updateQuantity('{{ $cartKey }}', $event.target.value)"
+                                       class="w-16 h-7 text-center text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-1">
+                            </div>
+                            <span class="font-medium text-sm text-slate-800">₱{{ number_format($item['price'] * $item['quantity'], 2) }}</span>
+                        </div>
                     </div>
-                    <span class="font-medium text-sm text-slate-800">₱{{ number_format($item['price'] * $item['quantity'], 2) }}</span>
+                    @empty
+                    <div class="py-16 text-center text-slate-400 text-sm">
+                        <svg class="w-10 h-10 mx-auto mb-2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                        No items added yet.
+                    </div>
+                    @endforelse
                 </div>
+
+                {{-- Discount / Totals / Payment (right) --}}
+                <div class="w-full md:w-80 flex-shrink-0 overflow-y-auto flex flex-col">
+
+                    {{-- Discount Section --}}
+                    <div class="p-4 border-b border-slate-200 flex-shrink-0">
+                        <label class="block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">Discount</label>
+                        <div class="flex gap-2 mb-3">
+                            @foreach(['none' => 'None', 'percent' => '% Off', 'fixed' => '₱ Off'] as $val => $label)
+                            <button type="button"
+                                    wire:click="setDiscountType('{{ $val }}')"
+                                    class="flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors
+                                    {{ $discountType === $val ? 'text-white border-transparent' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50' }}"
+                                    @if($discountType === $val) style="background-color:#363E48;" @endif>
+                                {{ $label }}
+                            </button>
+                            @endforeach
+                        </div>
+                        <div class="flex gap-2 {{ $discountType === 'none' ? 'hidden' : '' }}">
+                            <input type="number"
+                                   wire:model.live.debounce.400ms="discountValue"
+                                   min="0"
+                                   step="0.01"
+                                   placeholder="{{ $discountType === 'percent' ? 'e.g. 10' : 'e.g. 50.00' }}"
+                                   class="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2"
+                                   style="--tw-ring-color:#363E48;">
+                        </div>
+                    </div>
+
+                    {{-- Totals --}}
+                    <div class="p-4 bg-white border-b border-slate-200 space-y-1.5 text-sm flex-shrink-0">
+                        <div class="flex items-center justify-between text-slate-600">
+                            <span>Cart Subtotal</span>
+                            <span>₱{{ number_format($subtotal, 2) }}</span>
+                        </div>
+                        @if($discountAmount > 0)
+                        <div class="flex items-center justify-between text-green-600">
+                            <span>Discount</span>
+                            <span>−₱{{ number_format($discountAmount, 2) }}</span>
+                        </div>
+                        @endif
+                        <div class="flex items-center justify-between font-bold text-base text-slate-800 pt-1 border-t border-slate-100">
+                            <span>TOTAL</span>
+                            <span>₱{{ number_format($total, 2) }}</span>
+                        </div>
+                    </div>
+
+                    {{-- Payment Method --}}
+                    <div class="p-4 space-y-3 flex-shrink-0">
+                        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide">Payment Method</label>
+                        <div class="flex gap-2 mb-3">
+                            @foreach(['Cash', 'GCash', 'Cheque'] as $method)
+                            <button type="button"
+                                    wire:click="setPayment('{{ $method }}')"
+                                    class="flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors
+                                    {{ $payment === $method ? 'text-white border-transparent' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50' }}"
+                                    @if($payment === $method) style="background-color:#363E48;" @endif>
+                                {{ $method }}
+                            </button>
+                            @endforeach
+                        </div>
+
+                        @if($payment === 'Cash')
+                        <label class="block text-xs text-slate-500 mb-1">Amount Received</label>
+                        <input type="number"
+                               wire:model.live.debounce.300ms="amountReceived"
+                               min="0"
+                               step="0.01"
+                               placeholder="0.00"
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 mb-2"
+                               style="--tw-ring-color:#363E48;">
+                        @if($change !== null && $change >= 0)
+                        <div class="bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-sm text-green-700 flex items-center justify-between">
+                            <span class="font-medium">Change</span>
+                            <span class="font-bold">₱{{ number_format($change, 2) }}</span>
+                        </div>
+                        @endif
+                        @endif
+
+                        {{-- Complete Sale --}}
+                        <button type="button"
+                                wire:click="completeSale"
+                                wire:loading.attr="disabled"
+                                wire:target="completeSale"
+                                class="w-full py-3 rounded-xl font-bold text-sm text-white transition-opacity mt-1
+                                {{ count($cart) === 0 ? 'opacity-40 cursor-not-allowed' : 'hover:opacity-90' }}"
+                                style="background-color:#363E48;"
+                                @if(count($cart) === 0) disabled @endif>
+                            Complete Sale
+                        </button>
+                    </div>
+
+                </div>
+
             </div>
-            @empty
-            <div class="py-8 text-center text-slate-400 text-sm">
-                <svg class="w-10 h-10 mx-auto mb-2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
-                No items added yet.
-            </div>
-            @endforelse
         </div>
-
-        {{-- Discount Section --}}
-        <div class="p-4 border-t border-b border-slate-200 flex-shrink-0">
-            <label class="block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">Discount</label>
-            <div class="flex gap-2 mb-3">
-                @foreach(['none' => 'None', 'percent' => '% Off', 'fixed' => '₱ Off'] as $val => $label)
-                <button type="button"
-                        wire:click="setDiscountType('{{ $val }}')"
-                        class="flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors
-                        {{ $discountType === $val ? 'text-white border-transparent' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50' }}"
-                        @if($discountType === $val) style="background-color:#363E48;" @endif>
-                    {{ $label }}
-                </button>
-                @endforeach
-            </div>
-            <div class="flex gap-2 {{ $discountType === 'none' ? 'hidden' : '' }}">
-                <input type="number"
-                       wire:model.live.debounce.400ms="discountValue"
-                       min="0"
-                       step="0.01"
-                       placeholder="{{ $discountType === 'percent' ? 'e.g. 10' : 'e.g. 50.00' }}"
-                       class="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2"
-                       style="--tw-ring-color:#363E48;">
-            </div>
-        </div>
-
-        {{-- Totals --}}
-        <div class="p-4 bg-white border-t border-slate-200 space-y-1.5 text-sm flex-shrink-0">
-            <div class="flex items-center justify-between text-slate-600">
-                <span>Cart Subtotal</span>
-                <span>₱{{ number_format($subtotal, 2) }}</span>
-            </div>
-            @if($discountAmount > 0)
-            <div class="flex items-center justify-between text-green-600">
-                <span>Discount</span>
-                <span>−₱{{ number_format($discountAmount, 2) }}</span>
-            </div>
-            @endif
-            <div class="flex items-center justify-between font-bold text-base text-slate-800 pt-1 border-t border-slate-100">
-                <span>TOTAL</span>
-                <span>₱{{ number_format($total, 2) }}</span>
-            </div>
-        </div>
-
-        {{-- Payment Method --}}
-        <div class="p-4 border-t border-slate-200 space-y-3 flex-shrink-0">
-            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide">Payment Method</label>
-            <div class="flex gap-2 mb-3">
-                @foreach(['Cash', 'GCash', 'Cheque'] as $method)
-                <button type="button"
-                        wire:click="setPayment('{{ $method }}')"
-                        class="flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors
-                        {{ $payment === $method ? 'text-white border-transparent' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50' }}"
-                        @if($payment === $method) style="background-color:#363E48;" @endif>
-                    {{ $method }}
-                </button>
-                @endforeach
-            </div>
-
-            @if($payment === 'Cash')
-            <label class="block text-xs text-slate-500 mb-1">Amount Received</label>
-            <input type="number"
-                   wire:model.live.debounce.300ms="amountReceived"
-                   min="0"
-                   step="0.01"
-                   placeholder="0.00"
-                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 mb-2"
-                   style="--tw-ring-color:#363E48;">
-            @if($change !== null && $change >= 0)
-            <div class="bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-sm text-green-700 flex items-center justify-between">
-                <span class="font-medium">Change</span>
-                <span class="font-bold">₱{{ number_format($change, 2) }}</span>
-            </div>
-            @endif
-            @endif
-
-            {{-- Complete Sale --}}
-            <button type="button"
-                    wire:click="completeSale"
-                    wire:loading.attr="disabled"
-                    wire:target="completeSale"
-                    class="w-full py-3 rounded-xl font-bold text-sm text-white transition-opacity mt-1
-                    {{ count($cart) === 0 ? 'opacity-40 cursor-not-allowed' : 'hover:opacity-90' }}"
-                    style="background-color:#363E48;"
-                    @if(count($cart) === 0) disabled @endif>
-                Complete Sale
-            </button>
-        </div>
-
     </div>
 
 </div>
