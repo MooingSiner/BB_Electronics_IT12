@@ -46,10 +46,20 @@
         <div class="flex-1 overflow-y-auto p-4" wire:loading.class="opacity-60">
             <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
                 @forelse($products as $product)
-                @php $outOfStock = $product->stock <= 0; @endphp
+                @php
+                    $outOfStock = $product->stock <= 0;
+                    $qtyInCart = $cart[(string) $product->id]['quantity'] ?? 0;
+                    $borderClass = $qtyInCart > 0 ? 'border-[#363E48] shadow-md' : 'border-slate-200';
+                @endphp
                 <div @if(! $outOfStock) wire:click="addToCart({{ $product->id }})" @endif
-                     class="bg-white border border-slate-200 rounded-xl p-4 relative transition-shadow
+                     class="bg-white rounded-xl p-4 relative transition-shadow border-2 {{ $borderClass }}
                     {{ $outOfStock ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-md' }}">
+                    @if($qtyInCart > 0)
+                        <span class="absolute -top-2 -right-2 z-10 inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 rounded-full text-xs font-bold text-white shadow"
+                              style="background-color:#363E48;">
+                            {{ $qtyInCart }}
+                        </span>
+                    @endif
                     <div class="aspect-square w-full mb-3 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden">
                         @if($product->image_url)
                             <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="w-full h-full object-cover" loading="lazy">
