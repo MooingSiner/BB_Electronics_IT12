@@ -13,7 +13,7 @@
     </style>
     @livewireStyles
 </head>
-<body class="bg-slate-100 flex h-screen overflow-hidden" x-data="{ sidebarCollapsed: false }">
+<body class="bg-slate-100 flex h-screen overflow-hidden" x-data="{ sidebarCollapsed: true }">
 
 {{-- ── Sidebar ─────────────────────────────────────────────────────────────── --}}
 <aside class="flex-shrink-0 flex flex-col h-full sidebar-bg transition-all duration-200"
