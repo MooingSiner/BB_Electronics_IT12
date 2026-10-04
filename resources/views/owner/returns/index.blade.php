@@ -96,6 +96,11 @@
         <div class="bg-white rounded-xl border shadow-sm overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b">
                 <h2 class="font-semibold text-slate-800">Warranty Claims</h2>
+                <a href="{{ route('owner.returns.claim') }}"
+                   class="px-4 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition-opacity"
+                   style="background-color:#363E48">
+                    + File Warranty Claim
+                </a>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -125,8 +130,8 @@
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Under Review</span>
                                 @elseif($w->status === 'Active')
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
-                                @elseif($w->status === 'Repaired')
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Repaired</span>
+                                @elseif($w->status === 'In Repair')
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">In Repair</span>
                                 @elseif($w->status === 'Completed')
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Completed</span>
                                 @elseif($w->status === 'Replaced')

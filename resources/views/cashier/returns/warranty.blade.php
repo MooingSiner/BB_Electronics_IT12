@@ -63,10 +63,20 @@
             <span class="text-slate-700">{{ \Carbon\Carbon::parse($warranty->claim_date)->format('M d, Y') }}</span>
         </div>
         @endif
+        <div class="px-5 py-3.5">
+            <span class="text-slate-500">Problem reported</span>
+            <p class="text-slate-700 mt-1">{{ $warranty->issue ?: 'No description recorded.' }}</p>
+        </div>
         <div class="flex justify-between items-center px-5 py-3.5">
             <span class="text-slate-500">Outcome</span>
             <span class="text-slate-700">{{ $warranty->outcome->value === 'n_a' ? 'N/A' : ucfirst(str_replace('_', ' ', $warranty->outcome->value)) }}</span>
         </div>
+        @if($warranty->resolution_notes)
+        <div class="px-5 py-3.5">
+            <span class="text-slate-500">Repair / resolution notes</span>
+            <p class="text-slate-700 mt-1">{{ $warranty->resolution_notes }}</p>
+        </div>
+        @endif
     </div>
 
 </div>

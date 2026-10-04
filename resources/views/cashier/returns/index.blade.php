@@ -125,8 +125,13 @@
 
     {{-- Warranty Tab --}}
     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-100">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
             <h2 class="font-semibold text-slate-800">Warranty Claims</h2>
+            <a href="{{ route('cashier.returns.claim') }}"
+               class="px-4 py-2 text-sm font-semibold text-white rounded-xl hover:opacity-90 transition-opacity"
+               style="background-color:#363E48;">
+                + File Warranty Claim
+            </a>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-sm">

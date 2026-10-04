@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Cashier;
 use App\Enums\ReturnCondition;
 use App\Enums\ReturnResolution;
 use App\Enums\SaleStatus;
+use App\Http\Controllers\Concerns\FilesWarrantyClaims;
 use App\Http\Controllers\Controller;
 use App\Models\ReturnRecord;
 use App\Models\Sale;
@@ -17,6 +18,8 @@ use Illuminate\View\View;
 
 class ReturnController extends Controller
 {
+    use FilesWarrantyClaims;
+
     public function index(Request $request): View
     {
         if ($request->input('tab', 'returns') === 'warranty') {
@@ -26,10 +29,10 @@ class ReturnController extends Controller
                 ->map(fn (Warranty $warranty) => (object) [
                     'id' => $warranty->warranty_id,
                     'product_name' => $warranty->saleItem->product->product_name ?? '—',
-                    'issue' => null,
+                    'issue' => $warranty->issue,
                     'purchase_date' => $warranty->start_date,
                     'warranty_until' => $warranty->end_date,
-                    'created_at' => $warranty->start_date,
+                    'created_at' => $warranty->claim_date ?? $warranty->start_date,
                     'status' => match ($warranty->claim_status->value) {
                         'claimed' => 'Pending',
                         'in_progress' => 'In Repair',
@@ -116,6 +119,18 @@ class ReturnController extends Controller
         ]);
 
         return redirect()->route('cashier.returns.index')->with('success', 'Return recorded.');
+    }
+
+    public function claim(Request $request): View
+    {
+        return view('cashier.returns.claim', $this->claimFormData($request));
+    }
+
+    public function claimStore(Request $request): RedirectResponse
+    {
+        $warranty = $this->storeWarrantyClaim($request);
+
+        return redirect()->route('cashier.returns.warranty', $warranty->warranty_id)->with('success', 'Warranty claim filed.');
     }
 
     public function warranty(Warranty $warranty): View

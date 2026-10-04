@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['sale_item_id', 'customer_name', 'contact_number', 'start_date', 'end_date', 'claim_status', 'claim_date', 'outcome'])]
+#[Fillable(['sale_item_id', 'customer_name', 'contact_number', 'start_date', 'end_date', 'claim_status', 'claim_date', 'issue', 'outcome', 'resolution_notes'])]
 class Warranty extends Model
 {
     /** @use HasFactory<WarrantyFactory> */

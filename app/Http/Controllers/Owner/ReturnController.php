@@ -8,6 +8,7 @@ use App\Enums\ReturnStatus;
 use App\Enums\SaleStatus;
 use App\Enums\WarrantyClaimStatus;
 use App\Enums\WarrantyOutcome;
+use App\Http\Controllers\Concerns\FilesWarrantyClaims;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\ReturnRecord;
@@ -23,6 +24,8 @@ use Illuminate\View\View;
 
 class ReturnController extends Controller
 {
+    use FilesWarrantyClaims;
+
     public function index(Request $request): View
     {
         if ($request->input('tab', 'returns') === 'warranty') {
@@ -197,6 +200,18 @@ class ReturnController extends Controller
         return redirect()->route('owner.returns.process', ['transaction_id' => $transaction->sale_id]);
     }
 
+    public function claim(Request $request): View
+    {
+        return view('owner.returns.claim', $this->claimFormData($request));
+    }
+
+    public function claimStore(Request $request): RedirectResponse
+    {
+        $warranty = $this->storeWarrantyClaim($request);
+
+        return redirect()->route('owner.returns.warranty', $warranty->warranty_id)->with('success', 'Warranty claim filed.');
+    }
+
     public function warranty(Warranty $warranty): View
     {
         $warranty->load('saleItem.product', 'saleItem.sale');
@@ -215,10 +230,12 @@ class ReturnController extends Controller
             'status_value' => $warranty->claim_status->value,
             'customerName' => $warranty->customer_name,
             'contactNumber' => $warranty->contact_number,
-            'issue' => $warranty->claim_status !== WarrantyClaimStatus::None ? 'Customer filed a warranty claim.' : 'No claim filed yet.',
+            'issue' => $warranty->issue ?: ($warranty->claim_status === WarrantyClaimStatus::None ? 'No claim filed yet.' : 'No description of the problem was recorded for this claim.'),
             'resolution' => $warranty->outcome && $warranty->outcome !== WarrantyOutcome::NotApplicable
                 ? ucwords(str_replace('_', ' ', $warranty->outcome->value))
                 : null,
+            'resolution_notes' => $warranty->resolution_notes,
+            'outcome_value' => $warranty->outcome->value,
         ];
 
         return view('owner.returns.warranty', ['warranty' => $item]);
@@ -229,12 +246,14 @@ class ReturnController extends Controller
         $validated = $request->validate([
             'status' => ['required', new Enum(WarrantyClaimStatus::class)],
             'outcome' => ['nullable', new Enum(WarrantyOutcome::class)],
+            'resolution_notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $warranty->update([
             'claim_status' => $validated['status'],
             'claim_date' => $validated['status'] !== WarrantyClaimStatus::None->value ? ($warranty->claim_date ?? now()) : $warranty->claim_date,
             'outcome' => $validated['outcome'] ?? $warranty->outcome,
+            'resolution_notes' => $validated['resolution_notes'] ?? $warranty->resolution_notes,
         ]);
 
         AuditLog::record(
@@ -259,7 +278,7 @@ class ReturnController extends Controller
         return match ($status) {
             WarrantyClaimStatus::None => 'Active',
             WarrantyClaimStatus::Claimed => 'Under Review',
-            WarrantyClaimStatus::InProgress => 'Repaired',
+            WarrantyClaimStatus::InProgress => 'In Repair',
             WarrantyClaimStatus::Resolved => 'Completed',
         };
     }
