@@ -71,4 +71,13 @@ class CostCodeTest extends TestCase
             ->assertSeeHtml('Capital price: TT.SD</p>')
             ->assertDontSee('66.50');
     }
+
+    public function test_owner_and_cashier_pages_include_the_confirm_popup(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        $cashier = User::factory()->cashierAttendant()->create();
+
+        $this->actingAs($owner)->get(route('owner.sales.index'))->assertSee('id="confirmDialog"', false);
+        $this->actingAs($cashier)->get(route('cashier.sales.index'))->assertSee('id="confirmDialog"', false);
+    }
 }

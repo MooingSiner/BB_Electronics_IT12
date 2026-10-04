@@ -139,5 +139,6 @@
 
 @stack('scripts')
 @livewireScripts
+@include('partials.confirm-dialog')
 </body>
 </html>
