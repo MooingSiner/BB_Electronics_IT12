@@ -65,6 +65,10 @@
             <span class="text-slate-500">Resolution</span>
             <span class="text-slate-700">{{ ucfirst($ret->resolution->value) }}</span>
         </div>
+        <div class="flex justify-between gap-6 px-5 py-3.5">
+            <span class="text-slate-500 flex-shrink-0">Stock</span>
+            <span class="text-slate-700 text-right">{{ $ret->stockNote() }}</span>
+        </div>
         <div class="flex justify-between items-center px-5 py-3.5">
             <span class="text-slate-500">Status</span>
             @if($ret->status->value === 'open')

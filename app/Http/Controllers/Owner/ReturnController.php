@@ -19,6 +19,7 @@ use App\Models\Warranty;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Enum;
 use Illuminate\View\View;
 
@@ -84,6 +85,8 @@ class ReturnController extends Controller
             'created_at' => $returnRecord->return_date,
             'status' => $returnRecord->status === ReturnStatus::Open ? 'Pending' : 'Completed',
             'status_value' => $returnRecord->status->value,
+            'stock_note' => $returnRecord->stockNote(),
+            'will_restock' => $returnRecord->willRestock(),
         ];
 
         return view('owner.returns.show', compact('return'));
@@ -155,13 +158,7 @@ class ReturnController extends Controller
                 'status' => ReturnStatus::Resolved,
             ]);
 
-            $restockable = in_array($item['condition'], [
-                ReturnCondition::WrongItem->value,
-                ReturnCondition::CustomerChangedMind->value,
-                ReturnCondition::Other->value,
-            ], true);
-
-            if ($restockable) {
+            if (ReturnCondition::from($item['condition'])->isRestockable()) {
                 StockAdjustment::create([
                     'product_id' => $item['product_id'],
                     'user_id' => Auth::id(),
@@ -188,11 +185,33 @@ class ReturnController extends Controller
 
     public function resolve(ReturnRecord $returnRecord): RedirectResponse
     {
-        $returnRecord->update(['status' => ReturnStatus::Resolved]);
+        if ($returnRecord->status === ReturnStatus::Resolved) {
+            return redirect()->route('owner.returns.show', $returnRecord->return_id)->with('error', 'This return was already resolved.');
+        }
 
-        AuditLog::record('refund', "Marked return #{$returnRecord->return_id} as resolved.");
+        $restock = $returnRecord->willRestock();
 
-        return redirect()->route('owner.returns.show', $returnRecord->return_id)->with('success', 'Return marked as resolved.');
+        DB::transaction(function () use ($returnRecord, $restock) {
+            $returnRecord->update(['status' => ReturnStatus::Resolved]);
+
+            if ($restock) {
+                StockAdjustment::create([
+                    'product_id' => $returnRecord->product_id,
+                    'user_id' => Auth::id(),
+                    'adjustment_date' => now(),
+                    'quantity_change' => $returnRecord->quantity,
+                    'reason' => "Restocked from return #{$returnRecord->return_id}",
+                ]);
+            }
+        });
+
+        $stockMessage = $restock
+            ? "{$returnRecord->quantity} unit(s) added back to stock."
+            : 'The item was not added back to stock.';
+
+        AuditLog::record('refund', "Marked return #{$returnRecord->return_id} as resolved. {$stockMessage}");
+
+        return redirect()->route('owner.returns.show', $returnRecord->return_id)->with('success', "Return marked as resolved. {$stockMessage}");
     }
 
     public function create(Sale $transaction): RedirectResponse

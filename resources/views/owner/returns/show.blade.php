@@ -25,7 +25,7 @@
             <button type="submit"
                     class="shrink-0 px-4 py-2 text-sm font-medium text-white rounded-lg transition-opacity hover:opacity-90"
                     style="background-color:#363E48"
-                    onclick="return confirm('Mark this return as resolved?')">
+                    onclick="return confirm('{{ $return->will_restock ? 'Mark this return as resolved? The item will be added back to stock.' : 'Mark this return as resolved? The item will NOT be added back to stock.' }}')">
                 Mark Resolved
             </button>
         </form>
@@ -65,6 +65,10 @@
             <div class="flex justify-between">
                 <dt class="text-slate-500">Date</dt>
                 <dd class="text-slate-700">{{ $return->created_at?->format('M d, Y g:i A') }}</dd>
+            </div>
+            <div class="flex justify-between gap-6">
+                <dt class="text-slate-500 flex-shrink-0">Stock</dt>
+                <dd class="text-slate-700 text-right">{{ $return->stock_note }}</dd>
             </div>
             <div class="flex justify-between items-center">
                 <dt class="text-slate-500">Status</dt>

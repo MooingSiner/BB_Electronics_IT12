@@ -37,6 +37,35 @@ class ReturnRecord extends Model
         ];
     }
 
+    /**
+     * A customer return puts the item back in stock when it is in a sellable condition.
+     */
+    public function willRestock(): bool
+    {
+        return $this->sale_id !== null && $this->condition->isRestockable();
+    }
+
+    public function stockNote(): string
+    {
+        $added = StockAdjustment::where('product_id', $this->product_id)
+            ->where('reason', "Restocked from return #{$this->return_id}")
+            ->first();
+
+        if ($added) {
+            return "{$added->quantity_change} unit(s) added back to stock on ".$added->adjustment_date->format('M d, Y').'.';
+        }
+
+        $condition = str_replace('_', ' ', $this->condition->value);
+
+        return match (true) {
+            $this->sale_id === null => 'Not a customer return, so stock is not changed here.',
+            $this->status === ReturnStatus::Open && $this->willRestock() => 'Will be added back to stock when the owner marks it resolved.',
+            $this->status === ReturnStatus::Open => "Will not be added back to stock, because the item is {$condition}.",
+            $this->willRestock() => 'No stock change was recorded for this return.',
+            default => "Not added back to stock, because the item is {$condition}.",
+        };
+    }
+
     public function sale(): BelongsTo
     {
         return $this->belongsTo(Sale::class, 'sale_id', 'sale_id');
