@@ -125,4 +125,19 @@ class BarcodeScanTest extends TestCase
         $this->actingAs($cashier)->get(route('cashier.inventory.index', ['search' => '4800123456789']))
             ->assertOk()->assertSee($match->product_name)->assertDontSee($other->product_name);
     }
+
+    public function test_the_owner_inventory_search_also_matches_the_category_and_is_live(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        $lighting = Category::factory()->create(['category_name' => 'Lighting Zed']);
+        $other = Category::factory()->create(['category_name' => 'Cables Zed']);
+        $bulb = $this->product(['category_id' => $lighting->category_id]);
+        $cord = $this->product(['category_id' => $other->category_id]);
+
+        $this->actingAs($owner)->get(route('owner.inventory.index', ['search' => 'Lighting Zed']))
+            ->assertSee($bulb->product_name)->assertDontSee($cord->product_name);
+
+        $this->actingAs($owner)->get(route('owner.inventory.index'))
+            ->assertSee('id="inventoryResults"', false)->assertSee('Search name, code, barcode or category');
+    }
 }

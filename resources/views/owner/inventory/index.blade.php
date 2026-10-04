@@ -8,6 +8,42 @@
     Dashboard / Inventory
 @endsection
 
+@push('scripts')
+<script>
+    (function () {
+        const form = document.getElementById('inventoryFilter');
+        const searchInput = form.querySelector('input[name="search"]');
+        let timer = null;
+        let latest = 0;
+
+        function refresh() {
+            const params = new URLSearchParams(new FormData(form));
+            [...params.keys()].forEach(key => { if (params.get(key) === '') params.delete(key); });
+            const url = form.action + (params.toString() ? '?' + params.toString() : '');
+            const ticket = ++latest;
+
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(response => response.text())
+                .then(html => {
+                    if (ticket !== latest) return;
+                    const fresh = new DOMParser().parseFromString(html, 'text/html').getElementById('inventoryResults');
+                    if (fresh) {
+                        document.getElementById('inventoryResults').replaceWith(fresh);
+                        history.replaceState(null, '', url);
+                    }
+                });
+        }
+
+        searchInput.addEventListener('input', () => {
+            clearTimeout(timer);
+            timer = setTimeout(refresh, 250);
+        });
+        form.querySelectorAll('select').forEach(select => select.addEventListener('change', refresh));
+        form.addEventListener('submit', event => { event.preventDefault(); clearTimeout(timer); refresh(); });
+    })();
+</script>
+@endpush
+
 @section('content')
 <style>
     .tip { position: relative; }
@@ -55,14 +91,14 @@
 
     {{-- Filter Card --}}
     <div class="bg-white rounded-xl shadow border border-slate-200 p-4 mb-5">
-        <form method="GET" action="{{ route('owner.inventory.index') }}" class="flex flex-wrap gap-3 items-end">
+        <form id="inventoryFilter" method="GET" action="{{ route('owner.inventory.index') }}" class="flex flex-wrap gap-3 items-end">
             @if($showArchived)
                 <input type="hidden" name="archived" value="1">
             @endif
             <div class="flex-1 min-w-[180px]">
                 <label class="block text-xs font-medium text-slate-600 mb-1">Search</label>
                 <input type="text" name="search" value="{{ request('search') }}"
-                       placeholder="Product name or code…"
+                       placeholder="Search name, code, barcode or category…" autocomplete="off"
                        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
             </div>
             <div class="min-w-[160px]">
@@ -86,18 +122,12 @@
                     <option value="Needs Restock" {{ request('status') === 'Needs Restock' ? 'selected' : '' }}>Needs Restock (Low + Out)</option>
                 </select>
             </div>
-            <div>
-                <button type="submit"
-                        class="px-4 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition"
-                        style="background-color:#363E48">
-                    Filter
-                </button>
-            </div>
+            <button type="submit" class="sr-only">Filter</button>
         </form>
     </div>
 
     {{-- Table --}}
-    <div class="bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
+    <div id="inventoryResults" class="bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
         <div class="overflow-x-auto">
 <table class="w-full text-sm">
             <thead>
