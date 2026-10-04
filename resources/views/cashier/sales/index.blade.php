@@ -92,6 +92,7 @@
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Transaction ID</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Product(s)</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Qty</th>
+                        <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Unit Price</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Total</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Discount</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Payment</th>
@@ -112,6 +113,7 @@
                         </td>
                         <td class="px-5 py-4 text-slate-700 max-w-48 truncate">{{ $txn->items_summary ?? $txn->product_name ?? '—' }}</td>
                         <td class="px-5 py-4 text-slate-600">{{ $txn->total_qty ?? '—' }}</td>
+                        <td class="px-5 py-4 text-slate-600 max-w-40 truncate" title="{{ $txn->unit_prices }}">{{ $txn->unit_prices }}</td>
                         <td class="px-5 py-4 font-semibold text-slate-800">₱{{ number_format($txn->total, 2) }}</td>
                         <td class="px-5 py-4 text-slate-600">
                             @if(($txn->discount_amount ?? 0) > 0)
@@ -156,7 +158,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="10" class="px-5 py-16 text-center text-slate-400 text-sm">
+                        <td colspan="11" class="px-5 py-16 text-center text-slate-400 text-sm">
                             <svg class="w-10 h-10 mx-auto mb-2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>

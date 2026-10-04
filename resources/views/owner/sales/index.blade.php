@@ -76,6 +76,7 @@
                     <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Transaction ID</th>
                     <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Product(s)</th>
                     <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Qty</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Unit Price</th>
                     <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Total</th>
                     <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Discount</th>
                     <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Payment</th>
@@ -93,6 +94,7 @@
                         </td>
                         <td class="px-5 py-3 text-slate-700 max-w-[180px] truncate">{{ $txn->products }}</td>
                         <td class="px-5 py-3 text-slate-600">{{ $txn->qty ?? '—' }}</td>
+                        <td class="px-5 py-3 text-slate-600 max-w-[140px] truncate" title="{{ $txn->unit_prices }}">{{ $txn->unit_prices }}</td>
                         <td class="px-5 py-3 font-medium text-slate-800">{{ $txn->total }}</td>
                         <td class="px-5 py-3">
                             @if($txn->discount)
@@ -159,6 +161,7 @@
                             <td class="px-5 py-3"><span class="font-mono text-xs text-slate-700">{{ $row['id'] }}</span></td>
                             <td class="px-5 py-3 text-slate-700">{{ $row['products'] }}</td>
                             <td class="px-5 py-3 text-slate-600">{{ $row['qty'] }}</td>
+                            <td class="px-5 py-3 text-slate-600">—</td>
                             <td class="px-5 py-3 font-medium text-slate-800">{{ $row['total'] }}</td>
                             <td class="px-5 py-3">
                                 @if($row['discount'])

@@ -38,6 +38,7 @@ class SalesController extends Controller
                 'code' => $sale->code(),
                 'products' => $sale->items->pluck('product.product_name')->filter()->implode(', '),
                 'qty' => $sale->items->sum('quantity'),
+                'unit_prices' => $sale->items->map(fn ($item) => '₱'.number_format((float) $item->unit_price, 2))->implode(', '),
                 'total' => '₱'.number_format((float) $sale->total_amount, 2),
                 'discount' => (float) $sale->subtotal > 0 ? round(((float) $sale->discount_amount / (float) $sale->subtotal) * 100) : 0,
                 'payment_method' => $sale->payment_method->label(),
