@@ -49,13 +49,13 @@
 </div>
 
 @if(($txn->status ?? '') === 'Voided')
-    <div class="max-w-3xl mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+    <div class="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
         <p class="font-semibold">This sale was voided{{ $txn->voided_at ? ' on '.\Carbon\Carbon::parse($txn->voided_at)->format('M d, Y g:i A') : '' }}.</p>
         @if($txn->void_reason)<p class="mt-0.5">Reason: {{ $txn->void_reason }}</p>@endif
         <p class="mt-0.5">The items were put back in stock.</p>
     </div>
 @elseif(($txn->void_blocked_reason ?? null))
-    <p class="max-w-3xl mb-5 text-xs text-slate-400">Void unavailable: {{ $txn->void_blocked_reason }}</p>
+    <p class="mb-5 text-xs text-slate-400">Void unavailable: {{ $txn->void_blocked_reason }}</p>
 @endif
 
 @if(empty($txn->void_blocked_reason) && ($txn->status ?? '') === 'Completed')
@@ -79,9 +79,9 @@
 @endif
 
 {{-- Main Grid --}}
-<div class="max-w-3xl">
+<div>
 
-    <div class="flex flex-col gap-5">
+    <div class="flex flex-col-reverse gap-5">
 
         {{-- Transaction Information Card --}}
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
