@@ -16,7 +16,9 @@ class BarcodeScanTest extends TestCase
 
     private function product(array $attributes = []): Product
     {
-        return Product::factory()->for(Category::factory())->create(array_merge([
+        $factory = isset($attributes['category_id']) ? Product::factory() : Product::factory()->for(Category::factory());
+
+        return $factory->create(array_merge([
             'quantity_on_hand' => 10,
             'unit_price' => 100,
         ], $attributes));
@@ -116,8 +118,9 @@ class BarcodeScanTest extends TestCase
     public function test_the_cashier_inventory_search_finds_a_product_by_barcode(): void
     {
         $cashier = User::factory()->cashierAttendant()->create();
-        $match = $this->product(['barcode' => '4800123456789']);
-        $other = $this->product(['barcode' => '1112223334445']);
+        $category = Category::factory()->create();
+        $match = $this->product(['barcode' => '4800123456789', 'category_id' => $category->category_id]);
+        $other = $this->product(['barcode' => '1112223334445', 'category_id' => $category->category_id]);
 
         $this->actingAs($cashier)->get(route('cashier.inventory.index', ['search' => '4800123456789']))
             ->assertOk()->assertSee($match->product_name)->assertDontSee($other->product_name);
