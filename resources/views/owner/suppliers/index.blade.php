@@ -153,6 +153,7 @@
             </tbody>
         </table>
 </div>
+@include('partials.pagination', ['paginator' => $orders])
     </div>
 
     {{-- Footer link --}}

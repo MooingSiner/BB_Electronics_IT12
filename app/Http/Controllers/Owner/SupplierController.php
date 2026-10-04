@@ -51,8 +51,9 @@ class SupplierController extends Controller
                 }
             })
             ->latest('order_date')
-            ->get()
-            ->map(fn (PurchaseOrder $order) => (object) [
+            ->paginate(15)
+            ->withQueryString()
+            ->through(fn (PurchaseOrder $order) => (object) [
                 'id' => $order->order_id,
                 'supplier' => $order->supplier->supplier_name ?? '—',
                 'invoice_number' => $order->invoice_number,
@@ -282,8 +283,9 @@ class SupplierController extends Controller
         $damaged = ReturnRecord::whereNotNull('supplier_id')
             ->with(['product', 'supplier'])
             ->latest('return_date')
-            ->get()
-            ->map(fn (ReturnRecord $r) => (object) [
+            ->paginate(15)
+            ->withQueryString()
+            ->through(fn (ReturnRecord $r) => (object) [
                 'id' => 'DMG-'.str_pad((string) $r->return_id, 4, '0', STR_PAD_LEFT),
                 'return_id' => $r->return_id,
                 'order_id' => $r->order_id,

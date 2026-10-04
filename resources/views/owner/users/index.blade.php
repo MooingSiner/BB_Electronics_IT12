@@ -121,6 +121,7 @@
                 </tbody>
             </table>
         </div>
+@include('partials.pagination', ['paginator' => $users])
 
         {{-- Footer --}}
         <div class="px-6 py-3 bg-slate-50 border-t text-xs text-slate-500">

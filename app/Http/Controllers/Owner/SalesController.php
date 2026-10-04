@@ -31,7 +31,7 @@ class SalesController extends Controller
             ->when($request->input('discount') === 'with', fn ($query) => $query->where('discount_amount', '>', 0))
             ->when($request->input('discount') === 'without', fn ($query) => $query->where('discount_amount', 0))
             ->latest('sale_date')
-            ->paginate(20)
+            ->paginate(15)
             ->withQueryString()
             ->through(fn (Sale $sale) => (object) [
                 'id' => $sale->sale_id,

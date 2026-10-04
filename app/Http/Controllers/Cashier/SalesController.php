@@ -29,8 +29,9 @@ class SalesController extends Controller
             ->when($request->input('date') === 'today', fn ($query) => $query->whereDate('sale_date', today()))
             ->when($request->boolean('mine'), fn ($query) => $query->where('user_id', Auth::id()))
             ->latest('sale_date')
-            ->get()
-            ->map(fn (Sale $sale) => $this->present($sale));
+            ->paginate(15)
+            ->withQueryString()
+            ->through(fn (Sale $sale) => $this->present($sale));
 
         return view('cashier.sales.index', compact('transactions'));
     }

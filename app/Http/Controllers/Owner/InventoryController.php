@@ -11,6 +11,8 @@ use App\Models\SaleItem;
 use App\Models\StockAdjustment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -45,8 +47,9 @@ class InventoryController extends Controller
             ->when($request->input('status') === 'In Stock', fn ($query) => $query->whereColumn('quantity_on_hand', '>', 'reorder_level'))
             ->when($request->input('status') === 'Needs Restock', fn ($query) => $query->whereColumn('quantity_on_hand', '<=', 'reorder_level'))
             ->orderBy('product_name')
-            ->get()
-            ->map(fn (Product $product) => (object) [
+            ->paginate(15)
+            ->withQueryString()
+            ->through(fn (Product $product) => (object) [
                 'id' => $product->product_id,
                 'code' => $product->product_code,
                 'name' => $product->product_name,
@@ -314,7 +317,7 @@ class InventoryController extends Controller
             ->with('success', count($validated['items']).' product(s) restocked.');
     }
 
-    public function history(Product $product): View
+    public function history(Request $request, Product $product): View
     {
         $adjustments = StockAdjustment::where('product_id', $product->product_id)
             ->with('user')
@@ -357,6 +360,13 @@ class InventoryController extends Controller
         return view('owner.inventory.history', [
             'item' => (object) ['id' => $product->product_id, 'code' => $product->product_code, 'name' => $product->product_name],
             'movements' => $movements,
+            'pagedMovements' => new LengthAwarePaginator(
+                $movements->forPage(Paginator::resolveCurrentPage(), 15)->values(),
+                $movements->count(),
+                15,
+                Paginator::resolveCurrentPage(),
+                ['path' => $request->url(), 'query' => $request->query()]
+            ),
         ]);
     }
 

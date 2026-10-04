@@ -80,7 +80,7 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-                @forelse($movements as $movement)
+                @forelse($pagedMovements as $movement)
                     <tr class="hover:bg-slate-50 transition">
                         <td class="px-4 py-3 text-slate-500 whitespace-nowrap">
                             {{ $movement->date ? \Carbon\Carbon::parse($movement->date)->format('M d, Y') : '—' }}
@@ -117,6 +117,7 @@
                 @endforelse
             </tbody>
         </table>
+        @include('partials.pagination', ['paginator' => $pagedMovements])
 </div>
     </div>
 @endsection

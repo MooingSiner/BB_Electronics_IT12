@@ -14,7 +14,7 @@ class AuditController extends Controller
         $logs = AuditLog::with('user')
             ->when($request->filled('action'), fn ($query) => $query->where('action', $request->string('action')))
             ->latest('created_at')
-            ->paginate(25)
+            ->paginate(15)
             ->withQueryString()
             ->through(fn (AuditLog $log) => (object) [
                 'id' => $log->audit_id,

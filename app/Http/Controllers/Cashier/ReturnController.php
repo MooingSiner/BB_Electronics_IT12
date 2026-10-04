@@ -26,8 +26,9 @@ class ReturnController extends Controller
         if ($request->input('tab', 'returns') === 'warranty') {
             $warranties = Warranty::with('saleItem.product')
                 ->latest('warranty_id')
-                ->get()
-                ->map(fn (Warranty $warranty) => (object) [
+                ->paginate(15)
+                ->withQueryString()
+                ->through(fn (Warranty $warranty) => (object) [
                     'id' => $warranty->warranty_id,
                     'product_name' => $warranty->saleItem->product->product_name ?? '—',
                     'issue' => $warranty->issue,
@@ -49,8 +50,9 @@ class ReturnController extends Controller
             ->when($request->input('status') === 'Pending', fn ($query) => $query->where('status', 'open'))
             ->when($request->input('status') === 'Approved', fn ($query) => $query->where('status', 'resolved'))
             ->latest('return_date')
-            ->get()
-            ->map(fn (ReturnRecord $return) => (object) [
+            ->paginate(15)
+            ->withQueryString()
+            ->through(fn (ReturnRecord $return) => (object) [
                 'id' => $return->return_id,
                 'transaction_id' => $return->sale_id,
                 'transaction_code' => $return->sale?->code(),

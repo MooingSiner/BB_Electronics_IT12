@@ -112,5 +112,6 @@
             </tbody>
         </table>
 </div>
+@include('partials.pagination', ['paginator' => $damaged])
     </div>
 @endsection

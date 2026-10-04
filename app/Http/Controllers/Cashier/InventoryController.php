@@ -36,8 +36,9 @@ class InventoryController extends Controller
             ->when($request->input('status') === 'in_stock', fn ($query) => $query->whereColumn('quantity_on_hand', '>', 'reorder_level'))
             ->when($request->input('status') === 'needs_restock', fn ($query) => $query->whereColumn('quantity_on_hand', '<=', 'reorder_level'))
             ->orderBy('product_name')
-            ->get()
-            ->map(fn (Product $product) => (object) [
+            ->paginate(15)
+            ->withQueryString()
+            ->through(fn (Product $product) => (object) [
                 'id' => $product->product_id,
                 'code' => $product->product_code,
                 'name' => $product->product_name,

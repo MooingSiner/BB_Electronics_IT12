@@ -29,8 +29,9 @@ class UserController extends Controller
             ))
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')))
             ->orderBy('full_name')
-            ->get()
-            ->map(fn (User $user) => (object) [
+            ->paginate(15)
+            ->withQueryString()
+            ->through(fn (User $user) => (object) [
                 'id' => $user->user_id,
                 'name' => $user->full_name,
                 'username' => $user->username,
@@ -38,9 +39,9 @@ class UserController extends Controller
                 'status' => $user->status === UserStatus::Active ? 'Active' : 'Inactive',
             ]);
 
-        $activeCount = $users->where('status', 'Active')->count();
-        $inactiveCount = $users->where('status', 'Inactive')->count();
-        $totalCount = $users->count();
+        $activeCount = User::where('status', UserStatus::Active)->count();
+        $inactiveCount = User::where('status', UserStatus::Inactive)->count();
+        $totalCount = User::count();
 
         return view('owner.users.index', compact('users', 'activeCount', 'inactiveCount', 'totalCount'));
     }

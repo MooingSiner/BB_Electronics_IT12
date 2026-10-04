@@ -51,8 +51,9 @@ class PurchaseOrderController extends Controller
                 }
             })
             ->latest('order_date')
-            ->get()
-            ->map(fn (PurchaseOrder $order) => (object) [
+            ->paginate(15)
+            ->withQueryString()
+            ->through(fn (PurchaseOrder $order) => (object) [
                 'id' => $order->order_id,
                 'store' => $order->store->store_name ?? '—',
                 'invoice_number' => $order->invoice_number,

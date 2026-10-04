@@ -229,5 +229,6 @@
             </tbody>
         </table>
 </div>
+@include('partials.pagination', ['paginator' => $products])
     </div>
 @endsection

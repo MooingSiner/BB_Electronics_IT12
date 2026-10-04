@@ -89,6 +89,7 @@
                     </tbody>
                 </table>
             </div>
+@include('partials.pagination', ['paginator' => $returns])
         </div>
 
     @else
@@ -158,6 +159,7 @@
                     </tbody>
                 </table>
             </div>
+@include('partials.pagination', ['paginator' => $warranties])
         </div>
     @endif
 
