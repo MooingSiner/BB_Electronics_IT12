@@ -23,6 +23,7 @@
                     <option value="stock_adjustment" {{ request('action') === 'stock_adjustment' ? 'selected' : '' }}>Stock Adjustment</option>
                     <option value="void" {{ request('action') === 'void' ? 'selected' : '' }}>Void</option>
                     <option value="refund" {{ request('action') === 'refund' ? 'selected' : '' }}>Refund</option>
+                    <option value="order_cancelled" {{ request('action') === 'order_cancelled' ? 'selected' : '' }}>Order Cancelled</option>
                     <option value="warranty_outcome" {{ request('action') === 'warranty_outcome' ? 'selected' : '' }}>Warranty Outcome</option>
                 </select>
             </div>

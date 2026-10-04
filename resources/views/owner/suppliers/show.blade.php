@@ -39,6 +39,15 @@
                class="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition">
                 Receipt
             </a>
+            @if($order->can_cancel ?? false)
+            <form method="POST" action="{{ route('owner.suppliers.cancel', $order->id) }}"
+                  onsubmit="return confirm('Cancel this order? Nothing has been received yet, so stock is not affected. This cannot be undone.')">
+                @csrf
+                <button type="submit" class="px-4 py-2 text-sm font-medium rounded-lg border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition">
+                    Cancel Order
+                </button>
+            </form>
+            @endif
             @if($order->is_archived ?? false)
             <form method="POST" action="{{ route('owner.suppliers.restore', $order->id ?? 0) }}">
                 @csrf

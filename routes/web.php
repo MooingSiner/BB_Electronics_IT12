@@ -42,6 +42,7 @@ Route::middleware(['auth', 'role:owner_manager'])->prefix('owner')->name('owner.
     Route::get('/sales', [OwnerSalesController::class, 'index'])->name('sales.index');
     Route::get('/sales/{sale}', [OwnerSalesController::class, 'show'])->name('sales.show');
     Route::get('/sales/{sale}/receipt', [OwnerSalesController::class, 'receipt'])->name('sales.receipt');
+    Route::post('/sales/{sale}/void', [OwnerSalesController::class, 'void'])->name('sales.void');
 
     Route::get('/inventory', [OwnerInventoryController::class, 'index'])->name('inventory.index');
     Route::get('/inventory/create', [OwnerInventoryController::class, 'create'])->name('inventory.create');
@@ -72,6 +73,7 @@ Route::middleware(['auth', 'role:owner_manager'])->prefix('owner')->name('owner.
     Route::patch('/suppliers/{order}/return', [OwnerSupplierController::class, 'returnToSupplier'])->name('suppliers.return');
     Route::post('/suppliers/{order}/replacement', [OwnerSupplierController::class, 'replacement'])->name('suppliers.replacement');
     Route::post('/suppliers/{order}/receive', [OwnerSupplierController::class, 'receive'])->name('suppliers.receive');
+    Route::post('/suppliers/{order}/cancel', [OwnerSupplierController::class, 'cancelOrder'])->name('suppliers.cancel');
     Route::post('/suppliers/{order}/archive', [OwnerSupplierController::class, 'archive'])->name('suppliers.archive');
     Route::post('/suppliers/{order}/restore', [OwnerSupplierController::class, 'restore'])->name('suppliers.restore');
 
@@ -85,6 +87,7 @@ Route::middleware(['auth', 'role:owner_manager'])->prefix('owner')->name('owner.
     Route::patch('/purchase-orders/{order}/return', [OwnerPurchaseOrderController::class, 'returnToStore'])->name('purchase-orders.return');
     Route::post('/purchase-orders/{order}/replacement', [OwnerPurchaseOrderController::class, 'replacement'])->name('purchase-orders.replacement');
     Route::post('/purchase-orders/{order}/receive', [OwnerPurchaseOrderController::class, 'receive'])->name('purchase-orders.receive');
+    Route::post('/purchase-orders/{order}/cancel', [OwnerPurchaseOrderController::class, 'cancelOrder'])->name('purchase-orders.cancel');
     Route::post('/purchase-orders/{order}/archive', [OwnerPurchaseOrderController::class, 'archive'])->name('purchase-orders.archive');
     Route::post('/purchase-orders/{order}/restore', [OwnerPurchaseOrderController::class, 'restore'])->name('purchase-orders.restore');
 

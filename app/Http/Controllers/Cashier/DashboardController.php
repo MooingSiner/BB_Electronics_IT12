@@ -25,7 +25,7 @@ class DashboardController extends Controller
             ->where('status', SaleStatus::Completed)
             ->sum('total_amount');
 
-        $todaysSalesCount = Sale::whereBetween('sale_date', [$dateFrom, $dateTo])->count();
+        $todaysSalesCount = Sale::whereBetween('sale_date', [$dateFrom, $dateTo])->where('status', SaleStatus::Completed)->count();
 
         $lowStockCount = Product::where('is_active', true)
             ->whereColumn('quantity_on_hand', '<=', 'reorder_level')

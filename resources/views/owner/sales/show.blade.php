@@ -38,9 +38,45 @@
                 </svg>
                 Process Return
             </a>
+            @if(empty($txn->void_blocked_reason))
+                <button type="button" @click="$dispatch('open-void')"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-red-300 text-red-600 text-sm font-semibold hover:bg-red-50 transition-colors">
+                    Void Sale
+                </button>
+            @endif
         @endif
     </div>
 </div>
+
+@if(($txn->status ?? '') === 'Voided')
+    <div class="max-w-3xl mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p class="font-semibold">This sale was voided{{ $txn->voided_at ? ' on '.\Carbon\Carbon::parse($txn->voided_at)->format('M d, Y g:i A') : '' }}.</p>
+        @if($txn->void_reason)<p class="mt-0.5">Reason: {{ $txn->void_reason }}</p>@endif
+        <p class="mt-0.5">The items were put back in stock.</p>
+    </div>
+@elseif(($txn->void_blocked_reason ?? null))
+    <p class="max-w-3xl mb-5 text-xs text-slate-400">Void unavailable: {{ $txn->void_blocked_reason }}</p>
+@endif
+
+@if(empty($txn->void_blocked_reason) && ($txn->status ?? '') === 'Completed')
+<div x-data="{ open: false }" @open-void.window="open = true" @keydown.escape.window="open = false">
+    <div x-show="open" style="display:none" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <form method="POST" action="{{ route('owner.sales.void', $txn->id) }}" @click.outside="open = false"
+              class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+            @csrf
+            <h3 class="text-lg font-bold text-[#363E48]">Void {{ $txn->code }}?</h3>
+            <p class="mt-1 text-sm text-slate-500">All items go back into stock and the sale is marked Voided. This cannot be undone.</p>
+            <label class="mt-4 block text-xs font-medium text-slate-600 mb-1">Reason</label>
+            <input type="text" name="reason" required maxlength="255" placeholder="e.g. Wrong item rung up"
+                   class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
+            <div class="mt-5 flex justify-end gap-2">
+                <button type="button" @click="open = false" class="px-4 py-2 text-sm rounded-lg border border-slate-300 text-slate-600">Keep Sale</button>
+                <button type="submit" class="px-4 py-2 text-sm font-semibold rounded-lg bg-red-500 text-white hover:bg-red-600">Void Sale</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
 
 {{-- Main Grid --}}
 <div class="max-w-3xl">

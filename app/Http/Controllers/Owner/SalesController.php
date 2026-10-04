@@ -4,9 +4,13 @@ namespace App\Http\Controllers\Owner;
 
 use App\Enums\SaleStatus;
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Sale;
+use App\Models\StockAdjustment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class SalesController extends Controller
@@ -55,6 +59,9 @@ class SalesController extends Controller
             'created_at' => $sale->sale_date,
             'status' => $sale->status === SaleStatus::Completed ? 'Completed' : 'Voided',
             'processed_by' => $sale->user->full_name ?? '—',
+            'void_reason' => $sale->void_reason,
+            'voided_at' => $sale->voided_at,
+            'void_blocked_reason' => $sale->voidBlockedReason(),
             'payment_method' => $sale->payment_method->label(),
             'amount_received' => (float) $sale->amount_paid,
             'change_given' => (float) $sale->change_amount,
@@ -72,6 +79,37 @@ class SalesController extends Controller
         ];
 
         return view('owner.sales.show', compact('txn'));
+    }
+
+    public function void(Request $request, Sale $sale): RedirectResponse
+    {
+        $validated = $request->validate(['reason' => ['required', 'string', 'max:255']]);
+
+        if ($blocked = $sale->voidBlockedReason()) {
+            return back()->with('error', $blocked);
+        }
+
+        DB::transaction(function () use ($sale, $validated) {
+            foreach ($sale->items as $item) {
+                StockAdjustment::create([
+                    'product_id' => $item->product_id,
+                    'user_id' => Auth::id(),
+                    'adjustment_date' => now(),
+                    'quantity_change' => $item->quantity,
+                    'reason' => "Restocked from voided sale {$sale->code()}",
+                ]);
+            }
+
+            $sale->update([
+                'status' => SaleStatus::Voided,
+                'void_reason' => $validated['reason'],
+                'voided_at' => now(),
+            ]);
+
+            AuditLog::record('void', "Voided sale {$sale->code()}: {$validated['reason']}");
+        });
+
+        return back()->with('success', 'Sale voided and its items were put back in stock.');
     }
 
     public function receipt(Sale $sale): RedirectResponse

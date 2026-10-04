@@ -74,6 +74,22 @@ class PurchaseOrderController extends Controller
         return back()->with('success', 'Order archived.');
     }
 
+    public function cancelOrder(PurchaseOrder $order): RedirectResponse
+    {
+        abort_unless($order->store_id, 404);
+
+        if ($reason = $order->cancelBlockedReason()) {
+            return back()->with('error', $reason);
+        }
+
+        $order->items()->update(['is_cancelled' => true]);
+        $order->update(['status' => PurchaseOrderStatus::Cancelled]);
+
+        AuditLog::record('order_cancelled', "Cancelled order #{$order->order_id}.");
+
+        return back()->with('success', 'Order cancelled.');
+    }
+
     public function restore(PurchaseOrder $order): RedirectResponse
     {
         abort_unless($order->store_id, 404);
@@ -173,6 +189,7 @@ class PurchaseOrderController extends Controller
             'expected_date' => $order->date_received,
             'status' => $statusLabels[$order->status->value] ?? 'Ordered',
             'is_archived' => $order->is_archived,
+            'can_cancel' => $order->cancelBlockedReason() === null,
             'total_cost' => $order->items->sum(fn (OrderItem $i) => (float) $i->unit_cost * $i->quantity_ordered),
             'items' => $order->items->map(function (OrderItem $i) use ($damageInfoByProduct) {
                 $info = $damageInfoByProduct->get($i->product_id);
