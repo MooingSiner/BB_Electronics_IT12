@@ -323,7 +323,7 @@ class Pos extends Component
 
         $cartStock = Product::query()
             ->whereIn('product_id', array_column($this->cart, 'product_id'))
-            ->get(['product_id', 'quantity_on_hand', 'reorder_level'])
+            ->get(['product_id', 'quantity_on_hand', 'reorder_level', 'cost_price'])
             ->keyBy('product_id');
 
         return view('livewire.cashier.pos', compact('products', 'subtotal', 'discountAmount', 'total', 'change', 'cartStock'));

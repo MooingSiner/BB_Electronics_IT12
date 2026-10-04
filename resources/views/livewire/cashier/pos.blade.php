@@ -176,6 +176,9 @@
                                         $remaining = $inStock - $item['quantity'];
                                     @endphp
                                     <p class="text-xs text-slate-500">₱{{ number_format($item['price'], 2) }} each &middot; <span class="font-medium text-slate-700">{{ $inStock }} in stock</span></p>
+                                    @if($stockRow)
+                                        <p class="font-mono text-[11px] text-slate-400">Cost code: {{ $stockRow->costCode() }}</p>
+                                    @endif
                                     @if($remaining <= 0)
                                         <p class="text-xs font-medium text-red-600">Takes all remaining stock</p>
                                     @elseif($remaining <= ($stockRow->reorder_level ?? 0))

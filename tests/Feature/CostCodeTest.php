@@ -60,4 +60,15 @@ class CostCodeTest extends TestCase
         $this->actingAs($owner)->get(route('owner.inventory.index'))->assertSee('Cost Price')->assertSee('₱66.50');
         $this->actingAs($cashier)->get(route('cashier.inventory.index'))->assertDontSee('₱66.50');
     }
+
+    public function test_the_cart_popup_shows_the_cost_code_of_each_item(): void
+    {
+        $cashier = User::factory()->cashierAttendant()->create();
+        $product = Product::factory()->for(Category::factory())->create(['cost_price' => 66.50, 'unit_price' => 95, 'quantity_on_hand' => 10]);
+
+        Livewire::actingAs($cashier)->test(Pos::class)
+            ->call('addToCart', $product->product_id)
+            ->assertSeeHtml('Cost code: TT.SD</p>')
+            ->assertDontSee('66.50');
+    }
 }
