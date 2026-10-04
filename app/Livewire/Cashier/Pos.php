@@ -27,11 +27,11 @@ class Pos extends Component
 
     public string $discountType = 'none';
 
-    public float $discountValue = 0;
+    public ?float $discountValue = 0;
 
     public string $payment = 'Cash';
 
-    public float $amountReceived = 0;
+    public ?float $amountReceived = 0;
 
     public ?string $errorMessage = null;
 
@@ -119,7 +119,7 @@ class Pos extends Component
             $this->discountValue = 0;
         }
 
-        session(['discount_type' => $type, 'discount_value' => $this->discountValue]);
+        session(['discount_type' => $type, 'discount_value' => (float) $this->discountValue]);
     }
 
     public function setPayment(string $method): void
@@ -130,12 +130,12 @@ class Pos extends Component
 
     public function updatedDiscountValue(mixed $value): void
     {
-        session(['discount_value' => $value]);
+        session(['discount_value' => (float) $value]);
     }
 
     public function updatedAmountReceived(mixed $value): void
     {
-        session(['amount_received' => $value]);
+        session(['amount_received' => (float) $value]);
     }
 
     public function startNewSale(): void
@@ -172,13 +172,13 @@ class Pos extends Component
         };
 
         if ($paymentMethod === PaymentMethod::Cash) {
-            if ($this->amountReceived < $total) {
+            if ((float) $this->amountReceived < $total) {
                 $this->errorMessage = 'Amount received is less than the total due.';
 
                 return;
             }
 
-            $amountReceived = $this->amountReceived;
+            $amountReceived = (float) $this->amountReceived;
             $changeAmount = $amountReceived - $total;
         } else {
             $amountReceived = $total;
@@ -242,8 +242,8 @@ class Pos extends Component
     private function calculateDiscount(float $subtotal): float
     {
         return match ($this->discountType) {
-            'percent' => round($subtotal * min(max($this->discountValue, 0), 100) / 100, 2),
-            'fixed' => min(max($this->discountValue, 0), $subtotal),
+            'percent' => round($subtotal * min(max((float) $this->discountValue, 0), 100) / 100, 2),
+            'fixed' => min(max((float) $this->discountValue, 0), $subtotal),
             default => 0,
         };
     }
@@ -274,7 +274,7 @@ class Pos extends Component
         $subtotal = collect($this->cart)->sum(fn ($item) => $item['price'] * $item['quantity']);
         $discountAmount = $this->calculateDiscount($subtotal);
         $total = max(0, $subtotal - $discountAmount);
-        $change = $this->payment === 'Cash' && $this->amountReceived > 0 ? $this->amountReceived - $total : null;
+        $change = $this->payment === 'Cash' && (float) $this->amountReceived > 0 ? (float) $this->amountReceived - $total : null;
 
         return view('livewire.cashier.pos', compact('products', 'subtotal', 'discountAmount', 'total', 'change'));
     }
