@@ -91,7 +91,7 @@
                         <td class="px-5 py-4 text-slate-500 font-mono text-xs">{{ $product->code }}</td>
                         <td class="px-5 py-4">
                             <p class="font-medium text-slate-800">{{ $product->name }}</p>
-                            <p class="text-xs text-slate-400 font-mono">Cost code: {{ $product->cost_code }}</p>
+                            <p class="text-xs text-slate-400 font-mono">Capital price: {{ $product->cost_code }}</p>
                             @if($product->sku ?? false)
                             <p class="text-xs text-slate-400 font-mono">{{ $product->sku }}</p>
                             @endif

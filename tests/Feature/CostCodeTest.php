@@ -37,10 +37,10 @@ class CostCodeTest extends TestCase
         $cashier = User::factory()->cashierAttendant()->create();
         $product = Product::factory()->for(Category::factory())->create(['cost_price' => 66.50, 'unit_price' => 95, 'quantity_on_hand' => 10]);
 
-        Livewire::actingAs($cashier)->test(Pos::class)->assertSee('Cost code: TT.SD')->assertDontSee('66.50');
+        Livewire::actingAs($cashier)->test(Pos::class)->assertSee('Capital price: TT.SD')->assertDontSee('66.50');
 
-        $this->actingAs($cashier)->get(route('cashier.inventory.index'))->assertSee('Cost code: TT.SD')->assertDontSee('66.50');
-        $this->actingAs($cashier)->get(route('cashier.inventory.show', $product->product_id))->assertSee('Cost code: TT.SD')->assertDontSee('66.50');
+        $this->actingAs($cashier)->get(route('cashier.inventory.index'))->assertSee('Capital price: TT.SD')->assertDontSee('66.50');
+        $this->actingAs($cashier)->get(route('cashier.inventory.show', $product->product_id))->assertSee('Capital price: TT.SD')->assertDontSee('66.50');
     }
 
     public function test_the_owner_label_shows_the_code(): void
@@ -57,7 +57,7 @@ class CostCodeTest extends TestCase
         $cashier = User::factory()->cashierAttendant()->create();
         Product::factory()->for(Category::factory())->create(['cost_price' => 66.50, 'unit_price' => 95]);
 
-        $this->actingAs($owner)->get(route('owner.inventory.index'))->assertSee('Cost Price')->assertSee('₱66.50');
+        $this->actingAs($owner)->get(route('owner.inventory.index'))->assertSee('Capital Price')->assertSee('₱66.50');
         $this->actingAs($cashier)->get(route('cashier.inventory.index'))->assertDontSee('₱66.50');
     }
 
@@ -68,7 +68,7 @@ class CostCodeTest extends TestCase
 
         Livewire::actingAs($cashier)->test(Pos::class)
             ->call('addToCart', $product->product_id)
-            ->assertSeeHtml('Cost code: TT.SD</p>')
+            ->assertSeeHtml('Capital price: TT.SD</p>')
             ->assertDontSee('66.50');
     }
 }

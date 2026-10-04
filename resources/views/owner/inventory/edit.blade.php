@@ -132,7 +132,7 @@
                     @enderror
                 </div>
                 <div>
-                    <label for="cost_price" class="block text-sm font-medium text-slate-700 mb-1">Cost Price (₱)</label>
+                    <label for="cost_price" class="block text-sm font-medium text-slate-700 mb-1">Capital Price (₱)</label>
                     <input type="number" id="cost_price" name="cost_price"
                            value="{{ old('cost_price', $item->cost_price) }}" step="0.01" min="0"
                            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 @error('cost_price') border-red-400 @enderror">

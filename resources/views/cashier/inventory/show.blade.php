@@ -42,7 +42,7 @@
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Unit Price</p>
             <p class="text-2xl font-bold text-slate-800">₱{{ number_format($item->price, 2) }}</p>
-            <p class="mt-1 font-mono text-xs text-slate-400">Cost code: {{ $item->cost_code }}</p>
+            <p class="mt-1 font-mono text-xs text-slate-400">Capital price: {{ $item->cost_code }}</p>
         </div>
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Current Stock</p>
