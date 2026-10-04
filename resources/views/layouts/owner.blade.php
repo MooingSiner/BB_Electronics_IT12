@@ -43,11 +43,11 @@
             @foreach ([
                 ['id' => 'dashboard',         'label' => 'Dashboard',           'route' => 'owner.dashboard',        'icon' => 'dashboard'],
                 ['id' => 'sales',             'label' => 'Sales Transactions',   'route' => 'owner.sales.index',      'icon' => 'cart'],
-                ['id' => 'inventory',         'label' => 'Inventory',            'route' => 'owner.inventory.index',  'icon' => 'box'],
-                ['id' => 'supplier-orders',   'label' => 'Supplier Orders',      'route' => 'owner.suppliers.index',  'icon' => 'truck'],
                 ['id' => 'purchase-orders',   'label' => 'Purchase Orders',      'route' => 'owner.purchase-orders.index', 'icon' => 'store'],
-                ['id' => 'returns',           'label' => 'Returns & Warranties', 'route' => 'owner.returns.index',    'icon' => 'return'],
+                ['id' => 'supplier-orders',   'label' => 'Supplier Orders',      'route' => 'owner.suppliers.index',  'icon' => 'truck'],
+                ['id' => 'inventory',         'label' => 'Inventory',            'route' => 'owner.inventory.index',  'icon' => 'box'],
                 ['id' => 'reports',           'label' => 'Reports',              'route' => 'owner.reports.index',    'icon' => 'chart'],
+                ['id' => 'returns',           'label' => 'Returns & Warranties', 'route' => 'owner.returns.index',    'icon' => 'return'],
                 ['id' => 'audit',             'label' => 'Audit Log',            'route' => 'owner.audit.index',      'icon' => 'audit'],
                 ['id' => 'users',             'label' => 'User Management',      'route' => 'owner.users.index',      'icon' => 'users'],
             ] as $item)
