@@ -68,7 +68,8 @@
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <table class="w-full text-sm">
+        <div class="overflow-x-auto">
+<table class="w-full text-sm">
             <thead>
                 <tr class="bg-slate-50 border-b border-slate-200">
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Date</th>
@@ -116,5 +117,6 @@
                 @endforelse
             </tbody>
         </table>
+</div>
     </div>
 @endsection

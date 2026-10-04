@@ -54,7 +54,8 @@
         <div class="px-6 py-4 border-b border-slate-100">
             <h2 class="font-semibold text-slate-800">Items</h2>
         </div>
-        <table class="w-full text-sm">
+        <div class="overflow-x-auto">
+<table class="w-full text-sm">
             <thead>
                 <tr class="bg-slate-50 border-b border-slate-100">
                     <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Product</th>
@@ -74,6 +75,7 @@
                 @endforeach
             </tbody>
         </table>
+</div>
     </div>
 
     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-1.5 text-sm">

@@ -56,7 +56,8 @@
             </div>
 
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-5">
-                <table class="w-full text-sm">
+                <div class="overflow-x-auto">
+<table class="w-full text-sm">
                     <thead>
                         <tr class="bg-slate-50 border-b border-slate-200">
                             <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Product</th>
@@ -74,6 +75,7 @@
                         </tr>
                     </tbody>
                 </table>
+</div>
             </div>
 
             <div class="flex items-center gap-3">

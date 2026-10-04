@@ -58,10 +58,10 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-3 gap-5">
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
 
         {{-- LEFT: 2/3 --}}
-        <div class="col-span-2 space-y-5">
+        <div class="xl:col-span-2 space-y-5">
 
             {{-- Card: Order Information --}}
             <div class="bg-white rounded-xl shadow border border-slate-200 p-6">
@@ -125,7 +125,8 @@
                 <div class="px-6 py-4 border-b border-slate-200">
                     <h2 class="text-base font-semibold text-slate-800">Order Items</h2>
                 </div>
-                <table class="w-full text-sm">
+                <div class="overflow-x-auto">
+<table class="w-full text-sm">
                     <thead>
                         <tr class="bg-slate-50 border-b border-slate-200">
                             <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Product</th>
@@ -191,11 +192,12 @@
                         </tr>
                     </tfoot>
                 </table>
+</div>
             </div>
         </div>
 
         {{-- RIGHT: 1/3 --}}
-        <div class="col-span-1">
+        <div class="xl:col-span-1">
             <div class="bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
                 <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
                     <h2 class="text-base font-semibold text-slate-800">Damage Reports</h2>
