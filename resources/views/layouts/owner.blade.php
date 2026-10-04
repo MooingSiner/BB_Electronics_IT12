@@ -10,6 +10,16 @@
         .sidebar-bg { background-color: #363E48; }
         .accent-bg  { background-color: #E0CD66; }
         .accent-text { color: #363E48; }
+        .tip { position: relative; }
+        .tip::after {
+            content: attr(data-tip);
+            position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+            padding: 7px 14px; border-radius: 10px; background: #363E48; color: #fff;
+            font-size: 14px; font-weight: 500; line-height: 1.2; white-space: nowrap;
+            box-shadow: 0 6px 16px rgba(0,0,0,.22);
+            opacity: 0; visibility: hidden; pointer-events: none; z-index: 40;
+        }
+        .tip:hover::after, .tip:focus-visible::after { opacity: 1; visibility: visible; }
     </style>
     @stack('styles')
 </head>
