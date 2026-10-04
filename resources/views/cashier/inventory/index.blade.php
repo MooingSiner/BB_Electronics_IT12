@@ -78,8 +78,8 @@
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Product ID</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Product Name</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Category</th>
-                        <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Unit Price</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Stock</th>
+                        <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Unit Price</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Reorder At</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
                         <th class="sticky right-0 text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide bg-slate-50 shadow-[-6px_0_8px_-6px_rgba(0,0,0,0.15)]">Actions</th>
@@ -100,12 +100,12 @@
                                 {{ $product->category }}
                             </span>
                         </td>
-                        <td class="px-5 py-4 font-semibold text-slate-800">₱{{ number_format($product->price, 2) }}</td>
                         <td class="px-5 py-4">
                             <span class="font-semibold {{ $product->stock == 0 ? 'text-red-600' : ($product->stock <= ($product->reorder_level ?? 5) ? 'text-amber-600' : 'text-slate-800') }}">
                                 {{ $product->stock }}
                             </span>
                         </td>
+                        <td class="px-5 py-4 font-semibold text-slate-800">₱{{ number_format($product->price, 2) }}</td>
                         <td class="px-5 py-4 text-slate-500">{{ $product->reorder_level ?? '—' }}</td>
                         <td class="px-5 py-4">
                             @if($product->stock == 0)

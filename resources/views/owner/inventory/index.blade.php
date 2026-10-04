@@ -93,8 +93,8 @@
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Product ID</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Product Name</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Category</th>
-                    <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Unit Price</th>
                     <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Stock</th>
+                    <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Unit Price</th>
                     <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Reorder At</th>
                     <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
                     <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
@@ -108,15 +108,15 @@
                         </td>
                         <td class="px-4 py-3 font-medium text-slate-800">{{ $product->name ?? 'Product Name' }}</td>
                         <td class="px-4 py-3 text-slate-600">{{ $product->category ?? '—' }}</td>
-                        <td class="px-4 py-3 text-right text-slate-700">
-                            ₱{{ number_format($product->unit_price ?? 0, 2) }}
-                        </td>
                         <td class="px-4 py-3 text-right font-semibold
                             @if(($product->stock ?? 0) === 0) text-red-600
                             @elseif(($product->stock ?? 0) <= ($product->reorder_level ?? 0)) text-amber-600
                             @else text-slate-700
                             @endif">
                             {{ $product->stock ?? 0 }}
+                        </td>
+                        <td class="px-4 py-3 text-right text-slate-700">
+                            ₱{{ number_format($product->unit_price ?? 0, 2) }}
                         </td>
                         <td class="px-4 py-3 text-right text-slate-500">{{ $product->reorder_level ?? 0 }}</td>
                         <td class="px-4 py-3 text-center">
