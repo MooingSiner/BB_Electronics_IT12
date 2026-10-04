@@ -7,6 +7,7 @@ use App\Enums\ReturnResolution;
 use App\Enums\SaleStatus;
 use App\Http\Controllers\Concerns\FilesWarrantyClaims;
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\ReturnRecord;
 use App\Models\Sale;
 use App\Models\SaleItem;
@@ -119,6 +120,28 @@ class ReturnController extends Controller
         ]);
 
         return redirect()->route('cashier.returns.index')->with('success', 'Return recorded.');
+    }
+
+    public function cancel(ReturnRecord $returnRecord): RedirectResponse
+    {
+        if (! $returnRecord->isCancellable()) {
+            return redirect()->route('cashier.returns.show', $returnRecord->return_id)->with('error', 'Only a pending customer return can be cancelled.');
+        }
+
+        $returnRecord->load('product');
+        $returnRecord->delete();
+
+        AuditLog::record('refund', "Cancelled return #{$returnRecord->return_id} ({$returnRecord->quantity} x ".($returnRecord->product->product_name ?? 'product').').');
+
+        return redirect()->route('cashier.returns.index')->with('success', 'Return cancelled.');
+    }
+
+    public function warrantyCancel(Warranty $warranty): RedirectResponse
+    {
+        $cancelled = $this->cancelWarrantyClaim($warranty);
+
+        return redirect()->route('cashier.returns.warranty', $warranty->warranty_id)
+            ->with($cancelled ? 'success' : 'error', $cancelled ? 'Warranty claim cancelled.' : 'Only a claim that is still under review can be cancelled.');
     }
 
     public function claim(Request $request): View

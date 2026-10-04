@@ -52,6 +52,28 @@ trait FilesWarrantyClaims
         return $ends->greaterThanOrEqualTo(today()) ? $ends : null;
     }
 
+    /**
+     * Withdraw a claim that is still under review. The warranty itself stays, so the item can be claimed again.
+     */
+    protected function cancelWarrantyClaim(Warranty $warranty): bool
+    {
+        if (! $warranty->isCancellable()) {
+            return false;
+        }
+
+        $warranty->update([
+            'claim_status' => WarrantyClaimStatus::None,
+            'claim_date' => null,
+            'issue' => null,
+            'outcome' => WarrantyOutcome::NotApplicable,
+            'resolution_notes' => null,
+        ]);
+
+        AuditLog::record('warranty_outcome', 'Cancelled warranty claim WAR-'.str_pad((string) $warranty->warranty_id, 5, '0', STR_PAD_LEFT).'.');
+
+        return true;
+    }
+
     protected function storeWarrantyClaim(Request $request): Warranty
     {
         $validated = $request->validate([

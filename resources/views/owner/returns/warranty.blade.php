@@ -18,11 +18,24 @@
             <h1 class="text-2xl font-bold text-slate-800">{{ $warranty->warranty_ref }}</h1>
             <p class="text-sm text-slate-500 mt-1">Warranty for {{ $warranty->productName ?? 'USB-A to USB-C Adapter' }}</p>
         </div>
-        <button onclick="document.getElementById('updateModal').classList.remove('hidden')"
-                class="shrink-0 px-4 py-2 text-sm font-medium text-white rounded-lg transition-opacity hover:opacity-90"
-                style="background-color:#363E48">
-            Update Status
-        </button>
+        <div class="flex items-center gap-2 shrink-0">
+            @if(($warranty->status_value ?? '') === 'claimed')
+            <form method="POST" action="{{ route('owner.returns.warranty.cancel', $warranty->id) }}"
+                  onsubmit="return confirm('Cancel this warranty claim? The warranty stays active and can be claimed again.')">
+                @csrf
+                @method('PATCH')
+                <button type="submit"
+                        class="px-4 py-2 text-sm font-medium rounded-lg border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition">
+                    Cancel Claim
+                </button>
+            </form>
+            @endif
+            <button onclick="document.getElementById('updateModal').classList.remove('hidden')"
+                    class="px-4 py-2 text-sm font-medium text-white rounded-lg transition-opacity hover:opacity-90"
+                    style="background-color:#363E48">
+                Update Status
+            </button>
+        </div>
     </div>
 
     {{-- Main Grid --}}

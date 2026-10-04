@@ -45,6 +45,14 @@ class ReturnRecord extends Model
         return $this->sale_id !== null && $this->condition->isRestockable();
     }
 
+    /**
+     * Only a customer return that is still pending can be cancelled; nothing has touched stock yet.
+     */
+    public function isCancellable(): bool
+    {
+        return $this->sale_id !== null && $this->status === ReturnStatus::Open;
+    }
+
     public function stockNote(): string
     {
         $added = StockAdjustment::where('product_id', $this->product_id)

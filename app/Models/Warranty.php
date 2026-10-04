@@ -36,6 +36,14 @@ class Warranty extends Model
         ];
     }
 
+    /**
+     * A claim can be withdrawn while it is still under review, before any repair or outcome has started.
+     */
+    public function isCancellable(): bool
+    {
+        return $this->claim_status === WarrantyClaimStatus::Claimed;
+    }
+
     public function saleItem(): BelongsTo
     {
         return $this->belongsTo(SaleItem::class, 'sale_item_id', 'sale_item_id');

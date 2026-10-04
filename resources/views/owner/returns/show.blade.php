@@ -19,6 +19,18 @@
             <p class="text-sm text-slate-500 mt-1">{{ $return->product_name }} ({{ $return->product_code }})</p>
         </div>
         @if($return->status === 'Pending')
+        <div class="flex items-center gap-2 shrink-0">
+        @if($return->cancellable)
+        <form method="POST" action="{{ route('owner.returns.cancel', $return->id) }}">
+            @csrf
+            @method('DELETE')
+            <button type="submit"
+                    class="px-4 py-2 text-sm font-medium rounded-lg border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition"
+                    onclick="return confirm('Cancel this return? It will be removed and stock will not change.')">
+                Cancel Return
+            </button>
+        </form>
+        @endif
         <form method="POST" action="{{ route('owner.returns.resolve', $return->id) }}">
             @csrf
             @method('PATCH')
@@ -29,6 +41,7 @@
                 Mark Resolved
             </button>
         </form>
+        </div>
         @endif
     </div>
 

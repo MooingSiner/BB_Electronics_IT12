@@ -98,6 +98,8 @@ Route::middleware(['auth', 'role:owner_manager'])->prefix('owner')->name('owner.
     Route::patch('/returns/{returnRecord}/resolve', [OwnerReturnController::class, 'resolve'])->name('returns.resolve');
     Route::get('/returns/warranty/{warranty}', [OwnerReturnController::class, 'warranty'])->name('returns.warranty');
     Route::patch('/returns/warranty/{warranty}', [OwnerReturnController::class, 'warrantyUpdate'])->name('returns.warrantyUpdate');
+    Route::patch('/returns/warranty/{warranty}/cancel', [OwnerReturnController::class, 'warrantyCancel'])->name('returns.warranty.cancel');
+    Route::delete('/returns/{returnRecord}', [OwnerReturnController::class, 'cancel'])->name('returns.cancel');
 
     Route::get('/reports', [OwnerReportController::class, 'index'])->name('reports.index');
 
@@ -130,6 +132,8 @@ Route::middleware(['auth', 'role:cashier_attendant'])->prefix('cashier')->name('
     Route::get('/returns/process', [CashierReturnController::class, 'process'])->name('returns.process');
     Route::post('/returns', [CashierReturnController::class, 'store'])->name('returns.store');
     Route::get('/returns/warranty/{warranty}', [CashierReturnController::class, 'warranty'])->name('returns.warranty');
+    Route::patch('/returns/warranty/{warranty}/cancel', [CashierReturnController::class, 'warrantyCancel'])->name('returns.warranty.cancel');
+    Route::delete('/returns/{returnRecord}', [CashierReturnController::class, 'cancel'])->name('returns.cancel');
     Route::get('/returns/claim', [CashierReturnController::class, 'claim'])->name('returns.claim');
     Route::post('/returns/claim', [CashierReturnController::class, 'claimStore'])->name('returns.claim.store');
     Route::get('/returns/{returnRecord}', [CashierReturnController::class, 'show'])->name('returns.show');

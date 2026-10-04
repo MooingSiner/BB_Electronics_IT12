@@ -79,5 +79,17 @@
         </div>
     </div>
 
+    @if($ret->isCancellable())
+    <form method="POST" action="{{ route('cashier.returns.cancel', $ret->return_id) }}"
+          onsubmit="return confirm('Cancel this return? It will be removed and stock will not change.')">
+        @csrf
+        @method('DELETE')
+        <button type="submit"
+                class="w-full py-3 text-sm font-semibold rounded-xl border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition-colors">
+            Cancel Return
+        </button>
+    </form>
+    @endif
+
 </div>
 @endsection

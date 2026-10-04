@@ -87,6 +87,7 @@ class ReturnController extends Controller
             'status_value' => $returnRecord->status->value,
             'stock_note' => $returnRecord->stockNote(),
             'will_restock' => $returnRecord->willRestock(),
+            'cancellable' => $returnRecord->isCancellable(),
         ];
 
         return view('owner.returns.show', compact('return'));
@@ -217,6 +218,28 @@ class ReturnController extends Controller
     public function create(Sale $transaction): RedirectResponse
     {
         return redirect()->route('owner.returns.process', ['transaction_id' => $transaction->sale_id]);
+    }
+
+    public function cancel(ReturnRecord $returnRecord): RedirectResponse
+    {
+        if (! $returnRecord->isCancellable()) {
+            return redirect()->route('owner.returns.show', $returnRecord->return_id)->with('error', 'Only a pending customer return can be cancelled.');
+        }
+
+        $returnRecord->load('product');
+        $returnRecord->delete();
+
+        AuditLog::record('refund', "Cancelled return #{$returnRecord->return_id} ({$returnRecord->quantity} x ".($returnRecord->product->product_name ?? 'product').').');
+
+        return redirect()->route('owner.returns.index')->with('success', 'Return cancelled.');
+    }
+
+    public function warrantyCancel(Warranty $warranty): RedirectResponse
+    {
+        $cancelled = $this->cancelWarrantyClaim($warranty);
+
+        return redirect()->route('owner.returns.warranty', $warranty->warranty_id)
+            ->with($cancelled ? 'success' : 'error', $cancelled ? 'Warranty claim cancelled.' : 'Only a claim that is still under review can be cancelled.');
     }
 
     public function claim(Request $request): View

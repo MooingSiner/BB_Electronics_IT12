@@ -79,5 +79,17 @@
         @endif
     </div>
 
+    @if($warranty->isCancellable())
+    <form method="POST" action="{{ route('cashier.returns.warranty.cancel', $warranty->warranty_id) }}"
+          onsubmit="return confirm('Cancel this warranty claim? The warranty stays active and can be claimed again.')">
+        @csrf
+        @method('PATCH')
+        <button type="submit"
+                class="w-full py-3 text-sm font-semibold rounded-xl border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition-colors">
+            Cancel Claim
+        </button>
+    </form>
+    @endif
+
 </div>
 @endsection
