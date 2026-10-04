@@ -141,6 +141,12 @@
                 </div>
             </div>
 
+            @if($errorMessage)
+            <div class="px-4 py-2 bg-red-50 border-b border-red-200 text-sm text-red-700 flex-shrink-0">
+                {{ $errorMessage }}
+            </div>
+            @endif
+
             <div class="flex-1 min-h-0 flex flex-col md:flex-row">
 
                 {{-- Cart Items (left) --}}
@@ -161,7 +167,17 @@
                             <div class="flex items-start justify-between mb-2">
                                 <div class="flex-1 min-w-0 mr-2">
                                     <p class="font-medium text-sm text-slate-800 truncate">{{ $item['name'] }}</p>
-                                    <p class="text-xs text-slate-500">₱{{ number_format($item['price'], 2) }} each</p>
+                                    @php
+                                        $stockRow = $cartStock[$item['product_id']] ?? null;
+                                        $inStock = $stockRow->quantity_on_hand ?? 0;
+                                        $remaining = $inStock - $item['quantity'];
+                                    @endphp
+                                    <p class="text-xs text-slate-500">₱{{ number_format($item['price'], 2) }} each &middot; <span class="font-medium text-slate-700">{{ $inStock }} in stock</span></p>
+                                    @if($remaining <= 0)
+                                        <p class="text-xs font-medium text-red-600">Takes all remaining stock</p>
+                                    @elseif($remaining <= ($stockRow->reorder_level ?? 0))
+                                        <p class="text-xs font-medium text-amber-600">Low stock after this sale: {{ $remaining }} left</p>
+                                    @endif
                                 </div>
                                 <button type="button" wire:click="removeFromCart('{{ $cartKey }}')" class="text-slate-400 hover:text-red-500 transition-colors flex-shrink-0">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -174,6 +190,9 @@
                                     <input type="number"
                                            value="{{ $item['quantity'] }}"
                                            min="1"
+                                           max="{{ $inStock }}"
+                                           x-data
+                                           @cart-quantity-corrected.window="if ($event.detail.cartKey === '{{ $cartKey }}') $el.value = $event.detail.quantity"
                                            wire:change="updateQuantity('{{ $cartKey }}', $event.target.value)"
                                            class="w-16 h-7 text-center text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-1">
                                 </div>
@@ -293,7 +312,7 @@
 
 @if($completedSale)
 <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-    <div class="bg-white rounded-2xl p-8 max-w-sm w-full mx-4 shadow-xl text-center">
+    <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-xl text-center max-h-[95vh] overflow-y-auto">
         <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg class="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
@@ -301,6 +320,42 @@
         </div>
         <h2 class="text-xl font-bold text-slate-800 mb-1">Sale Complete!</h2>
         <p class="text-sm text-slate-500 mb-4">Transaction ID: {{ $completedSale['code'] }}</p>
+
+        <div class="text-left border border-slate-200 rounded-lg divide-y divide-slate-100 mb-4 max-h-48 overflow-y-auto">
+            @foreach($completedSale['items'] as $line)
+            <div class="flex items-center gap-3 px-3 py-2">
+                <div class="w-9 h-9 rounded-md bg-slate-100 overflow-hidden flex-shrink-0">
+                    @if($line['image_url'])
+                        <img src="{{ $line['image_url'] }}" alt="{{ $line['name'] }}" class="w-full h-full object-cover">
+                    @endif
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-slate-800 truncate">{{ $line['name'] }}</p>
+                    <p class="text-xs text-slate-500">{{ $line['quantity'] }} &times; ₱{{ $line['price'] }}</p>
+                </div>
+                <span class="text-sm font-medium text-slate-800">₱{{ $line['subtotal'] }}</span>
+            </div>
+            @endforeach
+        </div>
+
+        @if(! empty($completedSale['low_stock']))
+        <div class="text-left bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+            <p class="text-xs font-semibold text-amber-800 uppercase tracking-wide mb-1">Low stock alert</p>
+            <ul class="text-sm text-amber-800 space-y-0.5">
+                @foreach($completedSale['low_stock'] as $low)
+                <li>
+                    {{ $low['name'] }} &mdash;
+                    @if($low['left'] <= 0)
+                        <strong>out of stock</strong>
+                    @else
+                        only <strong>{{ $low['left'] }}</strong> left (reorder at {{ $low['reorder'] }})
+                    @endif
+                </li>
+                @endforeach
+            </ul>
+            <p class="text-xs text-amber-700 mt-1">Please let the owner/manager know so it can be restocked.</p>
+        </div>
+        @endif
         <div class="text-left bg-slate-50 rounded-lg p-4 text-sm space-y-1 mb-4">
             <div class="flex justify-between">
                 <span class="text-slate-500">Subtotal</span>

@@ -35,7 +35,7 @@ class Pos extends Component
 
     public ?string $errorMessage = null;
 
-    /** @var array<string, string>|null */
+    /** @var array<string, mixed>|null */
     public ?array $completedSale = null;
 
     public function mount(): void
@@ -79,6 +79,7 @@ class Pos extends Component
     public function removeFromCart(string $key): void
     {
         unset($this->cart[$key]);
+        $this->errorMessage = null;
         $this->syncCartSession();
     }
 
@@ -90,13 +91,16 @@ class Pos extends Component
 
         $product = Product::find($this->cart[$key]['product_id']);
         $quantity = max(1, $quantity);
+        $this->errorMessage = null;
 
         if ($product && $quantity > $product->quantity_on_hand) {
+            $this->errorMessage = "Only {$product->quantity_on_hand} unit(s) of {$product->product_name} in stock, so the quantity was set to {$product->quantity_on_hand}.";
             $quantity = $product->quantity_on_hand;
         }
 
         $this->cart[$key]['quantity'] = $quantity;
         $this->syncCartSession();
+        $this->dispatch('cart-quantity-corrected', cartKey: $key, quantity: $quantity);
     }
 
     public function clearCart(): void
@@ -213,7 +217,27 @@ class Pos extends Component
             return $sale;
         });
 
+        $lowStock = Product::query()
+            ->whereIn('product_id', array_column($cartSnapshot, 'product_id'))
+            ->whereColumn('quantity_on_hand', '<=', 'reorder_level')
+            ->get()
+            ->map(fn (Product $product) => [
+                'name' => $product->product_name,
+                'left' => $product->quantity_on_hand,
+                'reorder' => $product->reorder_level,
+            ])
+            ->values()
+            ->all();
+
         $this->completedSale = [
+            'items' => array_values(array_map(fn ($item) => [
+                'name' => $item['name'],
+                'image_url' => $item['image_url'] ?? null,
+                'quantity' => $item['quantity'],
+                'price' => number_format($item['price'], 2),
+                'subtotal' => number_format($item['price'] * $item['quantity'], 2),
+            ], $cartSnapshot)),
+            'low_stock' => $lowStock,
             'id' => (string) $sale->sale_id,
             'code' => $sale->code(),
             'subtotal' => number_format($subtotal, 2),
@@ -276,6 +300,11 @@ class Pos extends Component
         $total = max(0, $subtotal - $discountAmount);
         $change = $this->payment === 'Cash' && (float) $this->amountReceived > 0 ? (float) $this->amountReceived - $total : null;
 
-        return view('livewire.cashier.pos', compact('products', 'subtotal', 'discountAmount', 'total', 'change'));
+        $cartStock = Product::query()
+            ->whereIn('product_id', array_column($this->cart, 'product_id'))
+            ->get(['product_id', 'quantity_on_hand', 'reorder_level'])
+            ->keyBy('product_id');
+
+        return view('livewire.cashier.pos', compact('products', 'subtotal', 'discountAmount', 'total', 'change', 'cartStock'));
     }
 }
