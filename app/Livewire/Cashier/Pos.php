@@ -313,6 +313,7 @@ class Pos extends Component
                 'price' => (float) $product->unit_price,
                 'stock' => $product->quantity_on_hand,
                 'reorder_level' => $product->reorder_level,
+                'cost_code' => $product->costCode(),
             ]);
 
         $subtotal = collect($this->cart)->sum(fn ($item) => $item['price'] * $item['quantity']);

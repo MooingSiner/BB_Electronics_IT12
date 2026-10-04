@@ -72,6 +72,7 @@
                         @endif
                     </div>
                     <p class="font-medium text-sm text-slate-800 leading-tight mb-1">{{ $product->name }}</p>
+                    <p class="font-mono text-[11px] text-slate-400 mb-1">Cost code: {{ $product->cost_code }}</p>
                     <p class="font-semibold text-sm mb-2" style="color:#363E48;">₱{{ number_format($product->price, 2) }}</p>
                     @if($product->stock == 0)
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Out of stock</span>

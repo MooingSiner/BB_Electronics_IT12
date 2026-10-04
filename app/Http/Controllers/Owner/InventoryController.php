@@ -131,6 +131,7 @@ class InventoryController extends Controller
             'name' => $product->product_name,
             'barcode' => $product->barcode ?: $product->product_code,
             'unit_price' => (float) $product->unit_price,
+            'cost_code' => $product->costCode(),
         ];
 
         return view('owner.inventory.label', compact('item', 'copies', 'size', 'width', 'scale'));

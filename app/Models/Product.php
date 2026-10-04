@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\CostCode;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -75,6 +76,14 @@ class Product extends Model
         return static::where('is_active', true)
             ->where(fn ($query) => $query->where('barcode', $value)->orWhere('product_code', $value))
             ->first();
+    }
+
+    /**
+     * The cost price as a letter code that staff can read but customers cannot.
+     */
+    public function costCode(): string
+    {
+        return CostCode::encode($this->cost_price);
     }
 
     public function isLowStock(): bool

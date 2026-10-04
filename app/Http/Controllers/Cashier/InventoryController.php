@@ -43,6 +43,7 @@ class InventoryController extends Controller
                 'name' => $product->product_name,
                 'category' => $product->category->category_name ?? '—',
                 'price' => (float) $product->unit_price,
+                'cost_code' => $product->costCode(),
                 'stock' => $product->quantity_on_hand,
                 'reorder_level' => $product->reorder_level,
             ]);
@@ -60,6 +61,7 @@ class InventoryController extends Controller
             'name' => $product->product_name,
             'category' => $product->category->category_name ?? '—',
             'price' => (float) $product->unit_price,
+            'cost_code' => $product->costCode(),
             'stock' => $product->quantity_on_hand,
             'reorder_level' => $product->reorder_level,
             'warranty_period_days' => $product->warranty_period_days,
