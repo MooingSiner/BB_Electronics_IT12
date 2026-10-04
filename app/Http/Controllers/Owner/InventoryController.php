@@ -266,6 +266,7 @@ class InventoryController extends Controller
             ->map(fn (Product $product) => (object) [
                 'id' => $product->product_id,
                 'code' => $product->product_code,
+                'barcode' => $product->barcode,
                 'name' => $product->product_name,
                 'stock' => $product->quantity_on_hand,
             ]);

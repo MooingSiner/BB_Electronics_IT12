@@ -99,4 +99,27 @@ class BarcodeScanTest extends TestCase
         $product = Product::where('product_name', 'No Barcode Item')->firstOrFail();
         $this->assertSame($product->product_code, $product->barcode);
     }
+
+    public function test_the_order_and_bulk_stock_in_pages_carry_the_barcodes_for_scanning(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        $this->product(['barcode' => '4800123456789']);
+
+        $this->actingAs($owner)->get(route('owner.suppliers.create'))
+            ->assertOk()->assertSee('Scan barcode or enter product code')->assertSee('data-barcode="4800123456789"', false);
+        $this->actingAs($owner)->get(route('owner.purchase-orders.create'))
+            ->assertOk()->assertSee('Scan barcode or enter product code')->assertSee('data-barcode="4800123456789"', false);
+        $this->actingAs($owner)->get(route('owner.inventory.stockin.bulk'))
+            ->assertOk()->assertSee('4800123456789');
+    }
+
+    public function test_the_cashier_inventory_search_finds_a_product_by_barcode(): void
+    {
+        $cashier = User::factory()->cashierAttendant()->create();
+        $match = $this->product(['barcode' => '4800123456789']);
+        $other = $this->product(['barcode' => '1112223334445']);
+
+        $this->actingAs($cashier)->get(route('cashier.inventory.index', ['search' => '4800123456789']))
+            ->assertOk()->assertSee($match->product_name)->assertDontSee($other->product_name);
+    }
 }

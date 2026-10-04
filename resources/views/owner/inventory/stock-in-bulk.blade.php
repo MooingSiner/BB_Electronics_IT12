@@ -13,7 +13,7 @@
     <div class="max-w-2xl mx-auto">
         <div class="text-center mb-6">
             <h1 class="text-2xl font-bold mb-1" style="color:#363E48">Stock In</h1>
-            <p class="text-sm text-slate-500">Search for a product to add it below. You can add as many as you need.</p>
+            <p class="text-sm text-slate-500">Scan a barcode or search for a product to add it below. You can add as many as you need.</p>
         </div>
 
         @if($errors->any())
@@ -30,7 +30,7 @@
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-5 relative">
             <label for="productSearch" class="block text-sm font-medium text-slate-700 mb-1">Search Product</label>
             <div class="relative">
-                <input type="text" id="productSearch" autocomplete="off" placeholder="Type a product name or code…"
+                <input type="text" id="productSearch" autocomplete="off" placeholder="Scan a barcode or type a product name or code…"
                        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
                 <div id="productResults"
                      class="hidden absolute z-10 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-64 overflow-y-auto"></div>
@@ -153,6 +153,32 @@
             .slice(0, 8);
 
         renderResults(matches);
+    });
+
+    searchInput.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter') {
+            return;
+        }
+
+        e.preventDefault();
+
+        const value = this.value.trim();
+        const product = catalog.find(p => p.code === value || (p.barcode && p.barcode === value));
+
+        if (!product) {
+            return;
+        }
+
+        if (addedIds.has(product.id)) {
+            const quantity = itemsBody.querySelector('tr[data-product-id="' + product.id + '"] input[name$="[quantity]"]');
+            quantity.value = quantity.value === '' ? 1 : parseInt(quantity.value, 10) + 1;
+        } else {
+            addProduct(product.id);
+            itemsBody.querySelector('tr[data-product-id="' + product.id + '"] input[name$="[quantity]"]').value = 1;
+        }
+
+        this.value = '';
+        resultsBox.classList.add('hidden');
     });
 
     document.addEventListener('click', function (e) {

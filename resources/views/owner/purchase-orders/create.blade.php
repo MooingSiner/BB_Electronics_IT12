@@ -43,6 +43,8 @@
                     </button>
                 </div>
 
+                @include('owner.partials.order-scan')
+
                 <div id="itemsContainer" class="space-y-3 max-h-[380px] overflow-y-auto pr-1">
                     {{-- Default empty row --}}
                     <div class="item-row flex gap-3 items-end p-3 bg-slate-50 rounded-md border border-slate-200">
@@ -51,7 +53,7 @@
                             <select name="items[0][product_id]" class="item-product-select w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
                                 <option value="">Select product</option>
                                 @foreach($products ?? [] as $product)
-                                    <option value="{{ $product->id }}" data-cost="{{ $product->cost_price }}">{{ $product->name }}</option>
+                                    <option value="{{ $product->id }}" data-cost="{{ $product->cost_price }}" data-code="{{ $product->code }}" data-barcode="{{ $product->barcode }}">{{ $product->name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -197,7 +199,7 @@
             const container = document.getElementById('itemsContainer');
             const idx = itemCount++;
 
-            const productsOptions = `{!! collect($products ?? [])->map(fn($p) => '<option value="'.$p->id.'" data-cost="'.$p->cost_price.'">'.$p->name.'</option>')->implode('') !!}`;
+            const productsOptions = `{!! collect($products ?? [])->map(fn($p) => '<option value="'.$p->id.'" data-cost="'.$p->cost_price.'" data-code="'.e($p->code).'" data-barcode="'.e($p->barcode).'">'.$p->name.'</option>')->implode('') !!}`;
 
             const row = document.createElement('div');
             row.className = 'item-row flex gap-3 items-end p-3 bg-slate-50 rounded-md border border-slate-200';

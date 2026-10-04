@@ -22,7 +22,8 @@ class InventoryController extends Controller
 
                 $query->where(fn ($q) => $q
                     ->where('product_name', 'like', "%{$search}%")
-                    ->orWhere('product_code', 'like', "%{$search}%"));
+                    ->orWhere('product_code', 'like', "%{$search}%")
+                    ->orWhere('barcode', 'like', "%{$search}%"));
             })
             ->when($request->filled('category'), fn ($query) => $query->whereHas(
                 'category',
