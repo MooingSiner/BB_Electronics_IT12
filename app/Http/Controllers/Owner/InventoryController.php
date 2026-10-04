@@ -51,6 +51,7 @@ class InventoryController extends Controller
                 'name' => $product->product_name,
                 'category' => $product->category->category_name ?? '—',
                 'unit_price' => (float) $product->unit_price,
+                'cost_price' => (float) $product->cost_price,
                 'stock' => $product->quantity_on_hand,
                 'reorder_level' => $product->reorder_level,
             ]);

@@ -50,4 +50,14 @@ class CostCodeTest extends TestCase
 
         $this->actingAs($owner)->get(route('owner.inventory.label', $product->product_id))->assertSee('TT.SD');
     }
+
+    public function test_the_owner_inventory_table_shows_the_cost_price_but_the_cashier_table_does_not(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        $cashier = User::factory()->cashierAttendant()->create();
+        Product::factory()->for(Category::factory())->create(['cost_price' => 66.50, 'unit_price' => 95]);
+
+        $this->actingAs($owner)->get(route('owner.inventory.index'))->assertSee('Cost Price')->assertSee('₱66.50');
+        $this->actingAs($cashier)->get(route('cashier.inventory.index'))->assertDontSee('₱66.50');
+    }
 }
