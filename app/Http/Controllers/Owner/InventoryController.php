@@ -123,8 +123,8 @@ class InventoryController extends Controller
     public function label(Request $request, Product $product): View
     {
         $copies = min(60, max(1, (int) $request->query('copies', 1)));
-        $size = in_array($request->query('size'), ['small', 'medium', 'large'], true) ? $request->query('size') : 'small';
-        [$width, $scale] = ['small' => [62, 1], 'medium' => [92, 1.5], 'large' => [186, 2.5]][$size];
+        $size = in_array($request->query('size'), ['xxsmall', 'xsmall', 'small', 'medium', 'large'], true) ? $request->query('size') : 'small';
+        [$width, $scale] = ['xxsmall' => [32, 0.55], 'xsmall' => [45, 0.8], 'small' => [62, 1], 'medium' => [92, 1.5], 'large' => [186, 2.5]][$size];
 
         $item = (object) [
             'id' => $product->product_id,

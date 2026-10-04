@@ -65,4 +65,15 @@ class BarcodeImageTest extends TestCase
         $this->actingAs($owner)->get(route('owner.inventory.label', [$product->product_id, 'size' => 'bogus']))
             ->assertOk()->assertSee('width: 62mm', false);
     }
+
+    public function test_the_label_can_also_be_printed_extra_small_and_extra_extra_small(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        $product = Product::factory()->for(Category::factory())->create(['barcode' => '123']);
+
+        $this->actingAs($owner)->get(route('owner.inventory.label', [$product->product_id, 'size' => 'xsmall']))
+            ->assertSee('width: 45mm', false);
+        $this->actingAs($owner)->get(route('owner.inventory.label', [$product->product_id, 'size' => 'xxsmall']))
+            ->assertSee('width: 32mm', false);
+    }
 }

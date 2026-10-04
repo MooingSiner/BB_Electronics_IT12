@@ -31,7 +31,7 @@
         <label>Copies <input type="number" name="copies" min="1" max="60" value="{{ $copies }}"></label>
         <label>Size
             <select name="size">
-                @foreach(['small' => 'Small (3 per row)', 'medium' => 'Medium (2 per row)', 'large' => 'Large (1 per row)'] as $value => $text)
+                @foreach(['xxsmall' => 'XX Small (5 per row)', 'xsmall' => 'X Small (4 per row)', 'small' => 'Small (3 per row)', 'medium' => 'Medium (2 per row)', 'large' => 'Large (1 per row)'] as $value => $text)
                     <option value="{{ $value }}" @selected($size === $value)>{{ $text }}</option>
                 @endforeach
             </select>
