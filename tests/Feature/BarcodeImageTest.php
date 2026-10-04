@@ -42,4 +42,16 @@ class BarcodeImageTest extends TestCase
             ->assertSee('Barcode 4800123456789', false)
             ->assertSee('4800123456789');
     }
+
+    public function test_the_label_page_has_only_the_label_and_repeats_for_copies(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        $product = Product::factory()->for(Category::factory())->create(['barcode' => '4800123456789']);
+
+        $response = $this->actingAs($owner)->get(route('owner.inventory.label', [$product->product_id, 'copies' => 3]))
+            ->assertOk()
+            ->assertDontSee('Stock In');
+
+        $this->assertSame(3, substr_count($response->getContent(), 'class="label"'));
+    }
 }

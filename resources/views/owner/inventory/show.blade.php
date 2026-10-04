@@ -83,7 +83,7 @@
             <div class="mt-5 inline-block bg-white rounded-lg p-3 text-center">
                 <div class="overflow-x-auto">{!! \App\Support\Code128::svg($item->barcode, 56) !!}</div>
                 <p class="mt-1 font-mono text-xs tracking-widest text-slate-700">{{ $item->barcode }}</p>
-                <button type="button" onclick="window.print()" class="mt-2 text-xs font-medium text-[#363E48] underline print:hidden">Print label</button>
+                <a href="{{ route('owner.inventory.label', $item->id) }}" class="mt-2 inline-block text-xs font-medium text-[#363E48] underline">Print label</a>
             </div>
             @endif
         </div>

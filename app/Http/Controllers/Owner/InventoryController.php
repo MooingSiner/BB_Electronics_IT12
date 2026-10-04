@@ -120,6 +120,20 @@ class InventoryController extends Controller
         return view('owner.inventory.show', compact('item'));
     }
 
+    public function label(Request $request, Product $product): View
+    {
+        $copies = min(60, max(1, (int) $request->query('copies', 1)));
+
+        $item = (object) [
+            'id' => $product->product_id,
+            'name' => $product->product_name,
+            'barcode' => $product->barcode ?: $product->product_code,
+            'unit_price' => (float) $product->unit_price,
+        ];
+
+        return view('owner.inventory.label', compact('item', 'copies'));
+    }
+
     public function edit(Product $product): View
     {
         $product->load('category');
