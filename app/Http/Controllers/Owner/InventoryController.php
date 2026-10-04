@@ -123,6 +123,8 @@ class InventoryController extends Controller
     public function label(Request $request, Product $product): View
     {
         $copies = min(60, max(1, (int) $request->query('copies', 1)));
+        $size = in_array($request->query('size'), ['small', 'medium', 'large'], true) ? $request->query('size') : 'small';
+        [$width, $scale] = ['small' => [62, 1], 'medium' => [92, 1.5], 'large' => [186, 2.5]][$size];
 
         $item = (object) [
             'id' => $product->product_id,
@@ -131,7 +133,7 @@ class InventoryController extends Controller
             'unit_price' => (float) $product->unit_price,
         ];
 
-        return view('owner.inventory.label', compact('item', 'copies'));
+        return view('owner.inventory.label', compact('item', 'copies', 'size', 'width', 'scale'));
     }
 
     public function edit(Product $product): View
