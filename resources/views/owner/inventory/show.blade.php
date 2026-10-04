@@ -41,7 +41,7 @@
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-400/20 text-green-300">Active</span>
                         @endif
                     </div>
-                    <p class="text-sm text-white/60 mt-1 font-mono">{{ $item->code }} &middot; {{ $item->category }}</p>
+                    <p class="text-sm text-white/60 mt-1 font-mono">{{ $item->code }} &middot; {{ $item->category }}@if($item->barcode) &middot; Barcode {{ $item->barcode }}@endif</p>
                 </div>
                 <div class="flex items-center gap-2 flex-wrap">
                 <a href="{{ route('owner.inventory.edit', $item->id) }}"

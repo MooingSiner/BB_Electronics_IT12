@@ -13,6 +13,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class InventoryController extends Controller
@@ -29,7 +30,8 @@ class InventoryController extends Controller
 
                 $query->where(fn ($q) => $q
                     ->where('product_name', 'like', "%{$search}%")
-                    ->orWhere('product_code', 'like', "%{$search}%"));
+                    ->orWhere('product_code', 'like', "%{$search}%")
+                    ->orWhere('barcode', 'like', "%{$search}%"));
             })
             ->when($request->filled('category'), fn ($query) => $query->whereHas(
                 'category',
@@ -74,9 +76,12 @@ class InventoryController extends Controller
         $validated = $this->validateProduct($request);
         $category = $this->resolveCategory($validated['category']);
 
+        $code = Product::generateCode($category);
+
         $product = Product::create([
             'category_id' => $category->category_id,
-            'product_code' => Product::generateCode($category),
+            'product_code' => $code,
+            'barcode' => $validated['barcode'] ?? $code,
             'product_name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'image_url' => $this->resolveImageUrl($request, $validated),
@@ -98,6 +103,7 @@ class InventoryController extends Controller
 
         $item = (object) [
             'id' => $product->product_id,
+            'barcode' => $product->barcode,
             'code' => $product->product_code,
             'name' => $product->product_name,
             'category' => $product->category->category_name ?? '—',
@@ -122,6 +128,7 @@ class InventoryController extends Controller
         $item = (object) [
             'id' => $product->product_id,
             'code' => $product->product_code,
+            'barcode' => $product->barcode,
             'name' => $product->product_name,
             'category' => $product->category->category_name ?? '',
             'description' => $product->description,
@@ -137,11 +144,12 @@ class InventoryController extends Controller
 
     public function update(Request $request, Product $product): RedirectResponse
     {
-        $validated = $this->validateProduct($request, forUpdate: true);
+        $validated = $this->validateProduct($request, forUpdate: true, ignoreId: $product->product_id);
         $oldPrice = (float) $product->unit_price;
 
         $product->update([
             'category_id' => $this->resolveCategory($validated['category'])->category_id,
+            'barcode' => $validated['barcode'] ?? $product->product_code,
             'product_name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'image_url' => $this->resolveImageUrl($request, $validated),
@@ -349,10 +357,11 @@ class InventoryController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function validateProduct(Request $request, bool $forUpdate = false): array
+    private function validateProduct(Request $request, bool $forUpdate = false, ?int $ignoreId = null): array
     {
         return $request->validate([
             'name' => ['required', 'string', 'max:150'],
+            'barcode' => ['nullable', 'string', 'max:50', Rule::unique('product', 'barcode')->ignore($ignoreId, 'product_id')],
             'category' => ['required', 'string', 'max:80'],
             'description' => ['nullable', 'string'],
             'image_url' => ['nullable', 'url', 'max:500'],

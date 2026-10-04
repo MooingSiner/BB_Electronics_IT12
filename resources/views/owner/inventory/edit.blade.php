@@ -105,6 +105,19 @@
                 @endif
             </div>
 
+            {{-- Barcode --}}
+            <div>
+                <label for="barcode" class="block text-sm font-medium text-slate-700 mb-1">Barcode</label>
+                <input type="text" id="barcode" name="barcode" value="{{ old('barcode', $item->barcode) }}" maxlength="50"
+                       placeholder="Click here, then scan the product's barcode"
+                       @keydown.enter.prevent
+                       class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 @error('barcode') border-red-400 @enderror">
+                <p class="mt-1 text-xs text-slate-400">Optional. Leave blank to use the product code. The cashier can scan this at the POS.</p>
+                @error('barcode')
+                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
             {{-- Unit Price & Cost Price --}}
             <div class="grid grid-cols-2 gap-4">
                 <div>

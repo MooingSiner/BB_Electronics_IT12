@@ -23,7 +23,9 @@
                 </div>
                 <input type="text"
                        wire:model.live.debounce.300ms="search"
-                       placeholder="Search or scan product..."
+                       wire:keydown.enter="scan"
+                       autofocus
+                       placeholder="Scan barcode or search product..."
                        class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-transparent"
                        style="--tw-ring-color:#363E48;" />
             </div>

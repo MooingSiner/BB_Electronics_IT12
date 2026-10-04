@@ -76,6 +76,24 @@ class Pos extends Component
         $this->syncCartSession();
     }
 
+    public function scan(): void
+    {
+        $product = Product::findByScan($this->search);
+
+        if ($product) {
+            $this->addToCart($product->product_id);
+            $this->search = '';
+
+            return;
+        }
+
+        $hasNameMatch = Product::where('is_active', true)->where('product_name', 'like', '%'.$this->search.'%')->exists();
+
+        if (trim($this->search) !== '' && ! $hasNameMatch) {
+            $this->errorMessage = "No product found for \"{$this->search}\".";
+        }
+    }
+
     public function removeFromCart(string $key): void
     {
         unset($this->cart[$key]);
@@ -278,7 +296,9 @@ class Pos extends Component
             ->with('category')
             ->where('is_active', true)
             ->when($this->search !== '', fn ($query) => $query->where(
-                'product_name', 'like', '%'.$this->search.'%'
+                fn ($q) => $q->where('product_name', 'like', '%'.$this->search.'%')
+                    ->orWhere('barcode', $this->search)
+                    ->orWhere('product_code', $this->search)
             ))
             ->when($this->category !== '', fn ($query) => $query->whereHas(
                 'category',
