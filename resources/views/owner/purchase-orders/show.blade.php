@@ -58,10 +58,10 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+    <div class="grid grid-cols-1 2xl:grid-cols-3 gap-5">
 
         {{-- LEFT: 2/3 --}}
-        <div class="xl:col-span-2 space-y-5">
+        <div class="2xl:col-span-2 space-y-5">
 
             {{-- Card: Order Information --}}
             <div class="bg-white rounded-xl shadow border border-slate-200 p-6">
@@ -129,29 +129,29 @@
 <table class="w-full text-sm">
                     <thead>
                         <tr class="bg-slate-50 border-b border-slate-200">
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Product</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Ordered</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Received</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Damaged</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Accepted</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Unit Cost</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Cost</th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
+                            <th class="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Product</th>
+                            <th class="px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Ordered</th>
+                            <th class="px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Received</th>
+                            <th class="px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Damaged</th>
+                            <th class="px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Accepted</th>
+                            <th class="px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Unit Cost</th>
+                            <th class="px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Cost</th>
+                            <th class="px-3 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @foreach($order->items as $item)
                             <tr class="hover:bg-slate-50 transition">
-                                <td class="px-4 py-3 font-medium text-slate-800">{{ $item->product->name ?? '—' }}</td>
-                                <td class="px-4 py-3 text-right text-slate-700">{{ $item->qty_ordered }}</td>
-                                <td class="px-4 py-3 text-right text-slate-700">{{ $item->qty_received }}</td>
-                                <td class="px-4 py-3 text-right text-red-600">{{ $item->qty_damaged ?? 0 }}</td>
-                                <td class="px-4 py-3 text-right text-green-700">{{ $item->qty_accepted ?? 0 }}</td>
-                                <td class="px-4 py-3 text-right text-slate-700">₱{{ number_format($item->unit_cost, 2) }}</td>
-                                <td class="px-4 py-3 text-right font-medium text-slate-800">
+                                <td class="px-3 py-3 font-medium text-slate-800">{{ $item->product->name ?? '—' }}</td>
+                                <td class="px-3 py-3 text-right text-slate-700">{{ $item->qty_ordered }}</td>
+                                <td class="px-3 py-3 text-right text-slate-700">{{ $item->qty_received }}</td>
+                                <td class="px-3 py-3 text-right text-red-600">{{ $item->qty_damaged ?? 0 }}</td>
+                                <td class="px-3 py-3 text-right text-green-700">{{ $item->qty_accepted ?? 0 }}</td>
+                                <td class="px-3 py-3 text-right text-slate-700">₱{{ number_format($item->unit_cost, 2) }}</td>
+                                <td class="px-3 py-3 text-right font-medium text-slate-800">
                                     ₱{{ number_format($item->unit_cost * $item->qty_ordered, 2) }}
                                 </td>
-                                <td class="px-4 py-3 text-center">
+                                <td class="px-3 py-3 text-center">
                                     @php
                                         $qtyReceived = $item->qty_received ?? 0;
                                         $qtyOrdered = $item->qty_ordered ?? 0;
@@ -185,8 +185,8 @@
                     </tbody>
                     <tfoot class="border-t border-slate-200 bg-slate-50">
                         <tr>
-                            <td colspan="7" class="px-4 py-3 text-right text-sm font-semibold text-slate-700">Total Order Cost</td>
-                            <td class="px-4 py-3 text-right text-sm font-bold text-slate-900">
+                            <td colspan="7" class="px-3 py-3 text-right text-sm font-semibold text-slate-700">Total Order Cost</td>
+                            <td class="px-3 py-3 text-right text-sm font-bold text-slate-900">
                                 ₱{{ number_format($order->total_cost, 2) }}
                             </td>
                         </tr>
@@ -197,7 +197,7 @@
         </div>
 
         {{-- RIGHT: 1/3 --}}
-        <div class="xl:col-span-1">
+        <div class="2xl:col-span-1">
             <div class="bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
                 <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
                     <h2 class="text-base font-semibold text-slate-800">Damage Reports</h2>
