@@ -121,4 +121,14 @@ class VoidSaleAndCancelOrderTest extends TestCase
         $this->actingAs($owner)->get(route('owner.sales.index'))->assertSee('Unit Price')->assertSee('₱95.00');
         $this->actingAs($cashier)->get(route('cashier.sales.index'))->assertSee('Unit Price')->assertSee('₱95.00');
     }
+
+    public function test_the_owner_sales_list_return_button_opens_the_return_form(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        [$sale] = $this->saleWithItem();
+
+        $this->actingAs($owner)->get(route('owner.sales.index'))
+            ->assertSee(route('owner.returns.process', ['transaction_id' => $sale->sale_id]), false);
+        $this->actingAs($owner)->get(route('owner.returns.process', ['transaction_id' => $sale->sale_id]))->assertOk();
+    }
 }
