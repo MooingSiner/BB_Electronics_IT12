@@ -14,6 +14,7 @@ use App\Models\PurchaseOrder;
 use App\Models\ReturnRecord;
 use App\Models\StockAdjustment;
 use App\Models\Supplier;
+use App\Support\PerPage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -51,7 +52,7 @@ class SupplierController extends Controller
                 }
             })
             ->latest('order_date')
-            ->paginate(15)
+            ->paginate(PerPage::rows())
             ->withQueryString()
             ->through(fn (PurchaseOrder $order) => (object) [
                 'id' => $order->order_id,
@@ -283,7 +284,7 @@ class SupplierController extends Controller
         $damaged = ReturnRecord::whereNotNull('supplier_id')
             ->with(['product', 'supplier'])
             ->latest('return_date')
-            ->paginate(15)
+            ->paginate(PerPage::rows())
             ->withQueryString()
             ->through(fn (ReturnRecord $r) => (object) [
                 'id' => 'DMG-'.str_pad((string) $r->return_id, 4, '0', STR_PAD_LEFT),

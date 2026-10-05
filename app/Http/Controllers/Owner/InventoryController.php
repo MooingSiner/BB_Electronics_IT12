@@ -9,6 +9,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\SaleItem;
 use App\Models\StockAdjustment;
+use App\Support\PerPage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -47,7 +48,7 @@ class InventoryController extends Controller
             ->when($request->input('status') === 'In Stock', fn ($query) => $query->whereColumn('quantity_on_hand', '>', 'reorder_level'))
             ->when($request->input('status') === 'Needs Restock', fn ($query) => $query->whereColumn('quantity_on_hand', '<=', 'reorder_level'))
             ->orderBy('product_name')
-            ->paginate(15)
+            ->paginate(PerPage::rows())
             ->withQueryString()
             ->through(fn (Product $product) => (object) [
                 'id' => $product->product_id,
@@ -361,9 +362,9 @@ class InventoryController extends Controller
             'item' => (object) ['id' => $product->product_id, 'code' => $product->product_code, 'name' => $product->product_name],
             'movements' => $movements,
             'pagedMovements' => new LengthAwarePaginator(
-                $movements->forPage(Paginator::resolveCurrentPage(), 15)->values(),
+                $movements->forPage(Paginator::resolveCurrentPage(), PerPage::rows())->values(),
                 $movements->count(),
-                15,
+                PerPage::rows(),
                 Paginator::resolveCurrentPage(),
                 ['path' => $request->url(), 'query' => $request->query()]
             ),

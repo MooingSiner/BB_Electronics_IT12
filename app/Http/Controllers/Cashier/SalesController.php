@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Cashier;
 use App\Enums\SaleStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Sale;
+use App\Support\PerPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -29,7 +30,7 @@ class SalesController extends Controller
             ->when($request->input('date') === 'today', fn ($query) => $query->whereDate('sale_date', today()))
             ->when($request->boolean('mine'), fn ($query) => $query->where('user_id', Auth::id()))
             ->latest('sale_date')
-            ->paginate(15)
+            ->paginate(PerPage::rows())
             ->withQueryString()
             ->through(fn (Sale $sale) => $this->present($sale));
 

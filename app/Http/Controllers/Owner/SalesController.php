@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Sale;
 use App\Models\StockAdjustment;
+use App\Support\PerPage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -31,7 +32,7 @@ class SalesController extends Controller
             ->when($request->input('discount') === 'with', fn ($query) => $query->where('discount_amount', '>', 0))
             ->when($request->input('discount') === 'without', fn ($query) => $query->where('discount_amount', 0))
             ->latest('sale_date')
-            ->paginate(15)
+            ->paginate(PerPage::rows())
             ->withQueryString()
             ->through(fn (Sale $sale) => (object) [
                 'id' => $sale->sale_id,

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Cashier;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
+use App\Support\PerPage;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -36,7 +37,7 @@ class InventoryController extends Controller
             ->when($request->input('status') === 'in_stock', fn ($query) => $query->whereColumn('quantity_on_hand', '>', 'reorder_level'))
             ->when($request->input('status') === 'needs_restock', fn ($query) => $query->whereColumn('quantity_on_hand', '<=', 'reorder_level'))
             ->orderBy('product_name')
-            ->paginate(15)
+            ->paginate(PerPage::rows())
             ->withQueryString()
             ->through(fn (Product $product) => (object) [
                 'id' => $product->product_id,

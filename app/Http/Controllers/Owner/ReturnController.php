@@ -16,6 +16,7 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\StockAdjustment;
 use App\Models\Warranty;
+use App\Support\PerPage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,7 +33,7 @@ class ReturnController extends Controller
         if ($request->input('tab', 'returns') === 'warranty') {
             $warranties = Warranty::with('saleItem.product')
                 ->latest('warranty_id')
-                ->paginate(15)
+                ->paginate(PerPage::rows())
                 ->withQueryString()
                 ->through(fn (Warranty $warranty) => (object) [
                     'id' => $warranty->warranty_id,
@@ -52,7 +53,7 @@ class ReturnController extends Controller
             ->when($request->input('status') === 'Pending', fn ($query) => $query->where('status', ReturnStatus::Open))
             ->when($request->input('status') === 'Completed', fn ($query) => $query->where('status', ReturnStatus::Resolved))
             ->latest('return_date')
-            ->paginate(15)
+            ->paginate(PerPage::rows())
             ->withQueryString()
             ->through(fn (ReturnRecord $return) => (object) [
                 'id' => $return->return_id,

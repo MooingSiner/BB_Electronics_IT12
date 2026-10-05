@@ -12,6 +12,7 @@ use App\Models\ReturnRecord;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Warranty;
+use App\Support\PerPage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Enum;
@@ -26,7 +27,7 @@ class ReturnController extends Controller
         if ($request->input('tab', 'returns') === 'warranty') {
             $warranties = Warranty::with('saleItem.product')
                 ->latest('warranty_id')
-                ->paginate(15)
+                ->paginate(PerPage::rows())
                 ->withQueryString()
                 ->through(fn (Warranty $warranty) => (object) [
                     'id' => $warranty->warranty_id,
@@ -50,7 +51,7 @@ class ReturnController extends Controller
             ->when($request->input('status') === 'Pending', fn ($query) => $query->where('status', 'open'))
             ->when($request->input('status') === 'Approved', fn ($query) => $query->where('status', 'resolved'))
             ->latest('return_date')
-            ->paginate(15)
+            ->paginate(PerPage::rows())
             ->withQueryString()
             ->through(fn (ReturnRecord $return) => (object) [
                 'id' => $return->return_id,

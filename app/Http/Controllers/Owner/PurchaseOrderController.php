@@ -14,6 +14,7 @@ use App\Models\PurchaseOrder;
 use App\Models\ReturnRecord;
 use App\Models\StockAdjustment;
 use App\Models\Store;
+use App\Support\PerPage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -51,7 +52,7 @@ class PurchaseOrderController extends Controller
                 }
             })
             ->latest('order_date')
-            ->paginate(15)
+            ->paginate(PerPage::rows())
             ->withQueryString()
             ->through(fn (PurchaseOrder $order) => (object) [
                 'id' => $order->order_id,
