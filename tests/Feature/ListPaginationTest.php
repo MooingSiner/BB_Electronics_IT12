@@ -9,6 +9,7 @@ use App\Models\ReturnRecord;
 use App\Models\Sale;
 use App\Models\StockAdjustment;
 use App\Models\User;
+use App\Support\PerPage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -87,5 +88,29 @@ class ListPaginationTest extends TestCase
         ReturnRecord::factory()->count(20)->create();
 
         $this->actingAs($owner)->get(route('owner.returns.index'))->assertSee('page=2', false);
+    }
+
+    public function test_phones_get_10_rows_per_page_and_everything_else_gets_15(): void
+    {
+        $iphone = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1';
+        $androidPhone = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36';
+        $androidTablet = 'Mozilla/5.0 (Linux; Android 14; SM-X700) AppleWebKit/537.36 Chrome/120.0 Safari/537.36';
+        $desktop = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36';
+
+        $this->assertTrue(PerPage::isMobile($iphone));
+        $this->assertTrue(PerPage::isMobile($androidPhone));
+        $this->assertFalse(PerPage::isMobile($androidTablet));
+        $this->assertFalse(PerPage::isMobile($desktop));
+
+        $owner = User::factory()->ownerManager()->create();
+        $category = Category::factory()->create();
+        foreach ($this->names(20) as $name) {
+            Product::factory()->create(['category_id' => $category->category_id, 'product_name' => $name]);
+        }
+
+        $this->actingAs($owner)->withHeader('User-Agent', $iphone)->get(route('owner.inventory.index'))
+            ->assertSee('Zitem 10')->assertDontSee('Zitem 11');
+        $this->actingAs($owner)->withHeader('User-Agent', $desktop)->get(route('owner.inventory.index'))
+            ->assertSee('Zitem 15')->assertDontSee('Zitem 16');
     }
 }
