@@ -197,7 +197,7 @@
 
                 {{-- Line chart --}}
                 @php
-                    $chartW = 640; $chartH = 220; $padL = 52; $padR = 22; $padT = 14; $padB = 28;
+                    $chartW = 640; $chartH = 220; $padL = 52; $padR = 22; $padT = 30; $padB = 28;
                     $plotW = $chartW - $padL - $padR; $plotH = $chartH - $padT - $padB;
                     $xAt = fn (int $i) => $pointCount > 1 ? $padL + $i * ($plotW / ($pointCount - 1)) : $padL + $plotW / 2;
                     $yAt = fn (float $v) => $padT + (1 - $v / $maxVal) * $plotH;
@@ -206,10 +206,13 @@
                     $baseY = $padT + $plotH;
                     $areaPath = $linePath.' L'.$coords->last()['x'].' '.$baseY.' L'.$coords->first()['x'].' '.$baseY.' Z';
                     $yTicks = [$maxVal, $maxVal / 2, 0];
+                    $peakIndex = $coords->search(fn ($c) => $c['value'] === (float) $maxVal);
+                    $lastActiveIndex = $coords->keys()->filter(fn ($i) => $coords[$i]['value'] > 0)->last();
                 @endphp
                 <div id="salesTrendChart" class="relative">
                     <svg viewBox="0 0 {{ $chartW }} {{ $chartH }}" class="w-full h-auto" role="img"
                          aria-label="Line chart of revenue per {{ $trendUnit }}. Total ₱{{ number_format($trendTotal, 2) }}.">
+                        <text x="{{ $padL - 8 }}" y="10" text-anchor="end" font-size="10" font-weight="600" fill="#64748B">Revenue</text>
                         @foreach($yTicks as $tick)
                             <line x1="{{ $padL }}" x2="{{ $chartW - $padR }}" y1="{{ $yAt((float) $tick) }}" y2="{{ $yAt((float) $tick) }}" stroke="#E2E8F0" stroke-width="1" @if($tick > 0) stroke-dasharray="3 4" @endif/>
                             <text x="{{ $padL - 8 }}" y="{{ $yAt((float) $tick) + 3.5 }}" text-anchor="end" font-size="10" fill="#94A3B8">₱{{ number_format($tick, 0) }}</text>
@@ -218,7 +221,14 @@
                         <path d="{{ $linePath }}" fill="none" stroke="#363E48" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
                         @foreach($coords as $i => $c)
                             @if($c['value'] > 0)
-                                <circle cx="{{ $c['x'] }}" cy="{{ $c['y'] }}" r="3.5" fill="#363E48" stroke="#fff" stroke-width="2"/>
+                                @if($i === $peakIndex)
+                                    <circle cx="{{ $c['x'] }}" cy="{{ $c['y'] }}" r="6" fill="#E0CD66" stroke="#363E48" stroke-width="2"/>
+                                @else
+                                    <circle cx="{{ $c['x'] }}" cy="{{ $c['y'] }}" r="3.5" fill="#363E48" stroke="#fff" stroke-width="2"/>
+                                @endif
+                                @if($i === $peakIndex || $i === $lastActiveIndex)
+                                    <text x="{{ min(max($c['x'], $padL + 24), $chartW - $padR - 24) }}" y="{{ $c['y'] - 12 }}" text-anchor="middle" font-size="11" font-weight="600" fill="#363E48">₱{{ number_format($c['value'], 0) }}</text>
+                                @endif
                             @endif
                             @if($i % $labelStep === 0)
                                 <text x="{{ $c['x'] }}" y="{{ $chartH - 8 }}" text-anchor="middle" font-size="10" fill="#94A3B8">{{ $c['label'] }}</text>
@@ -228,6 +238,23 @@
                         <circle id="trendDot" r="5" fill="#363E48" stroke="#fff" stroke-width="2" style="display:none"/>
                     </svg>
                     <div id="trendTip" class="pointer-events-none absolute z-10 hidden rounded-lg bg-[#363E48] px-3 py-1.5 text-xs text-white shadow-lg whitespace-nowrap"></div>
+                </div>
+
+                {{-- Legend --}}
+                <div class="flex flex-wrap items-center gap-x-5 gap-y-1 mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
+                    <span class="flex items-center gap-1.5">
+                        <svg width="22" height="10" viewBox="0 0 22 10"><line x1="0" y1="5" x2="22" y2="5" stroke="#363E48" stroke-width="2" stroke-linecap="round"/><circle cx="11" cy="5" r="3.5" fill="#363E48" stroke="#fff" stroke-width="2"/></svg>
+                        Revenue per {{ $trendUnit }}
+                    </span>
+                    <span class="flex items-center gap-1.5">
+                        <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5" fill="#E0CD66" stroke="#363E48" stroke-width="2"/></svg>
+                        Peak {{ $trendUnit }} ({{ $peakPoint['label'] }})
+                    </span>
+                    <span class="flex items-center gap-1.5">
+                        <svg width="22" height="10" viewBox="0 0 22 10"><line x1="0" y1="5" x2="22" y2="5" stroke="#CBD5E1" stroke-width="2"/></svg>
+                        Flat at ₱0 = no sales
+                    </span>
+                    <span class="ml-auto text-slate-400">Hover the chart for exact amounts</span>
                 </div>
                 <script>
                     (function () {
