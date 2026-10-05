@@ -186,7 +186,6 @@
                     $activePoints = $trendPoints->where('value', '>', 0);
                     $peakPoint = $activePoints->sortByDesc('value')->first();
                     $avgValue = $activePoints->count() > 0 ? $trendTotal / $activePoints->count() : 0;
-                    $showBarLabels = $pointCount <= 14;
                 @endphp
 
                 {{-- Summary --}}
@@ -196,46 +195,71 @@
                     &middot; Avg <span class="font-semibold text-slate-700">₱{{ number_format($avgValue, 2) }}</span> / active {{ $trendUnit }}
                 </p>
 
-                {{-- Chart --}}
-                <div class="flex gap-2">
-                    <div class="flex flex-col justify-between text-[10px] text-slate-400 h-44 py-0.5 text-right w-12 flex-shrink-0">
-                        <span>₱{{ number_format($maxVal, 0) }}</span>
-                        <span>₱0</span>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-end gap-1 h-44 border-b border-slate-100">
-                            @foreach($trendPoints as $point)
-                                <div class="flex-1 h-full flex flex-col items-center justify-end" title="{{ $point['label'] }}: ₱{{ number_format($point['value'], 2) }}">
-                                    @if($showBarLabels && $point['value'] > 0)
-                                        <span class="text-[9px] text-slate-500 mb-0.5 whitespace-nowrap">₱{{ number_format($point['value'], 0) }}</span>
-                                    @endif
-                                    <div class="w-full rounded-t transition-colors hover:opacity-80"
-                                         style="height: {{ $point['value'] > 0 ? max(4, ($point['value'] / $maxVal) * 100) : 1 }}%; background-color: {{ $point['value'] > 0 ? '#363E48' : '#E2E8F0' }};">
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                        <div class="flex gap-1 mt-2">
-                            @foreach($trendPoints as $i => $point)
-                                <div class="flex-1 text-center text-[10px] text-slate-400 truncate">
-                                    {{ $i % $labelStep === 0 ? $point['label'] : '' }}
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
+                {{-- Line chart --}}
+                @php
+                    $chartW = 640; $chartH = 220; $padL = 52; $padR = 22; $padT = 14; $padB = 28;
+                    $plotW = $chartW - $padL - $padR; $plotH = $chartH - $padT - $padB;
+                    $xAt = fn (int $i) => $pointCount > 1 ? $padL + $i * ($plotW / ($pointCount - 1)) : $padL + $plotW / 2;
+                    $yAt = fn (float $v) => $padT + (1 - $v / $maxVal) * $plotH;
+                    $coords = $trendPoints->values()->map(fn ($pt, $i) => ['x' => round($xAt($i), 1), 'y' => round($yAt((float) $pt['value']), 1), 'label' => $pt['label'], 'value' => (float) $pt['value']]);
+                    $linePath = $coords->map(fn ($c, $i) => ($i === 0 ? 'M' : 'L').$c['x'].' '.$c['y'])->implode(' ');
+                    $baseY = $padT + $plotH;
+                    $areaPath = $linePath.' L'.$coords->last()['x'].' '.$baseY.' L'.$coords->first()['x'].' '.$baseY.' Z';
+                    $yTicks = [$maxVal, $maxVal / 2, 0];
+                @endphp
+                <div id="salesTrendChart" class="relative">
+                    <svg viewBox="0 0 {{ $chartW }} {{ $chartH }}" class="w-full h-auto" role="img"
+                         aria-label="Line chart of revenue per {{ $trendUnit }}. Total ₱{{ number_format($trendTotal, 2) }}.">
+                        @foreach($yTicks as $tick)
+                            <line x1="{{ $padL }}" x2="{{ $chartW - $padR }}" y1="{{ $yAt((float) $tick) }}" y2="{{ $yAt((float) $tick) }}" stroke="#E2E8F0" stroke-width="1" @if($tick > 0) stroke-dasharray="3 4" @endif/>
+                            <text x="{{ $padL - 8 }}" y="{{ $yAt((float) $tick) + 3.5 }}" text-anchor="end" font-size="10" fill="#94A3B8">₱{{ number_format($tick, 0) }}</text>
+                        @endforeach
+                        <path d="{{ $areaPath }}" fill="#363E48" fill-opacity="0.07"/>
+                        <path d="{{ $linePath }}" fill="none" stroke="#363E48" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+                        @foreach($coords as $i => $c)
+                            @if($c['value'] > 0)
+                                <circle cx="{{ $c['x'] }}" cy="{{ $c['y'] }}" r="3.5" fill="#363E48" stroke="#fff" stroke-width="2"/>
+                            @endif
+                            @if($i % $labelStep === 0)
+                                <text x="{{ $c['x'] }}" y="{{ $chartH - 8 }}" text-anchor="middle" font-size="10" fill="#94A3B8">{{ $c['label'] }}</text>
+                            @endif
+                        @endforeach
+                        <line id="trendCursor" y1="{{ $padT }}" y2="{{ $baseY }}" stroke="#94A3B8" stroke-width="1" stroke-dasharray="3 3" style="display:none"/>
+                        <circle id="trendDot" r="5" fill="#363E48" stroke="#fff" stroke-width="2" style="display:none"/>
+                    </svg>
+                    <div id="trendTip" class="pointer-events-none absolute z-10 hidden rounded-lg bg-[#363E48] px-3 py-1.5 text-xs text-white shadow-lg whitespace-nowrap"></div>
                 </div>
+                <script>
+                    (function () {
+                        const points = @json($coords->values());
+                        const box = document.getElementById('salesTrendChart');
+                        const svg = box.querySelector('svg');
+                        const cursor = document.getElementById('trendCursor');
+                        const dot = document.getElementById('trendDot');
+                        const tip = document.getElementById('trendTip');
+                        const viewWidth = {{ $chartW }};
 
-                {{-- Legend --}}
-                <div class="flex items-center gap-4 mt-4 pt-3 border-t border-slate-100">
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-2.5 h-2.5 rounded-sm" style="background-color:#363E48"></span>
-                        <span class="text-xs text-slate-500">Revenue</span>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-2.5 h-2.5 rounded-sm bg-slate-200"></span>
-                        <span class="text-xs text-slate-500">No sales</span>
-                    </div>
-                </div>
+                        function hide() { cursor.style.display = dot.style.display = 'none'; tip.classList.add('hidden'); }
+
+                        svg.addEventListener('mousemove', event => {
+                            const rect = svg.getBoundingClientRect();
+                            const x = (event.clientX - rect.left) * (viewWidth / rect.width);
+                            const nearest = points.reduce((best, point) => Math.abs(point.x - x) < Math.abs(best.x - x) ? point : best, points[0]);
+                            const scale = rect.width / viewWidth;
+
+                            cursor.setAttribute('x1', nearest.x); cursor.setAttribute('x2', nearest.x);
+                            dot.setAttribute('cx', nearest.x); dot.setAttribute('cy', nearest.y);
+                            cursor.style.display = dot.style.display = '';
+
+                            tip.innerHTML = '<span class="text-white/70">' + nearest.label + '</span><br><strong>₱' + nearest.value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</strong>';
+                            tip.classList.remove('hidden');
+                            const left = Math.min(Math.max(nearest.x * scale - tip.offsetWidth / 2, 0), rect.width - tip.offsetWidth);
+                            tip.style.left = left + 'px';
+                            tip.style.top = Math.max(nearest.y * scale - tip.offsetHeight - 12, 0) + 'px';
+                        });
+                        svg.addEventListener('mouseleave', hide);
+                    })();
+                </script>
             @else
                 <p class="text-sm text-slate-400 text-center py-14">No sales recorded for {{ strtolower($periodLabel ?? 'today') }}.</p>
             @endif

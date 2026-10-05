@@ -131,4 +131,15 @@ class VoidSaleAndCancelOrderTest extends TestCase
             ->assertSee(route('owner.returns.process', ['transaction_id' => $sale->sale_id]), false);
         $this->actingAs($owner)->get(route('owner.returns.process', ['transaction_id' => $sale->sale_id]))->assertOk();
     }
+
+    public function test_the_dashboard_sales_trend_is_a_line_chart(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        Sale::factory()->create(['sale_date' => now(), 'total_amount' => 1500, 'status' => SaleStatus::Completed]);
+
+        $this->actingAs($owner)->get(route('owner.dashboard', ['period' => 'month']))
+            ->assertOk()
+            ->assertSee('id="salesTrendChart"', false)
+            ->assertSee('stroke-linejoin="round"', false);
+    }
 }
