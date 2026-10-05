@@ -23,10 +23,13 @@
     </style>
     @stack('styles')
 </head>
-<body class="bg-slate-100 flex h-screen overflow-hidden print:block print:h-auto print:overflow-visible">
+<body x-data="{ menuOpen: false }" @keydown.escape.window="menuOpen = false" class="bg-slate-100 flex h-screen overflow-hidden print:block print:h-auto print:overflow-visible">
+
+<div x-show="menuOpen" style="display:none" @click="menuOpen = false" class="lg:hidden fixed inset-0 z-40 bg-black/40"></div>
 
 {{-- ── Sidebar ─────────────────────────────────────────────────────────────── --}}
-<aside class="w-60 flex-shrink-0 flex flex-col h-full sidebar-bg print:hidden">
+<aside :class="menuOpen ? 'translate-x-0' : '-translate-x-full'"
+       class="fixed inset-y-0 left-0 z-50 w-60 flex-shrink-0 flex flex-col h-full sidebar-bg transition-transform duration-200 lg:static lg:z-auto lg:translate-x-0 print:hidden">
 
     {{-- Logo --}}
     <div class="px-5 py-5 border-b border-white/10 flex items-center gap-2.5">
@@ -63,7 +66,7 @@
             ] as $item)
                 @php $isActive = $nav === $item['id']; @endphp
                 <li>
-                    <a href="{{ route($item['route']) }}"
+                    <a href="{{ route($item['route']) }}" @click="menuOpen = false"
                        class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors
                               {{ $isActive ? 'font-medium' : 'text-white/60 hover:text-white hover:bg-white/10' }}"
                        @if($isActive) style="background-color:#E0CD66;color:#363E48" @endif>
@@ -114,7 +117,15 @@
 
     {{-- Header --}}
     <header class="bg-white border-b border-slate-200 px-5 h-14 flex items-center justify-between flex-shrink-0 print:hidden">
-        <div class="text-sm text-slate-500">@yield('breadcrumb')</div>
+        <div class="flex items-center gap-2 min-w-0">
+            <button type="button" @click="menuOpen = !menuOpen" aria-label="Toggle menu"
+                    class="lg:hidden p-2 -ml-2 rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+            <div class="text-sm text-slate-500 truncate">@yield('breadcrumb')</div>
+        </div>
         <div class="flex items-center gap-3">
             <div class="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-slate-100 cursor-pointer">
                 <div class="w-7 h-7 rounded-full flex items-center justify-center" style="background-color:#363E48">

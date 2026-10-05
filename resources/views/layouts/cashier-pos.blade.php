@@ -15,9 +15,11 @@
 </head>
 <body class="bg-slate-100 flex h-screen overflow-hidden" x-data="{ sidebarCollapsed: true }">
 
+<div x-show="!sidebarCollapsed" style="display:none" @click="sidebarCollapsed = true" class="lg:hidden fixed inset-0 z-40 bg-black/40"></div>
+
 {{-- ── Sidebar ─────────────────────────────────────────────────────────────── --}}
-<aside class="flex-shrink-0 flex flex-col h-full sidebar-bg transition-all duration-200"
-       :class="sidebarCollapsed ? 'w-16' : 'w-60'">
+<aside class="flex-shrink-0 flex flex-col h-full sidebar-bg transition-all duration-200 max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-50"
+       :class="sidebarCollapsed ? 'w-16 max-lg:-translate-x-full' : 'w-60'">
 
     {{-- Logo --}}
     <div class="px-5 py-5 border-b border-white/10 flex items-center gap-2.5" :class="sidebarCollapsed ? 'justify-center px-0' : ''">
