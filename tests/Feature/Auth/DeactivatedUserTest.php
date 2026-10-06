@@ -46,4 +46,22 @@ class DeactivatedUserTest extends TestCase
         $this->assertGuest();
         $this->assertTrue($owner->fresh()->status === UserStatus::Active);
     }
+
+    public function test_opening_a_page_without_a_session_shows_a_notice_on_the_login_page(): void
+    {
+        $this->get(route('owner.dashboard'))
+            ->assertRedirect(route('login'))
+            ->assertSessionHas('notice');
+
+        $this->followingRedirects()->get(route('owner.dashboard'))
+            ->assertSee('Your session has expired or you are not signed in.');
+    }
+
+    public function test_a_normal_logout_does_not_show_the_expired_notice(): void
+    {
+        $user = User::factory()->cashierAttendant()->create();
+
+        $this->actingAs($user)->post(route('logout'))->assertRedirect('/');
+        $this->followingRedirects()->get('/')->assertDontSee('Your session has expired');
+    }
 }

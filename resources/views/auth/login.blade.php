@@ -26,6 +26,12 @@
     <div class="bg-white rounded-2xl shadow-xl p-8">
         <h2 class="text-slate-800 text-lg font-semibold mb-6">Sign in to your account</h2>
 
+        @if (session('notice'))
+            <div class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <p class="text-sm text-amber-800">{{ session('notice') }}</p>
+            </div>
+        @endif
+
         @if ($errors->any())
             <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                 <p class="text-sm text-red-600">{{ $errors->first() }}</p>
