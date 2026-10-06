@@ -85,6 +85,11 @@
         </div>
     </div>
 
+    <a href="{{ route('cashier.returns.slip', $ret->return_id) }}"
+       class="block w-full py-3 text-center text-sm font-semibold rounded-xl border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 transition-colors">
+        Print Return Slip
+    </a>
+
     @if($ret->isCancellable())
     <form method="POST" action="{{ route('cashier.returns.cancel', $ret->return_id) }}"
           onsubmit="return confirm('Cancel this return? It will be removed and stock will not change.')">

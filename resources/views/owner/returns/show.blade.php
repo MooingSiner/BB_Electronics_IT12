@@ -18,8 +18,12 @@
             <h1 class="text-2xl font-bold text-slate-800">Return #{{ $return->id }}</h1>
             <p class="text-sm text-slate-500 mt-1">{{ $return->product_name }} ({{ $return->product_code }})</p>
         </div>
-        @if($return->status === 'Pending')
         <div class="flex items-center gap-2 shrink-0">
+        <a href="{{ route('owner.returns.slip', $return->id) }}"
+           class="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 transition">
+            Print Slip
+        </a>
+        @if($return->status === 'Pending')
         @if($return->cancellable)
         <form method="POST" action="{{ route('owner.returns.cancel', $return->id) }}">
             @csrf
@@ -41,8 +45,8 @@
                 Mark Resolved
             </button>
         </form>
-        </div>
         @endif
+        </div>
     </div>
 
     {{-- Return Information --}}

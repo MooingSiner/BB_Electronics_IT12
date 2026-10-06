@@ -76,6 +76,18 @@ class ReturnController extends Controller
         return view('cashier.returns.show', ['ret' => $returnRecord]);
     }
 
+    public function slip(ReturnRecord $returnRecord): View
+    {
+        abort_unless($returnRecord->sale_id !== null, 404);
+
+        $returnRecord->load(['product', 'sale.items', 'replacementProduct']);
+
+        return view('owner.returns.slip', [
+            'ret' => $returnRecord,
+            'backUrl' => route('cashier.returns.show', $returnRecord->return_id),
+        ]);
+    }
+
     public function process(Request $request): View
     {
         $transactionId = $request->input('transaction_id');
