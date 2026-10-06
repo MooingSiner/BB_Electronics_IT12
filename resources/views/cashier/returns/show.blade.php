@@ -65,6 +65,12 @@
             <span class="text-slate-500">Resolution</span>
             <span class="text-slate-700">{{ ucfirst($ret->resolution->value) }}</span>
         </div>
+        @if($ret->isExchange())
+        <div class="flex justify-between gap-6 px-5 py-3.5">
+            <span class="text-slate-500 flex-shrink-0">Exchange for</span>
+            <span class="text-slate-700 text-right">{{ $ret->replacementProduct->product_name ?? '—' }} ×{{ $ret->quantity }}<br><span class="text-xs text-slate-500">{{ $ret->exchangeDifferenceNote() }}</span></span>
+        </div>
+        @endif
         <div class="flex justify-between gap-6 px-5 py-3.5">
             <span class="text-slate-500 flex-shrink-0">Stock</span>
             <span class="text-slate-700 text-right">{{ $ret->stockNote() }}</span>

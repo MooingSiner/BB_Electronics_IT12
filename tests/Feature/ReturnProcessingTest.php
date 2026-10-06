@@ -36,9 +36,9 @@ class ReturnProcessingTest extends TestCase
         $this->assertDatabaseHas('return_record', ['sale_id' => $sale->sale_id, 'product_id' => $productA->product_id, 'quantity' => 1]);
         $this->assertDatabaseHas('return_record', ['sale_id' => $sale->sale_id, 'product_id' => $productB->product_id, 'quantity' => 2]);
 
-        // The sale_item insert trigger already decremented stock by the sold quantity
-        // (5 - 3 = 2, 5 - 2 = 3); wrong_item is then restocked, damaged is not.
-        $this->assertSame(3, $productA->fresh()->quantity_on_hand);
+        // The sale_item insert trigger already decremented stock by the sold quantity (5 - 3 = 2, 5 - 2 = 3).
+        // A is a wrong item, so it is restocked (+1), but its replacement unit leaves stock again (-1); B is damaged and refunded.
+        $this->assertSame(2, $productA->fresh()->quantity_on_hand);
         $this->assertSame(3, $productB->fresh()->quantity_on_hand);
     }
 

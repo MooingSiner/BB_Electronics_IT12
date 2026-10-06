@@ -115,10 +115,10 @@
             <span>Status</span>
             <span>{{ $txn->status }}@if($txn->return_label) &middot; {{ $txn->return_label }}@endif</span>
         </div>
-        @if($txn->refunded > 0)
-        <div class="flex justify-between text-red-600">
-            <span>Refunded</span>
-            <span>-₱{{ number_format($txn->refunded, 2) }}</span>
+        @if($txn->refunded != 0)
+        <div class="flex justify-between {{ $txn->refunded > 0 ? 'text-red-600' : 'text-green-600' }}">
+            <span>{{ $txn->refunded > 0 ? 'Refunded' : 'Paid extra for exchange' }}</span>
+            <span>{{ $txn->refunded > 0 ? '-' : '+' }}₱{{ number_format(abs($txn->refunded), 2) }}</span>
         </div>
         <div class="flex justify-between font-bold text-slate-800">
             <span>Net Total</span>

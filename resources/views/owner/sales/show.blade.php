@@ -250,10 +250,10 @@
                         </span>
                     </div>
 
-                    @if(($txn->refunded ?? 0) > 0)
+                    @if(($txn->refunded ?? 0) != 0)
                         <div class="flex justify-between text-sm">
-                            <span class="text-red-600">Refunded</span>
-                            <span class="font-medium text-red-600">-₱{{ number_format($txn->refunded, 2) }}</span>
+                            <span class="{{ $txn->refunded > 0 ? 'text-red-600' : 'text-green-600' }}">{{ $txn->refunded > 0 ? 'Refunded' : 'Paid extra for exchange' }}</span>
+                            <span class="font-medium {{ $txn->refunded > 0 ? 'text-red-600' : 'text-green-600' }}">{{ $txn->refunded > 0 ? '-' : '+' }}₱{{ number_format(abs($txn->refunded), 2) }}</span>
                         </div>
                         <div class="flex justify-between text-base font-bold pt-2 border-t border-slate-200">
                             <span class="text-[#363E48]">Net Total</span>

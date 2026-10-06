@@ -23,9 +23,17 @@
                             <td class="px-6 py-3 text-slate-700">{{ $line->product }}</td>
                             <td class="px-6 py-3 text-slate-600">{{ $line->quantity }}</td>
                             <td class="px-6 py-3 text-slate-600">{{ $line->condition }}</td>
-                            <td class="px-6 py-3 text-slate-600">{{ $line->resolution }}</td>
+                            <td class="px-6 py-3 text-slate-600">{{ $line->exchange ?? $line->resolution }}</td>
                             <td class="px-6 py-3 text-slate-600">{{ $line->status }}</td>
-                            <td class="px-6 py-3 text-right text-slate-700">{{ $line->refund !== null ? '₱'.number_format($line->refund, 2) : '—' }}</td>
+                            <td class="px-6 py-3 text-right text-slate-700">
+                                @if($line->refund === null || $line->refund == 0)
+                                    —
+                                @elseif($line->refund > 0)
+                                    ₱{{ number_format($line->refund, 2) }} refunded
+                                @else
+                                    ₱{{ number_format(abs($line->refund), 2) }} paid extra
+                                @endif
+                            </td>
                             <td class="px-6 py-3 text-right">
                                 <a href="{{ route($routePrefix.'.returns.show', $line->id) }}" class="text-xs font-medium text-[#363E48] underline">View</a>
                             </td>

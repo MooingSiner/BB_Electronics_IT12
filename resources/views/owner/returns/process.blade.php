@@ -63,7 +63,7 @@
     </div>
     @elseif($txn)
     <div class="bg-white rounded-xl border shadow-sm p-6">
-        <form data-confirm="Submit this return for the selected items?" id="returnForm" method="POST" action="{{ route('owner.returns.store') }}" class="space-y-5" onsubmit="handleSubmit(event)">
+        <form data-confirm="Submit this return for the selected items?" id="returnForm" method="POST" action="{{ route('owner.returns.store') }}" class="space-y-5">
             @csrf
 
             {{-- Transaction ID --}}
@@ -97,7 +97,7 @@
                                         class="product-select w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" required>
                                     <option value="">Select product</option>
                                     @foreach($txn->items as $item)
-                                        <option value="{{ $item->product_id }}" data-max="{{ $item->remaining }}">
+                                        <option value="{{ $item->product_id }}" data-max="{{ $item->remaining }}" data-paid="{{ $item->paid_unit }}">
                                             {{ $item->product_name }} ({{ $item->remaining }} returnable)
                                         </option>
                                     @endforeach
@@ -114,7 +114,7 @@
                             <div>
                                 <label class="block text-xs font-medium text-slate-600 mb-1">Resolution</label>
                                 <select name="items[0][resolution]"
-                                        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" required>
+                                        class="resolution-select w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" required>
                                     <option value="">Select...</option>
                                     <option value="replacement">Replacement</option>
                                     <option value="refund">Refund</option>
@@ -142,13 +142,24 @@
                                    placeholder="Describe the reason for the return..."
                                    class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" required>
                         </div>
+                        <div class="exchange-block hidden rounded-lg border border-slate-200 bg-white p-3 space-y-2">
+                            <label class="block text-xs font-medium text-slate-600">Exchange for a different product <span class="font-normal text-slate-400">(optional)</span></label>
+                            <select name="items[0][replacement_product_id]"
+                                    class="exchange-select w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
+                                <option value="">Same product</option>
+                                @foreach($exchangeProducts as $exchangeProduct)
+                                    <option value="{{ $exchangeProduct->product_id }}" data-price="{{ $exchangeProduct->unit_price }}">{{ $exchangeProduct->product_name }} — ₱{{ number_format($exchangeProduct->unit_price, 2) }} ({{ $exchangeProduct->quantity_on_hand }} in stock)</option>
+                                @endforeach
+                            </select>
+                            <p class="exchange-estimate text-xs font-medium text-slate-600"></p>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {{-- Buttons --}}
             <div class="flex items-center gap-3 pt-2">
-                <button type="button" onclick="document.getElementById('confirmDialog').classList.remove('hidden')"
+                <button type="submit"
                         class="px-5 py-2 text-sm font-medium text-white rounded-lg transition-opacity hover:opacity-90"
                         style="background-color:#363E48">
                     Process Return
@@ -165,33 +176,9 @@
 </div>
 @endsection
 
-@push('modals')
-<div id="confirmDialog" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-    <div class="bg-white rounded-xl p-6 max-w-sm mx-4 shadow-xl">
-        <h3 class="font-semibold text-slate-800 mb-2">Confirm Return</h3>
-        <p class="text-sm text-slate-600 mb-4">Process this return? This action cannot be undone.</p>
-        <div class="flex gap-2 justify-end">
-            <button onclick="document.getElementById('confirmDialog').classList.add('hidden')"
-                    class="px-4 py-2 text-sm border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-                Cancel
-            </button>
-            <button onclick="document.getElementById('returnForm').submit()"
-                    class="px-4 py-2 text-sm text-white rounded-lg transition-opacity hover:opacity-90"
-                    style="background-color:#363E48">
-                Process Return
-            </button>
-        </div>
-    </div>
-</div>
-@endpush
 
 @push('scripts')
 <script>
-    function handleSubmit(e) {
-        e.preventDefault();
-        document.getElementById('confirmDialog').classList.remove('hidden');
-    }
-
     const conditionHints = {
         wrong_item: 'Unopened/unused — re-added to inventory.',
         customer_changed_mind: 'Unopened/unused — re-added to inventory.',
@@ -221,11 +208,45 @@
             conditionHint.textContent = conditionHints[conditionSelect.value] || '';
         }
 
+        const resolutionSelect = row.querySelector('.resolution-select');
+        const exchangeBlock = row.querySelector('.exchange-block');
+        const exchangeSelect = row.querySelector('.exchange-select');
+        const exchangeEstimate = row.querySelector('.exchange-estimate');
+        const money = value => '₱' + Math.abs(value).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        function syncExchange() {
+            const show = resolutionSelect.value === 'replacement';
+            exchangeBlock.classList.toggle('hidden', !show);
+
+            if (!show) {
+                exchangeSelect.value = '';
+            }
+
+            const chosen = exchangeSelect.options[exchangeSelect.selectedIndex];
+            const returned = productSelect.options[productSelect.selectedIndex];
+
+            if (!show || !chosen || !chosen.value || chosen.value === productSelect.value || !returned?.dataset.paid) {
+                exchangeEstimate.textContent = '';
+                return;
+            }
+
+            const quantity = parseInt(qtyInput.value, 10) || 1;
+            const difference = parseFloat(chosen.dataset.price) * quantity - parseFloat(returned.dataset.paid) * quantity;
+            exchangeEstimate.textContent = difference > 0
+                ? `Customer pays ${money(difference)} for the exchange.`
+                : difference < 0
+                    ? `Give the customer ${money(difference)} back for the exchange.`
+                    : 'Even exchange, no money changes hands.';
+        }
+
+        [resolutionSelect, exchangeSelect, productSelect].forEach(element => element.addEventListener('change', syncExchange));
+        qtyInput.addEventListener('input', syncExchange);
         productSelect.addEventListener('change', syncMax);
         conditionSelect.addEventListener('change', syncCondition);
         row.querySelector('.remove-item')?.addEventListener('click', () => row.remove());
         syncMax();
         syncCondition();
+        syncExchange();
     }
 
     document.querySelectorAll('#itemsContainer .item-row').forEach(wireItemRow);
@@ -236,7 +257,9 @@
         const container = document.getElementById('itemsContainer');
         const idx = itemCount++;
 
-        const productsOptions = `{!! collect($txn->items ?? [])->map(fn($i) => '<option value="'.$i->product_id.'" data-max="'.$i->remaining.'">'.$i->product_name.' ('.$i->remaining.' returnable)</option>')->implode('') !!}`;
+        const exchangeOptions = `{!! collect($exchangeProducts ?? [])->map(fn ($p) => '<option value="'.$p->product_id.'" data-price="'.$p->unit_price.'">'.e($p->product_name).' — ₱'.number_format($p->unit_price, 2).' ('.$p->quantity_on_hand.' in stock)</option>')->implode('') !!}`;
+
+        const productsOptions = `{!! collect($txn->items ?? [])->map(fn($i) => '<option value="'.$i->product_id.'" data-max="'.$i->remaining.'" data-paid="'.$i->paid_unit.'">'.$i->product_name.' ('.$i->remaining.' returnable)</option>')->implode('') !!}`;
 
         const row = document.createElement('div');
         row.className = 'item-row p-3 bg-slate-50 rounded-md border border-slate-200 space-y-3';
@@ -264,7 +287,7 @@
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block text-xs font-medium text-slate-600 mb-1">Resolution</label>
-                    <select name="items[${idx}][resolution]" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2" required>
+                    <select name="items[${idx}][resolution]" class="resolution-select w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2" required>
                         <option value="">Select...</option>
                         <option value="replacement">Replacement</option>
                         <option value="refund">Refund</option>
@@ -291,6 +314,15 @@
                        placeholder="Describe the reason for the return..."
                        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2" required>
             </div>
+                        <div class="exchange-block hidden rounded-lg border border-slate-200 bg-white p-3 space-y-2">
+                            <label class="block text-xs font-medium text-slate-600">Exchange for a different product <span class="font-normal text-slate-400">(optional)</span></label>
+                            <select name="items[${idx}][replacement_product_id]"
+                                    class="exchange-select w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
+                                <option value="">Same product</option>
+                                ${exchangeOptions}
+                            </select>
+                            <p class="exchange-estimate text-xs font-medium text-slate-600"></p>
+                        </div>
         `;
         container.appendChild(row);
         wireItemRow(row);

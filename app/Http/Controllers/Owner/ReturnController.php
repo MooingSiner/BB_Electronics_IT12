@@ -15,12 +15,11 @@ use App\Models\Product;
 use App\Models\ReturnRecord;
 use App\Models\Sale;
 use App\Models\SaleItem;
-use App\Models\StockAdjustment;
 use App\Models\Warranty;
 use App\Support\PerPage;
+use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Enum;
 use Illuminate\View\View;
@@ -72,7 +71,7 @@ class ReturnController extends Controller
 
     public function show(ReturnRecord $returnRecord): View
     {
-        $returnRecord->load(['product', 'sale']);
+        $returnRecord->load(['product', 'sale', 'replacementProduct']);
 
         $return = (object) [
             'id' => $returnRecord->return_id,
@@ -90,6 +89,8 @@ class ReturnController extends Controller
             'status' => $returnRecord->status === ReturnStatus::Open ? 'Pending' : 'Completed',
             'status_value' => $returnRecord->status->value,
             'stock_note' => $returnRecord->stockNote(),
+            'exchange' => $returnRecord->isExchange() ? ($returnRecord->replacementProduct->product_name ?? '—').' ×'.$returnRecord->quantity : null,
+            'exchange_note' => $returnRecord->exchangeDifferenceNote(),
             'will_restock' => $returnRecord->willRestock(),
             'cancellable' => $returnRecord->isCancellable(),
         ];
@@ -104,10 +105,13 @@ class ReturnController extends Controller
             ? Sale::where('status', SaleStatus::Completed)->with('items.product')->find($transactionId)
             : null;
 
+        $paidShare = $sale && (float) $sale->subtotal > 0 ? (float) $sale->total_amount / (float) $sale->subtotal : 1.0;
+
         $txn = $sale ? (object) [
             'id' => $sale->sale_id,
             'code' => $sale->code(),
             'items' => $sale->items->map(fn ($item) => (object) [
+                'paid_unit' => round((float) $item->unit_price * $paidShare, 2),
                 'product_id' => $item->product_id,
                 'product_name' => $item->product->product_name ?? '—',
                 'qty' => $item->quantity,
@@ -116,7 +120,9 @@ class ReturnController extends Controller
                 ->values(),
         ] : null;
 
-        return view('owner.returns.process', compact('txn'));
+        $exchangeProducts = Product::where('is_active', true)->where('quantity_on_hand', '>', 0)->orderBy('product_name')->get(['product_id', 'product_name', 'unit_price', 'quantity_on_hand']);
+
+        return view('owner.returns.process', compact('txn', 'exchangeProducts'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -129,6 +135,7 @@ class ReturnController extends Controller
             'items.*.reason' => ['required', 'string', 'max:255'],
             'items.*.resolution' => ['required', new Enum(ReturnResolution::class)],
             'items.*.condition' => ['required', new Enum(ReturnCondition::class)],
+            'items.*.replacement_product_id' => ['nullable', 'exists:product,product_id'],
         ]);
 
         // Multiple lines can target the same product in one submission, so check the combined quantity.
@@ -150,35 +157,40 @@ class ReturnController extends Controller
 
         $created = collect();
 
-        foreach ($validated['items'] as $item) {
-            $return = ReturnRecord::create([
-                'sale_id' => $validated['transaction_id'],
-                'product_id' => $item['product_id'],
-                'supplier_id' => null,
-                'return_date' => now(),
-                'quantity' => $item['qty'],
-                'reason' => $item['reason'],
-                'condition' => $item['condition'],
-                'resolution' => $item['resolution'],
-                'status' => ReturnStatus::Resolved,
-            ]);
+        try {
+            DB::transaction(function () use ($validated, &$created) {
+                foreach ($validated['items'] as $item) {
+                    $exchangeFor = ($item['resolution'] === ReturnResolution::Replacement->value
+                        && ! empty($item['replacement_product_id'])
+                        && (int) $item['replacement_product_id'] !== (int) $item['product_id'])
+                        ? (int) $item['replacement_product_id']
+                        : null;
 
-            if (ReturnCondition::from($item['condition'])->isRestockable()) {
-                StockAdjustment::create([
-                    'product_id' => $item['product_id'],
-                    'user_id' => Auth::id(),
-                    'adjustment_date' => now(),
-                    'quantity_change' => $item['qty'],
-                    'reason' => "Restocked from return #{$return->return_id}",
-                ]);
-            }
+                    $return = ReturnRecord::create([
+                        'sale_id' => $validated['transaction_id'],
+                        'product_id' => $item['product_id'],
+                        'replacement_product_id' => $exchangeFor,
+                        'supplier_id' => null,
+                        'return_date' => now(),
+                        'quantity' => $item['qty'],
+                        'reason' => $item['reason'],
+                        'condition' => $item['condition'],
+                        'resolution' => $item['resolution'],
+                        'status' => ReturnStatus::Open,
+                    ]);
 
-            AuditLog::record(
-                'refund',
-                "Processed return #{$return->return_id} for {$item['qty']} unit(s) — resolution: ".ucwords(str_replace('_', ' ', $item['resolution']))
-            );
+                    $stockMessage = $return->settle();
 
-            $created->push($return);
+                    AuditLog::record(
+                        'refund',
+                        "Processed return #{$return->return_id} for {$item['qty']} unit(s) — resolution: ".ucwords(str_replace('_', ' ', $item['resolution'])).". {$stockMessage}"
+                    );
+
+                    $created->push($return);
+                }
+            });
+        } catch (DomainException $exception) {
+            return back()->withErrors(['items' => $exception->getMessage()])->withInput();
         }
 
         if ($created->count() === 1) {
@@ -194,46 +206,11 @@ class ReturnController extends Controller
             return redirect()->route('owner.returns.show', $returnRecord->return_id)->with('error', 'This return was already resolved.');
         }
 
-        $restock = $returnRecord->willRestock();
-        $replacementUnits = $returnRecord->replacementUnits();
-
-        if ($replacementUnits > 0) {
-            $onHand = (int) Product::whereKey($returnRecord->product_id)->value('quantity_on_hand');
-
-            if ($onHand < $replacementUnits) {
-                return redirect()->route('owner.returns.show', $returnRecord->return_id)
-                    ->with('error', "Only {$onHand} unit(s) are in stock, so {$replacementUnits} replacement unit(s) can't be given yet. Stock in more first.");
-            }
+        try {
+            $stockMessage = $returnRecord->settle();
+        } catch (DomainException $exception) {
+            return redirect()->route('owner.returns.show', $returnRecord->return_id)->with('error', $exception->getMessage());
         }
-
-        DB::transaction(function () use ($returnRecord, $restock, $replacementUnits) {
-            $returnRecord->update(['status' => ReturnStatus::Resolved]);
-
-            if ($replacementUnits > 0) {
-                StockAdjustment::create([
-                    'product_id' => $returnRecord->product_id,
-                    'user_id' => Auth::id(),
-                    'adjustment_date' => now(),
-                    'quantity_change' => -$replacementUnits,
-                    'reason' => "Replacement issued for return #{$returnRecord->return_id}",
-                ]);
-            }
-
-            if ($restock) {
-                StockAdjustment::create([
-                    'product_id' => $returnRecord->product_id,
-                    'user_id' => Auth::id(),
-                    'adjustment_date' => now(),
-                    'quantity_change' => $returnRecord->quantity,
-                    'reason' => "Restocked from return #{$returnRecord->return_id}",
-                ]);
-            }
-        });
-
-        $stockMessage = ($restock
-            ? "{$returnRecord->quantity} unit(s) added back to stock."
-            : 'The item was not added back to stock.')
-            .($replacementUnits > 0 ? " {$replacementUnits} unit(s) taken out of stock for the replacement." : '');
 
         AuditLog::record('refund', "Marked return #{$returnRecord->return_id} as resolved. {$stockMessage}");
 

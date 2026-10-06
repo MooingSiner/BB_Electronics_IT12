@@ -77,7 +77,7 @@
                 @foreach($sale->items as $item)
                     @php $left = $remaining[$item->product_id] ?? $item->quantity; @endphp
                     @if($left > 0)
-                    <option value="{{ $item->product_id }}" data-max="{{ $left }}">{{ $item->product->product_name ?? '—' }} ({{ $left }} returnable)</option>
+                    <option value="{{ $item->product_id }}" data-max="{{ $left }}" data-paid="{{ round((float) $item->unit_price * ((float) $sale->subtotal > 0 ? (float) $sale->total_amount / (float) $sale->subtotal : 1), 2) }}">{{ $item->product->product_name ?? '—' }} ({{ $left }} returnable)</option>
                     @endif
                 @endforeach
             </select>
@@ -111,13 +111,28 @@
 
         <div>
             <label class="block text-sm font-medium text-slate-700 mb-1.5">Requested Resolution</label>
-            <select name="resolution" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2" style="--tw-ring-color:#363E48;">
+            <select name="resolution" id="resolution" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2" style="--tw-ring-color:#363E48;">
                 <option value="pending">Pending Review</option>
                 <option value="refund">Refund</option>
                 <option value="replacement">Replacement</option>
                 <option value="repair">Repair</option>
                 <option value="supplier_exchange">Supplier Exchange</option>
             </select>
+        </div>
+
+        <div id="exchangeBlock" class="hidden rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2">
+            <label class="block text-sm font-medium text-slate-700">Exchange for a different product <span class="font-normal text-slate-400">(optional)</span></label>
+            <select name="replacement_product_id" id="replacement_product_id"
+                    class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2" style="--tw-ring-color:#363E48;">
+                <option value="">Same product</option>
+                @foreach($exchangeProducts as $exchangeProduct)
+                    <option value="{{ $exchangeProduct->product_id }}" data-price="{{ $exchangeProduct->unit_price }}">
+                        {{ $exchangeProduct->product_name }} — ₱{{ number_format($exchangeProduct->unit_price, 2) }} ({{ $exchangeProduct->quantity_on_hand }} in stock)
+                    </option>
+                @endforeach
+            </select>
+            <p id="exchangeEstimate" class="text-xs font-medium text-slate-600"></p>
+            <p class="text-xs text-slate-400">The owner has to approve the exchange before the stock changes.</p>
         </div>
 
         <button type="submit"
@@ -149,6 +164,41 @@
 
         productSelect.addEventListener('change', syncMax);
         syncMax();
+
+        const resolution = document.getElementById('resolution');
+        const block = document.getElementById('exchangeBlock');
+        const exchangeSelect = document.getElementById('replacement_product_id');
+        const estimate = document.getElementById('exchangeEstimate');
+        const money = value => '₱' + Math.abs(value).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        function syncExchange() {
+            const show = resolution.value === 'replacement';
+            block.classList.toggle('hidden', !show);
+
+            if (!show) {
+                exchangeSelect.value = '';
+            }
+
+            const chosen = exchangeSelect.options[exchangeSelect.selectedIndex];
+            const returned = productSelect.options[productSelect.selectedIndex];
+
+            if (!show || !chosen || !chosen.value || chosen.value === productSelect.value) {
+                estimate.textContent = '';
+                return;
+            }
+
+            const quantity = parseInt(quantityInput.value, 10) || 1;
+            const difference = parseFloat(chosen.dataset.price) * quantity - parseFloat(returned.dataset.paid) * quantity;
+            estimate.textContent = difference > 0
+                ? `Customer pays ${money(difference)} for the exchange.`
+                : difference < 0
+                    ? `Give the customer ${money(difference)} back for the exchange.`
+                    : 'Even exchange, no money changes hands.';
+        }
+
+        [resolution, exchangeSelect, productSelect].forEach(element => element.addEventListener('change', syncExchange));
+        quantityInput.addEventListener('input', syncExchange);
+        syncExchange();
     })();
 </script>
 @endif

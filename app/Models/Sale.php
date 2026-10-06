@@ -83,12 +83,14 @@ class Sale extends Model
         return ReturnRecord::query()
             ->whereNotNull('sale_id')
             ->where('status', ReturnStatus::Resolved)
-            ->where('resolution', ReturnResolution::Refund)
+            ->where(fn ($query) => $query
+                ->where('resolution', ReturnResolution::Refund)
+                ->orWhere(fn ($exchange) => $exchange->where('resolution', ReturnResolution::Replacement)->whereNotNull('price_difference')))
             ->when($saleIds !== null, fn ($query) => $query->whereIn('sale_id', collect($saleIds)->all()))
             ->with('sale.items')
             ->get()
             ->groupBy('sale_id')
-            ->map(fn (Collection $returns) => round($returns->sum(fn (ReturnRecord $return) => $return->refundAmount()), 2));
+            ->map(fn (Collection $returns) => round($returns->sum(fn (ReturnRecord $return) => $return->moneyBack()), 2));
     }
 
     /**
@@ -107,9 +109,7 @@ class Sale extends Model
     {
         $returns = $this->relationLoaded('returnRecords') ? $this->returnRecords : $this->returnRecords()->get();
 
-        return round((float) $returns
-            ->filter(fn (ReturnRecord $return) => $return->status === ReturnStatus::Resolved && $return->resolution === ReturnResolution::Refund)
-            ->sum(fn (ReturnRecord $return) => $return->setRelation('sale', $this)->refundAmount()), 2);
+        return round((float) $returns->sum(fn (ReturnRecord $return) => $return->setRelation('sale', $this)->moneyBack()), 2);
     }
 
     public function netTotal(): float
@@ -142,6 +142,8 @@ class Sale extends Model
      */
     public function returnLines(): Collection
     {
+        $this->loadMissing('returnRecords.replacementProduct');
+
         return $this->returnRecords->map(fn (ReturnRecord $return) => (object) [
             'id' => $return->return_id,
             'product' => $return->product->product_name ?? '—',
@@ -151,8 +153,11 @@ class Sale extends Model
                 ? 'Replaced'
                 : ucwords(str_replace('_', ' ', $return->resolution->value)),
             'status' => $return->status === ReturnStatus::Open ? 'Pending' : 'Resolved',
-            'refund' => $return->status === ReturnStatus::Resolved && $return->resolution === ReturnResolution::Refund
-                ? $return->setRelation('sale', $this)->refundAmount()
+            'exchange' => $return->isExchange()
+                ? 'Exchanged for '.($return->replacementProduct->product_name ?? 'another product').' ×'.$return->quantity
+                : null,
+            'refund' => $return->status === ReturnStatus::Resolved && ($return->resolution === ReturnResolution::Refund || $return->isExchange())
+                ? $return->setRelation('sale', $this)->moneyBack()
                 : null,
         ]);
     }

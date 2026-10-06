@@ -8,6 +8,7 @@ use App\Enums\SaleStatus;
 use App\Http\Controllers\Concerns\FilesWarrantyClaims;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\Product;
 use App\Models\ReturnRecord;
 use App\Models\Sale;
 use App\Models\SaleItem;
@@ -86,7 +87,9 @@ class ReturnController extends Controller
             ? $sale->items->mapWithKeys(fn ($item) => [$item->product_id => $this->remainingReturnable($sale->sale_id, $item->product_id)])
             : collect();
 
-        return view('cashier.returns.process', ['sale' => $sale, 'transactionId' => $transactionId, 'remaining' => $remaining]);
+        $exchangeProducts = Product::where('is_active', true)->where('quantity_on_hand', '>', 0)->orderBy('product_name')->get(['product_id', 'product_name', 'unit_price', 'quantity_on_hand']);
+
+        return view('cashier.returns.process', ['sale' => $sale, 'transactionId' => $transactionId, 'remaining' => $remaining, 'exchangeProducts' => $exchangeProducts]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -98,6 +101,7 @@ class ReturnController extends Controller
             'reason' => ['required', 'string', 'max:255'],
             'condition' => ['required', new Enum(ReturnCondition::class)],
             'resolution' => ['required', new Enum(ReturnResolution::class)],
+            'replacement_product_id' => ['nullable', 'exists:product,product_id'],
         ]);
 
         $remaining = $this->remainingReturnable($validated['sale_id'], $validated['product_id']);
@@ -110,9 +114,16 @@ class ReturnController extends Controller
             ])->withInput();
         }
 
+        $exchangeFor = ($validated['resolution'] === ReturnResolution::Replacement->value
+            && ! empty($validated['replacement_product_id'])
+            && (int) $validated['replacement_product_id'] !== (int) $validated['product_id'])
+            ? (int) $validated['replacement_product_id']
+            : null;
+
         ReturnRecord::create([
             'sale_id' => $validated['sale_id'],
             'product_id' => $validated['product_id'],
+            'replacement_product_id' => $exchangeFor,
             'supplier_id' => null,
             'return_date' => now(),
             'quantity' => $validated['quantity'],
@@ -122,7 +133,9 @@ class ReturnController extends Controller
             'status' => 'open',
         ]);
 
-        return redirect()->route('cashier.returns.index')->with('success', 'Return recorded.');
+        return redirect()->route('cashier.returns.index')->with('success', $exchangeFor
+            ? 'Exchange recorded. It needs the owner\'s approval before the stock changes.'
+            : 'Return recorded.');
     }
 
     public function cancel(ReturnRecord $returnRecord): RedirectResponse

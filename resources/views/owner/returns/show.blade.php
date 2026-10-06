@@ -79,6 +79,12 @@
                 <dt class="text-slate-500">Date</dt>
                 <dd class="text-slate-700">{{ $return->created_at?->format('M d, Y g:i A') }}</dd>
             </div>
+            @if($return->exchange)
+            <div class="flex justify-between gap-6">
+                <dt class="text-slate-500 flex-shrink-0">Exchange for</dt>
+                <dd class="text-slate-700 text-right">{{ $return->exchange }}<br><span class="text-xs text-slate-500">{{ $return->exchange_note }}</span></dd>
+            </div>
+            @endif
             <div class="flex justify-between gap-6">
                 <dt class="text-slate-500 flex-shrink-0">Stock</dt>
                 <dd class="text-slate-700 text-right">{{ $return->stock_note }}</dd>
