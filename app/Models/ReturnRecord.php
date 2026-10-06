@@ -46,6 +46,14 @@ class ReturnRecord extends Model
     }
 
     /**
+     * A replacement hands the customer a new unit, so those units leave stock when the return is resolved.
+     */
+    public function replacementUnits(): int
+    {
+        return $this->sale_id !== null && $this->resolution === ReturnResolution::Replacement ? $this->quantity : 0;
+    }
+
+    /**
      * Only a customer return that is still pending can be cancelled; nothing has touched stock yet.
      */
     public function isCancellable(): bool
@@ -71,6 +79,27 @@ class ReturnRecord extends Model
     }
 
     public function stockNote(): string
+    {
+        $note = $this->returnedItemNote();
+
+        if ($this->replacementUnits() === 0) {
+            return $note;
+        }
+
+        $issued = StockAdjustment::where('product_id', $this->product_id)
+            ->where('reason', "Replacement issued for return #{$this->return_id}")
+            ->first();
+
+        $replacement = $issued
+            ? abs($issued->quantity_change).' unit(s) taken out of stock for the replacement on '.$issued->adjustment_date->format('M d, Y').'.'
+            : ($this->status === ReturnStatus::Open
+                ? "{$this->replacementUnits()} unit(s) will be taken out of stock for the replacement when the owner marks it resolved."
+                : 'No stock change was recorded for the replacement.');
+
+        return $note.' '.$replacement;
+    }
+
+    private function returnedItemNote(): string
     {
         $added = StockAdjustment::where('product_id', $this->product_id)
             ->where('reason', "Restocked from return #{$this->return_id}")

@@ -147,7 +147,9 @@ class Sale extends Model
             'product' => $return->product->product_name ?? '—',
             'quantity' => $return->quantity,
             'condition' => ucwords(str_replace('_', ' ', $return->condition->value)),
-            'resolution' => ucwords(str_replace('_', ' ', $return->resolution->value)),
+            'resolution' => $return->resolution === ReturnResolution::Replacement && $return->status === ReturnStatus::Resolved
+                ? 'Replaced'
+                : ucwords(str_replace('_', ' ', $return->resolution->value)),
             'status' => $return->status === ReturnStatus::Open ? 'Pending' : 'Resolved',
             'refund' => $return->status === ReturnStatus::Resolved && $return->resolution === ReturnResolution::Refund
                 ? $return->setRelation('sale', $this)->refundAmount()

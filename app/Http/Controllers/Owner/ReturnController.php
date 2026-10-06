@@ -11,6 +11,7 @@ use App\Enums\WarrantyOutcome;
 use App\Http\Controllers\Concerns\FilesWarrantyClaims;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\Product;
 use App\Models\ReturnRecord;
 use App\Models\Sale;
 use App\Models\SaleItem;
@@ -194,9 +195,29 @@ class ReturnController extends Controller
         }
 
         $restock = $returnRecord->willRestock();
+        $replacementUnits = $returnRecord->replacementUnits();
 
-        DB::transaction(function () use ($returnRecord, $restock) {
+        if ($replacementUnits > 0) {
+            $onHand = (int) Product::whereKey($returnRecord->product_id)->value('quantity_on_hand');
+
+            if ($onHand < $replacementUnits) {
+                return redirect()->route('owner.returns.show', $returnRecord->return_id)
+                    ->with('error', "Only {$onHand} unit(s) are in stock, so {$replacementUnits} replacement unit(s) can't be given yet. Stock in more first.");
+            }
+        }
+
+        DB::transaction(function () use ($returnRecord, $restock, $replacementUnits) {
             $returnRecord->update(['status' => ReturnStatus::Resolved]);
+
+            if ($replacementUnits > 0) {
+                StockAdjustment::create([
+                    'product_id' => $returnRecord->product_id,
+                    'user_id' => Auth::id(),
+                    'adjustment_date' => now(),
+                    'quantity_change' => -$replacementUnits,
+                    'reason' => "Replacement issued for return #{$returnRecord->return_id}",
+                ]);
+            }
 
             if ($restock) {
                 StockAdjustment::create([
@@ -209,9 +230,10 @@ class ReturnController extends Controller
             }
         });
 
-        $stockMessage = $restock
+        $stockMessage = ($restock
             ? "{$returnRecord->quantity} unit(s) added back to stock."
-            : 'The item was not added back to stock.';
+            : 'The item was not added back to stock.')
+            .($replacementUnits > 0 ? " {$replacementUnits} unit(s) taken out of stock for the replacement." : '');
 
         AuditLog::record('refund', "Marked return #{$returnRecord->return_id} as resolved. {$stockMessage}");
 
