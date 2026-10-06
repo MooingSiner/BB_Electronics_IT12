@@ -3,14 +3,18 @@
 namespace App\Models;
 
 use App\Enums\PaymentMethod;
+use App\Enums\ReturnResolution;
+use App\Enums\ReturnStatus;
 use App\Enums\SaleStatus;
 use App\Enums\WarrantyClaimStatus;
 use Database\Factories\SaleFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 #[Fillable(['user_id', 'sale_date', 'subtotal', 'discount_amount', 'total_amount', 'payment_method', 'amount_paid', 'change_amount', 'status', 'void_reason', 'voided_at'])]
 class Sale extends Model
@@ -66,6 +70,89 @@ class Sale extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
+    }
+
+    /**
+     * Money refunded per sale: resolved customer returns whose resolution is a refund.
+     *
+     * @param  iterable<int>|null  $saleIds
+     * @return Collection<int, float>
+     */
+    public static function refundsBySale(?iterable $saleIds = null): Collection
+    {
+        return ReturnRecord::query()
+            ->whereNotNull('sale_id')
+            ->where('status', ReturnStatus::Resolved)
+            ->where('resolution', ReturnResolution::Refund)
+            ->when($saleIds !== null, fn ($query) => $query->whereIn('sale_id', collect($saleIds)->all()))
+            ->with('sale.items')
+            ->get()
+            ->groupBy('sale_id')
+            ->map(fn (Collection $returns) => round($returns->sum(fn (ReturnRecord $return) => $return->refundAmount()), 2));
+    }
+
+    /**
+     * Revenue of the given completed sales after taking off what was refunded.
+     *
+     * @param  Builder<Sale>  $completedSales
+     */
+    public static function netRevenue(Builder $completedSales): float
+    {
+        $rows = $completedSales->get(['sale_id', 'total_amount']);
+
+        return round((float) $rows->sum('total_amount') - (float) static::refundsBySale($rows->pluck('sale_id'))->sum(), 2);
+    }
+
+    public function refundedAmount(): float
+    {
+        $returns = $this->relationLoaded('returnRecords') ? $this->returnRecords : $this->returnRecords()->get();
+
+        return round((float) $returns
+            ->filter(fn (ReturnRecord $return) => $return->status === ReturnStatus::Resolved && $return->resolution === ReturnResolution::Refund)
+            ->sum(fn (ReturnRecord $return) => $return->setRelation('sale', $this)->refundAmount()), 2);
+    }
+
+    public function netTotal(): float
+    {
+        return round((float) $this->total_amount - $this->refundedAmount(), 2);
+    }
+
+    /**
+     * "Returned", "Partly returned" or "Return pending" for sales with customer returns, otherwise null.
+     */
+    public function returnStatusLabel(): ?string
+    {
+        $returns = $this->relationLoaded('returnRecords') ? $this->returnRecords : $this->returnRecords()->get();
+
+        if ($returns->isEmpty()) {
+            return null;
+        }
+
+        if ($returns->every(fn (ReturnRecord $return) => $return->status === ReturnStatus::Open)) {
+            return 'Return pending';
+        }
+
+        $sold = $this->relationLoaded('items') ? $this->items->sum('quantity') : $this->items()->sum('quantity');
+
+        return $returns->sum('quantity') >= $sold ? 'Returned' : 'Partly returned';
+    }
+
+    /**
+     * @return Collection<int, object>
+     */
+    public function returnLines(): Collection
+    {
+        return $this->returnRecords->map(fn (ReturnRecord $return) => (object) [
+            'id' => $return->return_id,
+            'product' => $return->product->product_name ?? '—',
+            'quantity' => $return->quantity,
+            'condition' => ucwords(str_replace('_', ' ', $return->condition->value)),
+            'resolution' => ucwords(str_replace('_', ' ', $return->resolution->value)),
+            'status' => $return->status === ReturnStatus::Open ? 'Pending' : 'Resolved',
+            'refund' => $return->status === ReturnStatus::Resolved && $return->resolution === ReturnResolution::Refund
+                ? $return->setRelation('sale', $this)->refundAmount()
+                : null,
+        ]);
     }
 
     public function items(): HasMany

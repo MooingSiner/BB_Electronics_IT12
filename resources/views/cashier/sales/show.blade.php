@@ -113,9 +113,21 @@
         </div>
         <div class="flex justify-between text-slate-500">
             <span>Status</span>
-            <span>{{ $txn->status }}</span>
+            <span>{{ $txn->status }}@if($txn->return_label) &middot; {{ $txn->return_label }}@endif</span>
         </div>
+        @if($txn->refunded > 0)
+        <div class="flex justify-between text-red-600">
+            <span>Refunded</span>
+            <span>-₱{{ number_format($txn->refunded, 2) }}</span>
+        </div>
+        <div class="flex justify-between font-bold text-slate-800">
+            <span>Net Total</span>
+            <span>₱{{ number_format($txn->net_total, 2) }}</span>
+        </div>
+        @endif
     </div>
+
+    @include('partials.sale-returns', ['routePrefix' => 'cashier'])
 
 </div>
 @endsection

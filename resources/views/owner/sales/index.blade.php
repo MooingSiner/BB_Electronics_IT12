@@ -111,6 +111,7 @@
                         <td class="px-5 py-3">
                             @if($txn->status === 'Completed')
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Completed</span>
+                                @include('partials.return-badge', ['label' => $txn->return_label ?? null])
                             @elseif($txn->status === 'Pending')
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Pending</span>
                             @elseif($txn->status === 'Returned')

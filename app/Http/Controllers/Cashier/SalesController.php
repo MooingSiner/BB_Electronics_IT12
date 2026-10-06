@@ -15,7 +15,7 @@ class SalesController extends Controller
     public function index(Request $request): View
     {
         $transactions = Sale::query()
-            ->with(['user', 'items.product'])
+            ->with(['user', 'items.product', 'returnRecords'])
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->string('search');
 
@@ -39,7 +39,7 @@ class SalesController extends Controller
 
     public function show(Sale $sale): View
     {
-        $sale->load(['user', 'items.product']);
+        $sale->load(['user', 'items.product', 'returnRecords.product']);
 
         $txn = $this->present($sale);
 
@@ -72,6 +72,10 @@ class SalesController extends Controller
             'created_at' => $sale->sale_date,
             'processed_by' => $sale->user->full_name ?? '—',
             'status' => $sale->status === SaleStatus::Completed ? 'Completed' : 'Voided',
+            'return_label' => $sale->returnStatusLabel(),
+            'return_lines' => $sale->relationLoaded('returnRecords') ? $sale->returnLines() : collect(),
+            'refunded' => $sale->refundedAmount(),
+            'net_total' => $sale->netTotal(),
             'items' => $sale->items->map(fn ($item) => (object) [
                 'name' => $item->product->product_name ?? '—',
                 'quantity' => $item->quantity,

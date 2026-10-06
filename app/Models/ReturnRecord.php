@@ -53,6 +53,23 @@ class ReturnRecord extends Model
         return $this->sale_id !== null && $this->status === ReturnStatus::Open;
     }
 
+    /**
+     * The money handed back for this return: the units' share of what the customer paid, discount included.
+     */
+    public function refundAmount(): float
+    {
+        $sale = $this->sale;
+
+        if (! $sale) {
+            return 0.0;
+        }
+
+        $unitPrice = (float) ($sale->items->firstWhere('product_id', $this->product_id)->unit_price ?? 0);
+        $paidShare = (float) $sale->subtotal > 0 ? (float) $sale->total_amount / (float) $sale->subtotal : 1.0;
+
+        return round($this->quantity * $unitPrice * $paidShare, 2);
+    }
+
     public function stockNote(): string
     {
         $added = StockAdjustment::where('product_id', $this->product_id)

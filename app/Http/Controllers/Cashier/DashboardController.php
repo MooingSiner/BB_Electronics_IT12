@@ -21,9 +21,8 @@ class DashboardController extends Controller
         $period = $request->input('period', 'today');
         [$dateFrom, $dateTo, $periodLabel] = $this->resolvePeriod($request, $period);
 
-        $todaysSales = (float) Sale::whereBetween('sale_date', [$dateFrom, $dateTo])
-            ->where('status', SaleStatus::Completed)
-            ->sum('total_amount');
+        $todaysSales = Sale::netRevenue(Sale::whereBetween('sale_date', [$dateFrom, $dateTo])
+            ->where('status', SaleStatus::Completed));
 
         $todaysSalesCount = Sale::whereBetween('sale_date', [$dateFrom, $dateTo])->where('status', SaleStatus::Completed)->count();
 
@@ -37,10 +36,9 @@ class DashboardController extends Controller
             ->whereBetween('sale_date', [$dateFrom, $dateTo])
             ->count();
 
-        $mySalesTodayTotal = (float) Sale::where('user_id', $user->user_id)
+        $mySalesTodayTotal = Sale::netRevenue(Sale::where('user_id', $user->user_id)
             ->whereBetween('sale_date', [$dateFrom, $dateTo])
-            ->where('status', SaleStatus::Completed)
-            ->sum('total_amount');
+            ->where('status', SaleStatus::Completed));
 
         $transactions = Sale::with(['user', 'items.product'])
             ->whereBetween('sale_date', [$dateFrom, $dateTo])

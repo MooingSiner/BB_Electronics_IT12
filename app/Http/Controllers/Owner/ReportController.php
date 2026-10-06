@@ -48,8 +48,11 @@ class ReportController extends Controller
             ->whereBetween('sale_date', [$dateFrom, $dateTo])
             ->get();
 
+        $refunds = Sale::refundsBySale($sales->pluck('sale_id'));
+        $netOf = fn (Sale $sale) => (float) $sale->total_amount - (float) $refunds->get($sale->sale_id, 0);
+
         $rows = $sales->groupBy(fn (Sale $sale) => $sale->sale_date->format('Y-m-d'))
-            ->map(function ($daySales, $date) {
+            ->map(function ($daySales, $date) use ($netOf) {
                 $productTotals = $daySales->flatMap->items->groupBy('product_id')
                     ->map(fn ($items) => $items->sum('quantity'));
                 $topProductId = $productTotals->sortDesc()->keys()->first();
@@ -58,7 +61,7 @@ class ReportController extends Controller
                 return [
                     'date' => Carbon::parse($date)->format('M d, Y'),
                     'transactions' => $daySales->count(),
-                    'revenue' => (float) $daySales->sum('total_amount'),
+                    'revenue' => (float) $daySales->sum($netOf),
                     'top_product' => $topProduct->product->product_name ?? '—',
                 ];
             })
@@ -66,9 +69,9 @@ class ReportController extends Controller
             ->values();
 
         return [
-            'revenue' => (float) $sales->sum('total_amount'),
+            'revenue' => (float) $sales->sum($netOf),
             'count' => $sales->count(),
-            'average' => $sales->count() > 0 ? (float) $sales->avg('total_amount') : 0.0,
+            'average' => $sales->count() > 0 ? (float) $sales->sum($netOf) / $sales->count() : 0.0,
             'rows' => $rows,
         ];
     }

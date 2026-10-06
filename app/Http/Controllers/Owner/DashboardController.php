@@ -21,9 +21,8 @@ class DashboardController extends Controller
         $totalProducts = Product::where('is_active', true)->count();
         $totalStock = (int) Product::where('is_active', true)->sum('quantity_on_hand');
 
-        $periodSalesTotal = Sale::whereBetween('sale_date', [$dateFrom, $dateTo])
-            ->where('status', SaleStatus::Completed)
-            ->sum('total_amount');
+        $periodSalesTotal = Sale::netRevenue(Sale::whereBetween('sale_date', [$dateFrom, $dateTo])
+            ->where('status', SaleStatus::Completed));
 
         $txnCount = Sale::whereBetween('sale_date', [$dateFrom, $dateTo])->where('status', SaleStatus::Completed)->count();
 
@@ -129,7 +128,9 @@ class DashboardController extends Controller
     {
         $sales = Sale::where('status', SaleStatus::Completed)
             ->whereBetween('sale_date', [$dateFrom, $dateTo])
-            ->get(['sale_date', 'total_amount']);
+            ->get(['sale_id', 'sale_date', 'total_amount']);
+        $refunds = Sale::refundsBySale($sales->pluck('sale_id'));
+        $netOf = fn (Sale $sale) => (float) $sale->total_amount - (float) $refunds->get($sale->sale_id, 0);
 
         if ($dateFrom->isSameDay($dateTo)) {
             $grouped = $sales->groupBy(fn (Sale $s) => $s->sale_date->format('H'));
@@ -137,7 +138,7 @@ class DashboardController extends Controller
             $points = collect(range(0, 23))
                 ->map(fn (int $hour) => [
                     'label' => Carbon::createFromTime($hour)->format('ga'),
-                    'value' => (float) ($grouped->get(str_pad((string) $hour, 2, '0', STR_PAD_LEFT)) ?? collect())->sum('total_amount'),
+                    'value' => (float) ($grouped->get(str_pad((string) $hour, 2, '0', STR_PAD_LEFT)) ?? collect())->sum($netOf),
                 ])
                 ->all();
 
@@ -152,7 +153,7 @@ class DashboardController extends Controller
                 $key = $cursor->format('Y-m');
                 $points[] = [
                     'label' => $cursor->format('M'),
-                    'value' => (float) ($grouped->get($key) ?? collect())->sum('total_amount'),
+                    'value' => (float) ($grouped->get($key) ?? collect())->sum($netOf),
                 ];
             }
 
@@ -166,7 +167,7 @@ class DashboardController extends Controller
             $key = $cursor->format('Y-m-d');
             $points[] = [
                 'label' => $cursor->format('M j'),
-                'value' => (float) ($grouped->get($key) ?? collect())->sum('total_amount'),
+                'value' => (float) ($grouped->get($key) ?? collect())->sum($netOf),
             ];
         }
 

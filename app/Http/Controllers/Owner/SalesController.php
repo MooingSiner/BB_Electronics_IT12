@@ -19,7 +19,7 @@ class SalesController extends Controller
     public function index(Request $request): View
     {
         $transactions = Sale::query()
-            ->with(['user', 'items.product'])
+            ->with(['user', 'items.product', 'returnRecords'])
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->string('search');
 
@@ -46,6 +46,7 @@ class SalesController extends Controller
                 'date' => $sale->sale_date->format('M d, Y'),
                 'processed_by' => $sale->user->full_name ?? '—',
                 'status' => $sale->status === SaleStatus::Completed ? 'Completed' : 'Voided',
+                'return_label' => $sale->returnStatusLabel(),
             ]);
 
         return view('owner.sales.index', compact('transactions'));
@@ -53,12 +54,16 @@ class SalesController extends Controller
 
     public function show(Sale $sale): View
     {
-        $sale->load(['user', 'items.product']);
+        $sale->load(['user', 'items.product', 'returnRecords.product']);
 
         $txn = (object) [
             'id' => $sale->sale_id,
             'code' => $sale->code(),
             'created_at' => $sale->sale_date,
+            'return_label' => $sale->returnStatusLabel(),
+            'return_lines' => $sale->returnLines(),
+            'refunded' => $sale->refundedAmount(),
+            'net_total' => $sale->netTotal(),
             'status' => $sale->status === SaleStatus::Completed ? 'Completed' : 'Voided',
             'processed_by' => $sale->user->full_name ?? '—',
             'void_reason' => $sale->void_reason,

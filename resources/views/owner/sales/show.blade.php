@@ -109,6 +109,7 @@
                             @php $status = $txn->status ?? 'Completed'; @endphp
                             @if($status === 'Completed')
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">Completed</span>
+                                @include('partials.return-badge', ['label' => $txn->return_label ?? null])
                             @elseif($status === 'Pending')
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Pending</span>
                             @elseif($status === 'Returned')
@@ -178,6 +179,9 @@
             </div>
         </div>
 
+        {{-- Returns on this sale --}}
+        @include('partials.sale-returns', ['routePrefix' => 'owner'])
+
         {{-- Items Card --}}
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100">
@@ -245,6 +249,17 @@
                             ₱{{ isset($txn->total_amount) ? number_format($txn->total_amount, 2) : '202.50' }}
                         </span>
                     </div>
+
+                    @if(($txn->refunded ?? 0) > 0)
+                        <div class="flex justify-between text-sm">
+                            <span class="text-red-600">Refunded</span>
+                            <span class="font-medium text-red-600">-₱{{ number_format($txn->refunded, 2) }}</span>
+                        </div>
+                        <div class="flex justify-between text-base font-bold pt-2 border-t border-slate-200">
+                            <span class="text-[#363E48]">Net Total</span>
+                            <span class="text-[#363E48]">₱{{ number_format($txn->net_total, 2) }}</span>
+                        </div>
+                    @endif
 
                 </div>
             </div>
