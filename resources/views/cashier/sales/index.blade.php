@@ -128,8 +128,11 @@
                         <td class="px-5 py-4">
                             @php $status = $txn->status ?? 'Completed'; @endphp
                             @if($status === 'Completed')
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Completed</span>
-                                @include('partials.return-badge', ['label' => $txn->return_label ?? null])
+                                @if($txn->return_label ?? null)
+                                    @include('partials.return-badge', ['label' => $txn->return_label ?? null])
+                                @else
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Completed</span>
+                                @endif
                             @elseif($status === 'Refunded')
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Refunded</span>
                             @elseif($status === 'Voided')

@@ -113,7 +113,7 @@
         </div>
         <div class="flex justify-between text-slate-500">
             <span>Status</span>
-            <span>{{ $txn->status }}@if($txn->return_label) &middot; {{ $txn->return_label }}@endif</span>
+            <span>{{ $txn->return_label ?? $txn->status }}</span>
         </div>
         @if($txn->refunded != 0)
         <div class="flex justify-between {{ $txn->refunded > 0 ? 'text-red-600' : 'text-green-600' }}">

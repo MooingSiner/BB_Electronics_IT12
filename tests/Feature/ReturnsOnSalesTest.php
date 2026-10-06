@@ -92,8 +92,8 @@ class ReturnsOnSalesTest extends TestCase
         [$sale, $product] = $this->sale();
         $this->giveBack($sale, $product, 2, ReturnStatus::Resolved);
 
-        $this->actingAs($owner)->get(route('owner.sales.index'))->assertSee('Partly returned');
-        $this->actingAs($cashier)->get(route('cashier.sales.index'))->assertSee('Partly returned');
+        $this->actingAs($owner)->get(route('owner.sales.index'))->assertSee('Partly returned')->assertDontSee('>Completed</span>', false);
+        $this->actingAs($cashier)->get(route('cashier.sales.index'))->assertSee('Partly returned')->assertDontSee('>Completed</span>', false);
 
         $this->actingAs($owner)->get(route('owner.sales.show', $sale->sale_id))
             ->assertSee('Returns on this sale')->assertSee('Refunded')->assertSee('Net Total')->assertSee('₱540.00')->assertSee('₱360.00');

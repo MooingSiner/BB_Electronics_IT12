@@ -2,7 +2,7 @@
     @php
         $tone = match ($label) {
             'Return pending' => 'bg-amber-100 text-amber-700',
-            'Partly returned' => 'bg-orange-100 text-orange-700',
+            'Partly returned' => 'bg-teal-100 text-teal-700',
             default => 'bg-slate-200 text-slate-700',
         };
     @endphp
