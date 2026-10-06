@@ -122,6 +122,20 @@ class VoidSaleAndCancelOrderTest extends TestCase
         $this->actingAs($cashier)->get(route('cashier.sales.index'))->assertSee('Unit Price')->assertSee('₱95.00');
     }
 
+    public function test_the_owner_receipt_is_a_standalone_printable_page(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        [$sale] = $this->saleWithItem(2);
+
+        $this->actingAs($owner)->get(route('owner.sales.receipt', $sale->sale_id))
+            ->assertOk()
+            ->assertSee($sale->code())
+            ->assertSee('Thank you for shopping with us!')
+            ->assertSee('receipt-card', false)
+            ->assertSee(route('owner.sales.show', $sale->sale_id), false)
+            ->assertDontSee('User Management');
+    }
+
     public function test_the_owner_sales_list_return_button_opens_the_return_form(): void
     {
         $owner = User::factory()->ownerManager()->create();

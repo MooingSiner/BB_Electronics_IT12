@@ -8,12 +8,15 @@
         body { font-family: 'Inter', sans-serif; }
         @media print {
             .no-print { display: none; }
+            body { background: #fff !important; padding: 0 !important; }
+            .receipt-card { box-shadow: none !important; border: 0 !important; border-radius: 0 !important; max-width: none !important; margin: 0 !important; }
+            @page { margin: 8mm; }
         }
     </style>
 </head>
 <body class="bg-slate-100 py-10">
 
-<div class="max-w-sm mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+<div class="receipt-card max-w-sm mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
 
     <div class="text-center mb-4">
         <h1 class="font-bold text-slate-800">B&amp;B Electronics</h1>

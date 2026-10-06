@@ -114,8 +114,31 @@ class SalesController extends Controller
         return back()->with('success', 'Sale voided and its items were put back in stock.');
     }
 
-    public function receipt(Sale $sale): RedirectResponse
+    public function receipt(Sale $sale): View
     {
-        return redirect()->route('owner.sales.show', $sale->sale_id);
+        $sale->load(['user', 'items.product']);
+
+        $txn = (object) [
+            'id' => $sale->sale_id,
+            'code' => $sale->code(),
+            'created_at' => $sale->sale_date,
+            'processed_by' => $sale->user->full_name ?? '—',
+            'subtotal' => (float) $sale->subtotal,
+            'discount_amount' => (float) $sale->discount_amount,
+            'total' => (float) $sale->total_amount,
+            'payment_method' => $sale->payment_method->label(),
+            'amount_paid' => (float) $sale->amount_paid,
+            'change_amount' => (float) $sale->change_amount,
+            'items' => $sale->items->map(fn ($item) => (object) [
+                'name' => $item->product->product_name ?? '—',
+                'quantity' => $item->quantity,
+                'subtotal' => (float) $item->subtotal,
+            ]),
+        ];
+
+        return view('cashier.sales.receipt', [
+            'txn' => $txn,
+            'backUrl' => route('owner.sales.show', $sale->sale_id),
+        ]);
     }
 }
