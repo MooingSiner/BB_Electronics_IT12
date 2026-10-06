@@ -164,7 +164,7 @@
 <div id="updateModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
     <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
         <h3 class="font-semibold text-slate-800 mb-4">Update Warranty Status</h3>
-        <form method="POST" action="{{ route('owner.returns.warrantyUpdate', $warranty->id ?? 1) }}">
+        <form data-confirm="Save this warranty update?" method="POST" action="{{ route('owner.returns.warrantyUpdate', $warranty->id ?? 1) }}">
             @csrf
             @method('PATCH')
             <div class="space-y-4">

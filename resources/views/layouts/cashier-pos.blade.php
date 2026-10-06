@@ -85,7 +85,7 @@
             </svg>
             <span x-show="!sidebarCollapsed" x-cloak>Account Settings</span>
         </a>
-        <form method="POST" action="{{ route('logout') }}">
+        <form data-confirm="Log out of your account?" method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit" title="Logout"
                     class="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-white/60 hover:text-red-400 hover:bg-white/10 transition-colors"
@@ -147,5 +147,6 @@
         }
     });
 </script>
+@include('partials.confirm-dialog')
 </body>
 </html>

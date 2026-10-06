@@ -29,7 +29,7 @@
     @endif
 
     {{-- Form --}}
-    <form method="POST" action="{{ route('owner.inventory.update', $item->id) }}" enctype="multipart/form-data">
+    <form data-confirm="Save the changes to this product?" method="POST" action="{{ route('owner.inventory.update', $item->id) }}" enctype="multipart/form-data">
         @csrf
         @method('PUT')
 

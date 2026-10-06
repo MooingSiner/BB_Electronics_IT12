@@ -49,7 +49,7 @@
         None of the items in {{ $sale->code() }} can be claimed: they either have no warranty or the warranty has already expired.
     </div>
     @elseif($sale)
-    <form method="POST" action="{{ route('owner.returns.claim.store') }}" class="bg-white rounded-xl border shadow-sm p-6 space-y-4">
+    <form data-confirm="File this warranty claim?" method="POST" action="{{ route('owner.returns.claim.store') }}" class="bg-white rounded-xl border shadow-sm p-6 space-y-4">
         @csrf
 
         <div class="flex items-center justify-between px-3 py-2 bg-slate-50 border rounded-lg text-sm">

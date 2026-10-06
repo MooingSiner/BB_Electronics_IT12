@@ -285,7 +285,7 @@
                 </button>
             </div>
 
-            <form method="POST" action="{{ route('owner.suppliers.receive', $order->id ?? 0) }}">
+            <form data-confirm="Record this delivery? The received quantities will be added to stock." method="POST" action="{{ route('owner.suppliers.receive', $order->id ?? 0) }}">
                 @csrf
 
                 {{-- Date Received --}}
@@ -367,7 +367,7 @@
                     </svg>
                 </button>
             </div>
-            <form method="POST" action="{{ route('owner.suppliers.damage', $order->id ?? 0) }}">
+            <form data-confirm="Report these damaged products?" method="POST" action="{{ route('owner.suppliers.damage', $order->id ?? 0) }}">
                 @csrf
 
                 {{-- Date Reported --}}
@@ -444,7 +444,7 @@
                     </svg>
                 </button>
             </div>
-            <form method="POST" action="{{ route('owner.suppliers.replacement', $order->id ?? 0) }}" class="space-y-4">
+            <form data-confirm="Record the replacement units from the supplier?" method="POST" action="{{ route('owner.suppliers.replacement', $order->id ?? 0) }}" class="space-y-4">
                 @csrf
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Damaged Report</label>
@@ -483,7 +483,7 @@
                     </svg>
                 </button>
             </div>
-            <form method="POST" action="{{ route('owner.suppliers.return', $order->id ?? 0) }}">
+            <form data-confirm="Mark these damaged units as returned? They will be removed from stock." method="POST" action="{{ route('owner.suppliers.return', $order->id ?? 0) }}">
                 @csrf
                 @method('PATCH')
 

@@ -135,7 +135,7 @@
             <button onclick="document.getElementById('addUserModal').classList.add('hidden')"
                     class="text-slate-400 hover:text-slate-600 text-lg leading-none">&#x2715;</button>
         </div>
-        <form method="POST" action="{{ route('owner.users.store') }}" class="space-y-4">
+        <form data-confirm="Create this user account?" method="POST" action="{{ route('owner.users.store') }}" class="space-y-4">
             @csrf
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">

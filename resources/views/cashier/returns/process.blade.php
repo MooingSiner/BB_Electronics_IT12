@@ -62,7 +62,7 @@
         Every item from this transaction has already been fully returned.
     </div>
     @elseif($sale)
-    <form method="POST" action="{{ route('cashier.returns.store') }}" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
+    <form data-confirm="Submit this return for the selected items?" method="POST" action="{{ route('cashier.returns.store') }}" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
         @csrf
         <input type="hidden" name="sale_id" value="{{ $sale->sale_id }}">
 

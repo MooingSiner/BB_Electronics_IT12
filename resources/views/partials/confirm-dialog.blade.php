@@ -1,4 +1,4 @@
-{{-- Replaces the browser's confirm() box: any onsubmit/onclick="return confirm('...')" now opens this popup. --}}
+{{-- Replaces the browser's confirm() box. Works with data-confirm="..." on a form or button, and with legacy onsubmit/onclick="return confirm('...')". --}}
 <div id="confirmDialog" style="display:none" class="fixed inset-0 z-[100] items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-labelledby="confirmDialogTitle">
     <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
         <div class="flex items-start gap-3">
@@ -31,7 +31,7 @@
         }
 
         function ask(text, onConfirm) {
-            const risky = /archive|cancel|deactivate|remove|delete|void/i.test(text);
+            const risky = /archive|cancel|deactivate|remove|delete|void|clear|log out/i.test(text);
             message.textContent = text;
             okButton.style.backgroundColor = risky ? '#dc2626' : '#363E48';
             okButton.textContent = risky ? 'Yes, continue' : 'Confirm';
@@ -40,7 +40,7 @@
             okButton.focus();
         }
 
-        function messageFrom(element, attribute) {
+        function legacyMessage(element, attribute) {
             const code = element.getAttribute(attribute) || '';
             const match = code.match(/confirm\('((?:[^'\\]|\\.)*)'\)/);
             return match ? match[1].replace(/\\'/g, "'") : null;
@@ -53,7 +53,25 @@
 
         document.addEventListener('submit', event => {
             const form = event.target;
-            const text = form.matches('form') ? messageFrom(form, 'onsubmit') : null;
+            if (!form.matches || !form.matches('form')) return;
+
+            if (form.dataset.confirmPassed) {
+                delete form.dataset.confirmPassed;
+                return;
+            }
+
+            if (form.dataset.confirm) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                const submitter = event.submitter;
+                ask(form.dataset.confirm, () => {
+                    form.dataset.confirmPassed = '1';
+                    form.requestSubmit(submitter || undefined);
+                });
+                return;
+            }
+
+            const text = legacyMessage(form, 'onsubmit');
             if (!text) return;
             event.preventDefault();
             event.stopImmediatePropagation();
@@ -61,8 +79,25 @@
         }, true);
 
         document.addEventListener('click', event => {
-            const control = event.target.closest('button[onclick], a[onclick]');
-            const text = control ? messageFrom(control, 'onclick') : null;
+            const control = event.target.closest('button[data-confirm], a[data-confirm], button[onclick], a[onclick]');
+            if (!control) return;
+
+            if (control.dataset.confirmPassed) {
+                delete control.dataset.confirmPassed;
+                return;
+            }
+
+            if (control.dataset.confirm) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                ask(control.dataset.confirm, () => {
+                    control.dataset.confirmPassed = '1';
+                    control.click();
+                });
+                return;
+            }
+
+            const text = legacyMessage(control, 'onclick');
             if (!text) return;
             event.preventDefault();
             event.stopImmediatePropagation();

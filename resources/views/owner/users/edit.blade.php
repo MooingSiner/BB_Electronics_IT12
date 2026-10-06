@@ -29,7 +29,7 @@
     @endif
 
     {{-- Form --}}
-    <form method="POST" action="{{ route('owner.users.update', $item->user_id) }}">
+    <form data-confirm="Save the changes to this user?" method="POST" action="{{ route('owner.users.update', $item->user_id) }}">
         @csrf
         @method('PUT')
 

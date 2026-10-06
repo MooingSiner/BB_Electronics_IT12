@@ -37,7 +37,7 @@
             </div>
         </div>
 
-        <form id="stockInForm" method="POST" action="{{ route('owner.inventory.stockin.bulk.store') }}">
+        <form data-confirm="Add all of the listed products to stock? Their quantities on hand will increase." id="stockInForm" method="POST" action="{{ route('owner.inventory.stockin.bulk.store') }}">
             @csrf
 
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-5 mb-5">

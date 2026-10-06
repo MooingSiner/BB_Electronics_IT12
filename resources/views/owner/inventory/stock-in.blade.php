@@ -26,7 +26,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('owner.inventory.stockin.store', $item->id) }}">
+        <form data-confirm="Add this stock to inventory? The quantity on hand will increase." method="POST" action="{{ route('owner.inventory.stockin.store', $item->id) }}">
             @csrf
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-5">
                 <div>

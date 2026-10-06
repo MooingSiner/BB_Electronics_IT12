@@ -135,7 +135,7 @@
             <div class="p-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0 bg-white">
                 <span class="font-semibold text-slate-800">Current Order</span>
                 <div class="flex items-center gap-3">
-                    <button type="button" wire:click="clearCart" class="text-red-500 text-sm hover:underline transition-colors">Clear Cart</button>
+                    <button type="button" wire:click="clearCart" data-confirm="Clear all items from the cart?" class="text-red-500 text-sm hover:underline transition-colors">Clear Cart</button>
                     <button type="button" @click="cartOpen = false" title="Close" class="text-slate-400 hover:text-slate-600 transition-colors">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
@@ -298,6 +298,7 @@
                         {{-- Complete Sale --}}
                         <button type="button"
                                 wire:click="completeSale"
+                                data-confirm="Complete this sale for ₱{{ number_format($total, 2) }} paid by {{ $payment }}?"
                                 wire:loading.attr="disabled"
                                 wire:target="completeSale"
                                 class="w-full py-3 rounded-xl font-bold text-sm text-white transition-opacity mt-1

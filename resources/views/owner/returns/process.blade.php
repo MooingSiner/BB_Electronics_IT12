@@ -63,7 +63,7 @@
     </div>
     @elseif($txn)
     <div class="bg-white rounded-xl border shadow-sm p-6">
-        <form id="returnForm" method="POST" action="{{ route('owner.returns.store') }}" class="space-y-5" onsubmit="handleSubmit(event)">
+        <form data-confirm="Submit this return for the selected items?" id="returnForm" method="POST" action="{{ route('owner.returns.store') }}" class="space-y-5" onsubmit="handleSubmit(event)">
             @csrf
 
             {{-- Transaction ID --}}

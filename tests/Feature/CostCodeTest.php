@@ -80,4 +80,21 @@ class CostCodeTest extends TestCase
         $this->actingAs($owner)->get(route('owner.sales.index'))->assertSee('id="confirmDialog"', false);
         $this->actingAs($cashier)->get(route('cashier.sales.index'))->assertSee('id="confirmDialog"', false);
     }
+
+    public function test_the_pos_and_other_important_actions_ask_for_confirmation(): void
+    {
+        $cashier = User::factory()->cashierAttendant()->create();
+        $owner = User::factory()->ownerManager()->create();
+        $product = Product::factory()->for(Category::factory())->create(['unit_price' => 95, 'quantity_on_hand' => 10]);
+
+        Livewire::actingAs($cashier)->test(Pos::class)
+            ->call('addToCart', $product->product_id)
+            ->assertSeeHtml('data-confirm="Complete this sale for ₱95.00 paid by Cash?"')
+            ->assertSeeHtml('data-confirm="Clear all items from the cart?"');
+
+        $this->actingAs($owner)->get(route('owner.inventory.stockout', $product->product_id))
+            ->assertSee('data-confirm="Remove this stock from inventory?', false)
+            ->assertSee('data-confirm="Log out of your account?"', false);
+        $this->actingAs($cashier)->get(route('cashier.sales.index'))->assertSee('data-confirm="Log out of your account?"', false);
+    }
 }
