@@ -80,8 +80,7 @@
 
             <div class="flex items-center gap-3">
                 <button type="submit" id="submitBtn"
-                        class="px-5 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition shadow-sm opacity-40 cursor-not-allowed" disabled
-                        style="background-color:#363E48">
+                        class="px-5 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition shadow-sm opacity-40 cursor-not-allowed bg-green-600" disabled>
                     Add to Stock
                 </button>
                 <a href="{{ route('owner.inventory.index') }}"

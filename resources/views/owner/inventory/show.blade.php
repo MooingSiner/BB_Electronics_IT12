@@ -45,15 +45,15 @@
                 </div>
                 <div class="flex items-center gap-2 flex-wrap">
                 <a href="{{ route('owner.inventory.edit', $item->id) }}"
-                   class="px-3 py-1.5 text-xs font-medium rounded-md bg-white/10 text-white hover:bg-white/20 transition">
+                   class="px-3 py-1.5 text-xs font-medium rounded-md bg-sky-500/25 text-sky-100 hover:bg-sky-500/40 transition">
                     Edit
                 </a>
                 <a href="{{ route('owner.inventory.stockin', $item->id) }}"
-                   class="px-3 py-1.5 text-xs font-medium rounded-md bg-white/10 text-white hover:bg-white/20 transition">
+                   class="px-3 py-1.5 text-xs font-medium rounded-md bg-green-500/25 text-green-100 hover:bg-green-500/40 transition">
                     Stock In
                 </a>
                 <a href="{{ route('owner.inventory.stockout', $item->id) }}"
-                   class="px-3 py-1.5 text-xs font-medium rounded-md bg-white/10 text-white hover:bg-white/20 transition">
+                   class="px-3 py-1.5 text-xs font-medium rounded-md bg-amber-500/25 text-amber-100 hover:bg-amber-500/40 transition">
                     Stock Out
                 </a>
                 <a href="{{ route('owner.inventory.history', $item->id) }}"
