@@ -54,6 +54,16 @@ class HelpGuide
                 ['text' => 'In Sales Transactions, press the eye icon on the sale.', 'image' => 'o-void-1'],
                 ['text' => 'Press Void Sale and give a reason. The items go back to stock. A sale that already has a return cannot be voided.', 'image' => 'o-void-2'],
             ]],
+            ['title' => 'Update a supplier order delivery', 'steps' => [
+                ['text' => 'In Supplier Orders, press the eye icon on an order that is still Ordered.', 'image' => 's-recv-1'],
+                ['text' => 'Press Update Delivery Status at the top of the order.', 'image' => 's-recv-2'],
+                ['text' => 'Check the date received, type how many units actually arrived for each product (tick Not Available if an item did not come), add a note if needed, then press Confirm Receipt. The units are added to stock.', 'image' => 's-recv-3'],
+            ]],
+            ['title' => 'Update a purchase order delivery', 'steps' => [
+                ['text' => 'In Purchase Orders, press the eye icon on an order that is still Ordered.', 'image' => 'p-recv-1'],
+                ['text' => 'Press Update Delivery Status at the top of the order.', 'image' => 'p-recv-2'],
+                ['text' => 'Check the date received, type how many units actually arrived for each product, then press Confirm Receipt. The units are added to stock. If only part arrived, the order stays Partially Received and you can update it again later.', 'image' => 'p-recv-3'],
+            ]],
             ['title' => 'Create a purchase order', 'steps' => [
                 ['text' => 'In Purchase Orders, press + New Purchase Order.', 'image' => 'o-po-1'],
                 ['text' => 'Enter the store, choose each product with its quantity and cost, then press Submit Order.', 'image' => 'o-po-2'],
