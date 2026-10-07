@@ -120,6 +120,8 @@ Route::middleware(['auth', 'role:owner_manager'])->prefix('owner')->name('owner.
     Route::get('/profile', [OwnerProfileController::class, 'edit'])->name('profile');
     Route::patch('/profile', [OwnerProfileController::class, 'update'])->name('profile.update');
     Route::patch('/profile/password', [OwnerProfileController::class, 'password'])->name('profile.password');
+    Route::post('/profile/photo', [OwnerProfileController::class, 'photo'])->name('profile.photo');
+    Route::delete('/profile/photo', [OwnerProfileController::class, 'removePhoto'])->name('profile.photo.remove');
 });
 
 Route::middleware(['auth', 'role:cashier_attendant'])->prefix('cashier')->name('cashier.')->group(function () {
@@ -148,6 +150,8 @@ Route::middleware(['auth', 'role:cashier_attendant'])->prefix('cashier')->name('
     Route::get('/profile', [CashierProfileController::class, 'edit'])->name('profile');
     Route::patch('/profile', [CashierProfileController::class, 'update'])->name('profile.update');
     Route::patch('/profile/password', [CashierProfileController::class, 'password'])->name('profile.password');
+    Route::post('/profile/photo', [CashierProfileController::class, 'photo'])->name('profile.photo');
+    Route::delete('/profile/photo', [CashierProfileController::class, 'removePhoto'])->name('profile.photo.remove');
 });
 
 require __DIR__.'/auth.php';

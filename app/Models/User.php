@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['full_name', 'username', 'password_hash', 'role', 'status'])]
+#[Fillable(['full_name', 'username', 'password_hash', 'role', 'status', 'profile_photo'])]
 #[Hidden(['password_hash'])]
 class User extends Authenticatable
 {
@@ -35,6 +35,23 @@ class User extends Authenticatable
             'role' => UserRole::class,
             'status' => UserStatus::class,
         ];
+    }
+
+    public function initials(): string
+    {
+        $parts = preg_split('/\s+/', trim($this->full_name));
+        $initials = mb_substr($parts[0], 0, 1);
+
+        if (count($parts) > 1) {
+            $initials .= mb_substr(end($parts), 0, 1);
+        }
+
+        return mb_strtoupper($initials);
+    }
+
+    public function profilePhotoUrl(): ?string
+    {
+        return $this->profile_photo ? asset('storage/'.$this->profile_photo) : null;
     }
 
     public function getAuthPassword(): string

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
@@ -49,5 +50,35 @@ class ProfileController extends Controller
         ]);
 
         return back()->with('success', 'Password updated.');
+    }
+
+    public function photo(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'photo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ]);
+
+        $user = $request->user();
+        $old = $user->profile_photo;
+
+        $user->update(['profile_photo' => $request->file('photo')->store('avatars', 'public')]);
+
+        if ($old) {
+            Storage::disk('public')->delete($old);
+        }
+
+        return back()->with('success', 'Profile picture updated.');
+    }
+
+    public function removePhoto(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if ($user->profile_photo) {
+            Storage::disk('public')->delete($user->profile_photo);
+            $user->update(['profile_photo' => null]);
+        }
+
+        return back()->with('success', 'Profile picture removed.');
     }
 }
