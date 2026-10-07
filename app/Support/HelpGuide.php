@@ -13,6 +13,92 @@ class HelpGuide
     }
 
     /**
+     * @return list<array{title: string, steps: list<array{text: string, image: string}>}>
+     */
+    public static function guides(string $role): array
+    {
+        return $role === 'owner' ? self::ownerGuides() : self::cashierGuides();
+    }
+
+    /**
+     * @return list<array{title: string, steps: list<array{text: string, image: string}>}>
+     */
+    private static function ownerGuides(): array
+    {
+        return [
+            ['title' => 'Add a new product', 'steps' => [
+                ['text' => 'Open Inventory and press + Add Product.', 'image' => 'o-add-1'],
+                ['text' => 'Type the product name, then the unit price and the starting quantity. Fill in the other boxes if you have them, then press Add Product.', 'image' => 'o-add-2'],
+            ]],
+            ['title' => 'Stock In (one product)', 'steps' => [
+                ['text' => 'In Inventory, press the green arrow on the product\'s row.', 'image' => 'o-in-1'],
+                ['text' => 'Enter how many units arrived and a short reason, then press Add to Stock. A message with an Undo button appears in case you made a mistake.', 'image' => 'o-in-2'],
+            ]],
+            ['title' => 'Stock In (many products)', 'steps' => [
+                ['text' => 'In Inventory, press the Stock In button at the top.', 'image' => 'o-bulk-1'],
+                ['text' => 'Scan or search each product, enter the quantity for each one, then press Add to Stock.', 'image' => 'o-bulk-2'],
+            ]],
+            ['title' => 'Stock Out', 'steps' => [
+                ['text' => 'In Inventory, press the orange arrow on the product\'s row.', 'image' => 'o-out-1'],
+                ['text' => 'Enter the quantity to remove and the reason (for example breakage or a miscount), then press Remove from Stock.', 'image' => 'o-out-2'],
+            ]],
+            ['title' => 'Undo a stock entry', 'steps' => [
+                ['text' => 'Open the product and press History.', 'image' => 'o-undo-1'],
+                ['text' => 'Press Reverse beside the entry you typed by mistake. The original stays in the list and a reversal is added, so nothing is hidden.', 'image' => 'o-undo-2'],
+            ]],
+            ['title' => 'Print barcode labels', 'steps' => [
+                ['text' => 'Open the product and press Print label under the barcode.', 'image' => 'o-label-1'],
+                ['text' => 'Choose how many copies and the size, then press Print.', 'image' => 'o-label-2'],
+            ]],
+            ['title' => 'Void a sale', 'steps' => [
+                ['text' => 'In Sales Transactions, press the eye icon on the sale.', 'image' => 'o-void-1'],
+                ['text' => 'Press Void Sale and give a reason. The items go back to stock. A sale that already has a return cannot be voided.', 'image' => 'o-void-2'],
+            ]],
+            ['title' => 'Create a purchase order', 'steps' => [
+                ['text' => 'In Purchase Orders, press + New Purchase Order.', 'image' => 'o-po-1'],
+                ['text' => 'Enter the store, choose each product with its quantity and cost, then press Submit Order.', 'image' => 'o-po-2'],
+                ['text' => 'Open an order to receive the delivery, report damaged items, or print the receipt.', 'image' => 'o-po-3'],
+            ]],
+            ['title' => 'Process a customer return', 'steps' => [
+                ['text' => 'Open the sale and press Process Return.', 'image' => 'o-ret-1'],
+                ['text' => 'Choose the product and quantity, the reason, the item condition, and what the customer wants (refund, replacement, exchange or repair), then press Process Return.', 'image' => 'o-ret-2'],
+            ]],
+            ['title' => 'Make a report', 'steps' => [
+                ['text' => 'In Reports, choose the report type and the dates, then press Generate Report.', 'image' => 'o-rep-1'],
+                ['text' => 'Press Print to print the report.', 'image' => 'o-rep-2'],
+            ]],
+            ['title' => 'Add or edit a user', 'steps' => [
+                ['text' => 'In User Management, press + Add User, fill in the details and save.', 'image' => 'o-user-1'],
+                ['text' => 'Use the pencil to edit a user, or the power button to deactivate or reactivate the account.', 'image' => 'o-user-2'],
+            ]],
+        ];
+    }
+
+    /**
+     * @return list<array{title: string, steps: list<array{text: string, image: string}>}>
+     */
+    private static function cashierGuides(): array
+    {
+        return [
+            ['title' => 'Make a sale', 'steps' => [
+                ['text' => 'Scan the barcode or type in the search box, then tap a product to add it. Tapping it again adds one more.', 'image' => 'c-sale-1'],
+                ['text' => 'Press the Cart button. Change quantities, pick a discount if needed, choose the payment method, enter the amount received, then press Complete Sale and print the receipt.', 'image' => 'c-sale-2'],
+            ]],
+            ['title' => 'Reprint a receipt', 'steps' => [
+                ['text' => 'In Sales Transactions, press the eye icon on the sale (or the printer icon to print straight away).', 'image' => 'c-rec-1'],
+                ['text' => 'Press Print Receipt.', 'image' => 'c-rec-2'],
+            ]],
+            ['title' => 'Start a customer return', 'steps' => [
+                ['text' => 'Open the sale and press Process Return.', 'image' => 'c-ret-1'],
+                ['text' => 'Choose the product and quantity, give the reason and condition, pick what the customer wants, then press Submit Return. The owner approves it before stock changes.', 'image' => 'c-ret-2'],
+            ]],
+            ['title' => 'Check stock and price', 'steps' => [
+                ['text' => 'In Inventory, type a name or code in the search box. The list shows the price and how many are in stock.', 'image' => 'c-inv-1'],
+            ]],
+        ];
+    }
+
+    /**
      * @return list<array{title: string, summary: string, points: list<string>, image: string}>
      */
     private static function owner(): array

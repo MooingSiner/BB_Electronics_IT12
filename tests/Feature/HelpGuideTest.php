@@ -20,6 +20,19 @@ class HelpGuideTest extends TestCase
         }
     }
 
+    public function test_every_step_of_every_guide_has_a_picture(): void
+    {
+        foreach (['owner', 'cashier'] as $role) {
+            foreach (HelpGuide::guides($role) as $guide) {
+                $this->assertNotEmpty($guide['steps'], $guide['title']);
+
+                foreach ($guide['steps'] as $step) {
+                    $this->assertFileExists(public_path('help/steps/'.$step['image'].'.jpg'), $guide['title']);
+                }
+            }
+        }
+    }
+
     public function test_owner_pages_have_the_help_button_and_guide(): void
     {
         $this->actingAs(User::factory()->ownerManager()->create())
