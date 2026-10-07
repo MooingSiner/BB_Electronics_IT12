@@ -61,4 +61,12 @@ class ProfilePhotoTest extends TestCase
         $page->assertDontSee('hidden sm:block text-left', false);
         $this->assertStringContainsString('Zed Quill', $page->getContent());
     }
+
+    public function test_pages_that_loop_over_users_still_render_the_sidebar_avatar(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+        User::factory()->cashierAttendant()->create();
+
+        $this->actingAs($owner)->get(route('owner.users.index'))->assertOk();
+    }
 }

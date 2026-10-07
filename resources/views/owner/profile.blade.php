@@ -17,7 +17,7 @@
         {{-- LEFT: Profile Card --}}
         <div class="bg-white rounded-xl border shadow-sm p-6 text-center">
             {{-- Avatar --}}
-            @include('partials.avatar', ['size' => 'w-24 h-24 text-2xl', 'class' => 'mx-auto'])
+            @include('partials.avatar', ['avatarSize' => 'w-24 h-24 text-2xl', 'avatarClass' => 'mx-auto'])
             <form method="POST" action="{{ route('owner.profile.photo') }}" enctype="multipart/form-data" class="mt-3"
                   x-data @change="$el.requestSubmit()">
                 @csrf
