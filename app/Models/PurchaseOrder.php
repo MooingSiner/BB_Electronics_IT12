@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['supplier_id', 'user_id', 'order_date', 'status', 'date_received'])]
+#[Fillable(['supplier_id', 'store_id', 'user_id', 'order_date', 'invoice_number', 'status', 'is_archived', 'date_received'])]
 class PurchaseOrder extends Model
 {
     /** @use HasFactory<PurchaseOrderFactory> */
@@ -31,12 +31,38 @@ class PurchaseOrder extends Model
             'order_date' => 'datetime',
             'date_received' => 'datetime',
             'status' => PurchaseOrderStatus::class,
+            'is_archived' => 'boolean',
         ];
+    }
+
+    /**
+     * Why this order can't be cancelled, or null when it can. Once anything is received, stock has changed.
+     */
+    public function cancelBlockedReason(): ?string
+    {
+        if ($this->status === PurchaseOrderStatus::Cancelled) {
+            return 'This order is already cancelled.';
+        }
+
+        if ($this->status !== PurchaseOrderStatus::Pending || $this->items()->where('quantity_received', '>', 0)->exists()) {
+            return 'Part of this order was already received, so it can no longer be cancelled.';
+        }
+
+        if (ReturnRecord::where('order_id', $this->order_id)->exists()) {
+            return 'This order has damage reports, so it can no longer be cancelled.';
+        }
+
+        return null;
     }
 
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class, 'supplier_id', 'supplier_id');
+    }
+
+    public function store(): BelongsTo
+    {
+        return $this->belongsTo(Store::class, 'store_id', 'store_id');
     }
 
     public function user(): BelongsTo

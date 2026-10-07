@@ -18,29 +18,36 @@
             <h1 class="text-2xl font-bold text-slate-800">Return #{{ $return->id }}</h1>
             <p class="text-sm text-slate-500 mt-1">{{ $return->product_name }} ({{ $return->product_code }})</p>
         </div>
+        <div class="flex items-center gap-2 shrink-0">
+        <a href="{{ route('owner.returns.slip', $return->id) }}"
+           class="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 transition">
+            Print Slip
+        </a>
         @if($return->status === 'Pending')
+        @if($return->cancellable)
+        <form method="POST" action="{{ route('owner.returns.cancel', $return->id) }}">
+            @csrf
+            @method('DELETE')
+            <button type="submit"
+                    class="px-4 py-2 text-sm font-medium rounded-lg border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition"
+                    onclick="return confirm('Cancel this return? It will be removed and stock will not change.')">
+                Cancel Return
+            </button>
+        </form>
+        @endif
         <form method="POST" action="{{ route('owner.returns.resolve', $return->id) }}">
             @csrf
             @method('PATCH')
             <button type="submit"
                     class="shrink-0 px-4 py-2 text-sm font-medium text-white rounded-lg transition-opacity hover:opacity-90"
                     style="background-color:#363E48"
-                    onclick="return confirm('Mark this return as resolved?')">
+                    onclick="return confirm('{{ $return->will_restock ? 'Mark this return as resolved? The item will be added back to stock.' : 'Mark this return as resolved? The item will NOT be added back to stock.' }}')">
                 Mark Resolved
             </button>
         </form>
         @endif
+        </div>
     </div>
-
-    {{-- Success Alert --}}
-    @if(session('success'))
-    <div class="flex items-center gap-3 px-4 py-3 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm">
-        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-        </svg>
-        {{ session('success') }}
-    </div>
-    @endif
 
     {{-- Return Information --}}
     <div class="bg-white rounded-xl border shadow-sm p-5">
@@ -75,6 +82,16 @@
             <div class="flex justify-between">
                 <dt class="text-slate-500">Date</dt>
                 <dd class="text-slate-700">{{ $return->created_at?->format('M d, Y g:i A') }}</dd>
+            </div>
+            @if($return->exchange)
+            <div class="flex justify-between gap-6">
+                <dt class="text-slate-500 flex-shrink-0">Exchange for</dt>
+                <dd class="text-slate-700 text-right">{{ $return->exchange }}<br><span class="text-xs text-slate-500">{{ $return->exchange_note }}</span></dd>
+            </div>
+            @endif
+            <div class="flex justify-between gap-6">
+                <dt class="text-slate-500 flex-shrink-0">Stock</dt>
+                <dd class="text-slate-700 text-right">{{ $return->stock_note }}</dd>
             </div>
             <div class="flex justify-between items-center">
                 <dt class="text-slate-500">Status</dt>

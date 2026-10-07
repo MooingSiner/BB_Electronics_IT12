@@ -19,16 +19,6 @@
         </button>
     </div>
 
-    {{-- Success Alert --}}
-    @if(session('success'))
-    <div class="flex items-center gap-3 px-4 py-3 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm">
-        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-        </svg>
-        {{ session('success') }}
-    </div>
-    @endif
-
     {{-- Filter Bar --}}
     <div class="bg-white rounded-xl border shadow-sm p-4">
         <form method="GET" action="{{ route('owner.users.index') }}" class="flex flex-wrap gap-3 items-end">
@@ -106,17 +96,12 @@
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
-                                <a href="{{ route('owner.users.edit', $user->id) }}"
-                                   class="text-sm font-medium hover:underline"
-                                   style="color:#363E48">Edit</a>
+                                <a href="{{ route('owner.users.edit', $user->id) }}" class="tip inline-flex items-center justify-center p-1.5 border rounded-md transition border-slate-300 text-slate-600 hover:bg-slate-100" data-tip="Edit" aria-label="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg></a>
                                 <form method="POST" action="{{ route('owner.users.toggleStatus', $user->id) }}" class="inline">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit"
-                                            class="text-sm font-medium text-slate-500 hover:text-slate-700 hover:underline transition-colors"
-                                            onclick="return confirm('Are you sure you want to {{ ($user->status === 'Active' || $user->status === 'active') ? 'deactivate' : 'activate' }} this user?')">
-                                        {{ ($user->status === 'Active' || $user->status === 'active') ? 'Deactivate' : 'Activate' }}
-                                    </button>
+                                            onclick="return confirm('Are you sure you want to {{ ($user->status === 'Active' || $user->status === 'active') ? 'deactivate' : 'activate' }} this user?')" class="tip inline-flex items-center justify-center p-1.5 border rounded-md transition border-slate-300 text-slate-600 hover:bg-slate-100" data-tip="{{ ($user->status === 'Active' || $user->status === 'active') ? 'Deactivate' : 'Activate' }}" aria-label="{{ ($user->status === 'Active' || $user->status === 'active') ? 'Deactivate' : 'Activate' }}"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5.636 5.636a9 9 0 1012.728 0M12 3v9"/></svg></button>
                                 </form>
                             </div>
                         </td>
@@ -131,6 +116,7 @@
                 </tbody>
             </table>
         </div>
+@include('partials.pagination', ['paginator' => $users])
 
         {{-- Footer --}}
         <div class="px-6 py-3 bg-slate-50 border-t text-xs text-slate-500">
@@ -149,7 +135,7 @@
             <button onclick="document.getElementById('addUserModal').classList.add('hidden')"
                     class="text-slate-400 hover:text-slate-600 text-lg leading-none">&#x2715;</button>
         </div>
-        <form method="POST" action="{{ route('owner.users.store') }}" class="space-y-4">
+        <form data-confirm="Create this user account?" method="POST" action="{{ route('owner.users.store') }}" class="space-y-4">
             @csrf
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">

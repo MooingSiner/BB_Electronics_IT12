@@ -11,35 +11,29 @@
         <h1 class="text-2xl font-bold text-slate-800">Account Settings</h1>
     </div>
 
-    {{-- Success Alert --}}
-    @if(session('success'))
-    <div class="flex items-center gap-3 px-4 py-3 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm">
-        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-        </svg>
-        {{ session('success') }}
-    </div>
-    @endif
-
     {{-- Main Grid --}}
     <div class="grid grid-cols-3 gap-6 items-start">
 
         {{-- LEFT: Profile Card --}}
         <div class="bg-white rounded-xl border shadow-sm p-6 text-center">
             {{-- Avatar --}}
-            <div class="w-20 h-20 mx-auto rounded-full flex items-center justify-center" style="background-color:#363E48">
-                <span class="font-bold text-xl" style="color:#E0CD66">
-                    @php
-                        $name = auth()->user()->full_name;
-                        $parts = explode(' ', trim($name));
-                        $initials = strtoupper(substr($parts[0], 0, 1));
-                        if (count($parts) > 1) {
-                            $initials .= strtoupper(substr($parts[count($parts) - 1], 0, 1));
-                        }
-                        echo $initials;
-                    @endphp
-                </span>
-            </div>
+            @include('partials.avatar', ['avatarSize' => 'w-24 h-24 text-2xl', 'avatarClass' => 'mx-auto'])
+            <form method="POST" action="{{ route('owner.profile.photo') }}" enctype="multipart/form-data" class="mt-3"
+                  x-data @change="$el.requestSubmit()">
+                @csrf
+                <input type="file" name="photo" id="photo" accept="image/png,image/jpeg,image/webp" class="hidden">
+                <label for="photo" class="inline-block cursor-pointer px-3 py-1.5 text-xs font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50">Upload picture</label>
+            </form>
+            @if (auth()->user()->profile_photo)
+                <form method="POST" action="{{ route('owner.profile.photo.remove') }}" class="mt-1" data-confirm="Remove your profile picture?">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="text-xs text-red-500 hover:underline">Remove picture</button>
+                </form>
+            @endif
+            @error('photo')
+                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+            @enderror
             <p class="font-semibold text-slate-800 mt-3">{{ auth()->user()->full_name }}</p>
             <p class="text-sm text-slate-500 mt-0.5">Owner / Manager</p>
             <p class="text-xs text-slate-400 mt-0.5">{{ auth()->user()->username ?? 'msantos' }}</p>

@@ -11,8 +11,10 @@
         ← Back to Supplier Orders
     </a>
 
+    <div class="max-w-5xl mx-auto">
+
     {{-- Page Header --}}
-    <h1 class="text-2xl font-bold mb-6" style="color:#363E48">New Supplier Order</h1>
+    <h1 class="text-2xl font-bold mb-6 text-center" style="color:#363E48">New Supplier Order</h1>
 
     {{-- Validation Errors --}}
     @if($errors->any())
@@ -26,96 +28,111 @@
         </div>
     @endif
 
-    <form id="orderForm" method="POST" action="{{ route('owner.suppliers.store') }}" class="max-w-2xl space-y-5">
+    <form id="orderForm" method="POST" action="{{ route('owner.suppliers.store') }}">
         @csrf
 
-        {{-- Card: Order Information --}}
-        <div class="bg-white rounded-xl shadow border border-slate-200 p-6 space-y-5">
-            <h2 class="text-base font-semibold text-slate-800">Order Information</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-5">
 
-            {{-- Supplier --}}
-            <div>
-                <label for="supplier" class="block text-sm font-medium text-slate-700 mb-1">
-                    Supplier <span class="text-red-500">*</span>
-                </label>
-                <input type="text" id="supplier" name="supplier" list="supplier-options" value="{{ old('supplier') }}" required
-                       autocomplete="off"
-                       placeholder="e.g. TechWorld Distributors"
-                       class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 @error('supplier') border-red-400 @enderror">
-                <datalist id="supplier-options">
-                    @foreach($suppliers ?? [] as $s)
-                        <option value="{{ $s }}"></option>
-                    @endforeach
-                </datalist>
-                <p class="mt-1 text-xs text-slate-400">Type a new supplier name to add them automatically.</p>
-                @error('supplier')
-                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                @enderror
+            {{-- LEFT: Products to Order --}}
+            <div class="lg:col-span-3 bg-white rounded-xl shadow border border-slate-200 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-base font-semibold text-slate-800">Products to Order</h2>
+                    <button type="button" id="addItem"
+                            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition">
+                        + Add Item
+                    </button>
+                </div>
+
+                @include('owner.partials.order-scan')
+
+                <div id="itemsContainer" class="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+                    {{-- Default empty row --}}
+                    <div class="item-row flex gap-3 items-end p-3 bg-slate-50 rounded-md border border-slate-200">
+                        <div class="flex-1">
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Product</label>
+                            <select name="items[0][product_id]" class="item-product-select w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
+                                <option value="">Select product</option>
+                                @foreach($products ?? [] as $product)
+                                    <option value="{{ $product->id }}" data-cost="{{ $product->cost_price }}" data-code="{{ $product->code }}" data-barcode="{{ $product->barcode }}">{{ $product->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="w-24">
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Qty</label>
+                            <input type="number" name="items[0][qty]" min="1" placeholder="Qty"
+                                   class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
+                        </div>
+                        <div class="w-36">
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Unit Cost (₱)</label>
+                            <input type="number" name="items[0][unit_cost]" step="0.01" min="0" placeholder="0.00"
+                                   class="item-cost-input w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
+                        </div>
+                        <div class="pb-0.5">
+                            <button type="button" onclick="this.closest('.item-row').remove()"
+                                    class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 border border-slate-300 rounded-lg hover:border-red-300 transition text-lg leading-none">
+                                &times;
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            {{-- Order Date --}}
-            <div>
-                <label for="order_date" class="block text-sm font-medium text-slate-700 mb-1">
-                    Order Date <span class="text-red-500">*</span>
-                </label>
-                <input type="date" id="order_date" name="order_date"
-                       value="{{ old('order_date', date('Y-m-d')) }}" required
-                       class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 @error('order_date') border-red-400 @enderror">
-                @error('order_date')
-                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
+            {{-- RIGHT: Order Information --}}
+            <div class="lg:col-span-2 bg-white rounded-xl shadow border border-slate-200 p-6 space-y-5 self-start">
+                <h2 class="text-base font-semibold text-slate-800">Order Information</h2>
 
-            {{-- Notes --}}
-            <div>
-                <label for="notes" class="block text-sm font-medium text-slate-700 mb-1">Notes</label>
-                <textarea id="notes" name="notes" rows="3"
-                          class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 resize-none @error('notes') border-red-400 @enderror">{{ old('notes') }}</textarea>
-                @error('notes')
-                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-        </div>
+                {{-- Supplier --}}
+                <div>
+                    <label for="supplier" class="block text-sm font-medium text-slate-700 mb-1">
+                        Supplier <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="supplier" name="supplier" list="supplier-options" value="{{ old('supplier') }}" required
+                           autocomplete="off"
+                           placeholder="e.g. TechWorld Distributors"
+                           class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 @error('supplier') border-red-400 @enderror">
+                    <datalist id="supplier-options">
+                        @foreach($suppliers ?? [] as $s)
+                            <option value="{{ $s }}"></option>
+                        @endforeach
+                    </datalist>
+                    <p class="mt-1 text-xs text-slate-400">Type a new supplier name to add them automatically.</p>
+                    @error('supplier')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
 
-        {{-- Card: Products to Order --}}
-        <div class="bg-white rounded-xl shadow border border-slate-200 p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-base font-semibold text-slate-800">Products to Order</h2>
-                <button type="button" id="addItem"
-                        class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition">
-                    + Add Item
-                </button>
-            </div>
+                {{-- Order Date --}}
+                <div>
+                    <label for="order_date" class="block text-sm font-medium text-slate-700 mb-1">
+                        Order Date <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date" id="order_date" name="order_date"
+                           value="{{ old('order_date', date('Y-m-d')) }}" required
+                           class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 @error('order_date') border-red-400 @enderror">
+                    @error('order_date')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
 
-            <div id="itemsContainer" class="space-y-3">
-                {{-- Default empty row --}}
-                <div class="item-row flex gap-3 items-end p-3 bg-slate-50 rounded-md border border-slate-200">
-                    <div class="flex-1">
-                        <label class="block text-xs font-medium text-slate-600 mb-1">Product</label>
-                        <select name="items[0][product_id]"
-                                class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
-                            <option value="">Select product</option>
-                            @foreach($products ?? [] as $product)
-                                <option value="{{ $product->id }}">{{ $product->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="w-24">
-                        <label class="block text-xs font-medium text-slate-600 mb-1">Qty</label>
-                        <input type="number" name="items[0][qty]" min="1" placeholder="Qty"
-                               class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
-                    </div>
-                    <div class="w-36">
-                        <label class="block text-xs font-medium text-slate-600 mb-1">Unit Cost (₱)</label>
-                        <input type="number" name="items[0][unit_cost]" step="0.01" min="0" placeholder="0.00"
-                               class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
-                    </div>
-                    <div class="pb-0.5">
-                        <button type="button" onclick="this.closest('.item-row').remove()"
-                                class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 border border-slate-300 rounded-lg hover:border-red-300 transition text-lg leading-none">
-                            &times;
-                        </button>
-                    </div>
+                {{-- Invoice Number --}}
+                <div>
+                    <label for="invoice_number" class="block text-sm font-medium text-slate-700 mb-1">Invoice Number</label>
+                    <input type="text" id="invoice_number" name="invoice_number" value="{{ old('invoice_number') }}"
+                           placeholder="e.g. INV-2026-00123"
+                           class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 @error('invoice_number') border-red-400 @enderror">
+                    @error('invoice_number')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- Notes --}}
+                <div>
+                    <label for="notes" class="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+                    <textarea id="notes" name="notes" rows="3"
+                              class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 resize-none @error('notes') border-red-400 @enderror">{{ old('notes') }}</textarea>
+                    @error('notes')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
         </div>
@@ -134,6 +151,7 @@
             </a>
         </div>
     </form>
+    </div>
 @endsection
 
 @push('modals')
@@ -181,7 +199,7 @@
             const container = document.getElementById('itemsContainer');
             const idx = itemCount++;
 
-            const productsOptions = `{!! collect($products ?? [])->map(fn($p) => '<option value="'.$p->id.'">'.$p->name.'</option>')->implode('') !!}`;
+            const productsOptions = `{!! collect($products ?? [])->map(fn($p) => '<option value="'.$p->id.'" data-cost="'.$p->cost_price.'" data-code="'.e($p->code).'" data-barcode="'.e($p->barcode).'">'.$p->name.'</option>')->implode('') !!}`;
 
             const row = document.createElement('div');
             row.className = 'item-row flex gap-3 items-end p-3 bg-slate-50 rounded-md border border-slate-200';
@@ -189,7 +207,7 @@
                 <div class="flex-1">
                     <label class="block text-xs font-medium text-slate-600 mb-1">Product</label>
                     <select name="items[${idx}][product_id]"
-                            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2">
+                            class="item-product-select w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2">
                         <option value="">Select product</option>
                         ${productsOptions}
                     </select>
@@ -202,7 +220,7 @@
                 <div class="w-36">
                     <label class="block text-xs font-medium text-slate-600 mb-1">Unit Cost (₱)</label>
                     <input type="number" name="items[${idx}][unit_cost]" step="0.01" min="0" placeholder="0.00"
-                           class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2">
+                           class="item-cost-input w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2">
                 </div>
                 <div class="pb-0.5">
                     <button type="button" onclick="this.closest('.item-row').remove()"
@@ -212,6 +230,21 @@
                 </div>
             `;
             container.appendChild(row);
+            wireCostAutofill(row);
         });
+
+        // Auto-fill Unit Cost from the product's cost_price in Inventory when a product is picked
+        function wireCostAutofill(row) {
+            const productSelect = row.querySelector('.item-product-select');
+            const costInput = row.querySelector('.item-cost-input');
+
+            productSelect.addEventListener('change', function () {
+                const selected = productSelect.options[productSelect.selectedIndex];
+                const cost = selected ? selected.dataset.cost : '';
+                costInput.value = cost ? parseFloat(cost).toFixed(2) : '';
+            });
+        }
+
+        document.querySelectorAll('#itemsContainer .item-row').forEach(wireCostAutofill);
     </script>
 @endpush

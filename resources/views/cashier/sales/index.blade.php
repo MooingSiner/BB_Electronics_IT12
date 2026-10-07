@@ -92,13 +92,14 @@
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Transaction ID</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Product(s)</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Qty</th>
+                        <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Unit Price</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Total</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Discount</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Payment</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Date</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Processed By</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
-                        <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
+                        <th class="sticky right-0 text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide bg-slate-50 shadow-[-6px_0_8px_-6px_rgba(0,0,0,0.15)]">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
@@ -112,6 +113,7 @@
                         </td>
                         <td class="px-5 py-4 text-slate-700 max-w-48 truncate">{{ $txn->items_summary ?? $txn->product_name ?? '—' }}</td>
                         <td class="px-5 py-4 text-slate-600">{{ $txn->total_qty ?? '—' }}</td>
+                        <td class="px-5 py-4 text-slate-600 max-w-40 truncate" title="{{ $txn->unit_prices }}">{{ $txn->unit_prices }}</td>
                         <td class="px-5 py-4 font-semibold text-slate-800">₱{{ number_format($txn->total, 2) }}</td>
                         <td class="px-5 py-4 text-slate-600">
                             @if(($txn->discount_amount ?? 0) > 0)
@@ -126,7 +128,11 @@
                         <td class="px-5 py-4">
                             @php $status = $txn->status ?? 'Completed'; @endphp
                             @if($status === 'Completed')
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Completed</span>
+                                @if($txn->return_label ?? null)
+                                    @include('partials.return-badge', ['label' => $txn->return_label ?? null])
+                                @else
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Completed</span>
+                                @endif
                             @elseif($status === 'Refunded')
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Refunded</span>
                             @elseif($status === 'Voided')
@@ -135,28 +141,19 @@
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">{{ $status }}</span>
                             @endif
                         </td>
-                        <td class="px-5 py-4">
+                        <td class="sticky right-0 px-5 py-4 bg-white shadow-[-6px_0_8px_-6px_rgba(0,0,0,0.15)]">
                             <div class="flex items-center gap-2">
-                                <a href="{{ route('cashier.sales.show', $txn->id) }}"
-                                   class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 transition-colors">
-                                    View
-                                </a>
-                                <a href="{{ route('cashier.sales.receipt', $txn->id) }}"
-                                   class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 transition-colors">
-                                    Print
-                                </a>
+                                <a href="{{ route('cashier.sales.show', $txn->id) }}" class="tip inline-flex items-center justify-center p-1.5 border rounded-md transition border-slate-300 text-slate-600 hover:bg-slate-100" data-tip="View" aria-label="View"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178zM15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg></a>
+                                <a href="{{ route('cashier.sales.receipt', $txn->id) }}" class="tip inline-flex items-center justify-center p-1.5 border rounded-md transition border-slate-300 text-slate-600 hover:bg-slate-100" data-tip="Print" aria-label="Print"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.056 48.056 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z"/></svg></a>
                                 @if(($txn->status ?? 'Completed') === 'Completed')
-                                <a href="{{ route('cashier.returns.process', ['transaction_id' => $txn->id]) }}"
-                                   class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium border border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors">
-                                    Return
-                                </a>
+                                <a href="{{ route('cashier.returns.process', ['transaction_id' => $txn->id]) }}" class="tip inline-flex items-center justify-center p-1.5 border rounded-md transition border-red-200 text-red-600 bg-red-50 hover:bg-red-100" data-tip="Return" aria-label="Return"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"/></svg></a>
                                 @endif
                             </div>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="10" class="px-5 py-16 text-center text-slate-400 text-sm">
+                        <td colspan="11" class="px-5 py-16 text-center text-slate-400 text-sm">
                             <svg class="w-10 h-10 mx-auto mb-2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>

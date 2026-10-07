@@ -13,16 +13,6 @@
         <p class="text-sm text-slate-500 mt-1">Manage your personal information and account security.</p>
     </div>
 
-    {{-- Success Alert --}}
-    @if(session('success'))
-    <div class="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700">
-        <svg class="w-5 h-5 flex-shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-        {{ session('success') }}
-    </div>
-    @endif
-
     {{-- Error Alert --}}
     @if($errors->any())
     <div class="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
@@ -43,10 +33,23 @@
         <div class="lg:col-span-1">
             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 text-center">
                 {{-- Avatar --}}
-                <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-white text-2xl font-bold"
-                     style="background-color:#363E48;">
-                    {{ strtoupper(substr(auth()->user()->full_name, 0, 1)) }}{{ strtoupper(substr(explode(' ', auth()->user()->full_name)[1] ?? 'U', 0, 1)) }}
-                </div>
+                @include('partials.avatar', ['avatarSize' => 'w-24 h-24 text-2xl', 'avatarClass' => 'mx-auto'])
+            <form method="POST" action="{{ route('cashier.profile.photo') }}" enctype="multipart/form-data" class="mt-3"
+                  x-data @change="$el.requestSubmit()">
+                @csrf
+                <input type="file" name="photo" id="photo" accept="image/png,image/jpeg,image/webp" class="hidden">
+                <label for="photo" class="inline-block cursor-pointer px-3 py-1.5 text-xs font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50">Upload picture</label>
+            </form>
+            @if (auth()->user()->profile_photo)
+                <form method="POST" action="{{ route('cashier.profile.photo.remove') }}" class="mt-1" data-confirm="Remove your profile picture?">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="text-xs text-red-500 hover:underline">Remove picture</button>
+                </form>
+            @endif
+            @error('photo')
+                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+            @enderror
                 <h2 class="text-lg font-bold text-slate-800">{{ auth()->user()->full_name }}</h2>
                 <p class="text-sm text-slate-500 mt-0.5">Cashier / Store Attendant</p>
                 <div class="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium" style="background-color:rgba(224,205,102,0.2); color:#363E48;">

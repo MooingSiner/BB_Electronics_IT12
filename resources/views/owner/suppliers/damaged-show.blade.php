@@ -17,6 +17,16 @@
     <div class="max-w-xl bg-white rounded-xl shadow border border-slate-200 p-6">
         <dl class="space-y-3 text-sm">
             <div class="flex justify-between">
+                <dt class="text-slate-500">Order</dt>
+                <dd class="text-slate-700">
+                    @if($item->order_id)
+                        <a href="{{ route('owner.suppliers.show', $item->order_id) }}" class="hover:underline" style="color:#363E48">SO-{{ str_pad($item->order_id, 4, '0', STR_PAD_LEFT) }}</a>
+                    @else
+                        —
+                    @endif
+                </dd>
+            </div>
+            <div class="flex justify-between">
                 <dt class="text-slate-500">Supplier</dt>
                 <dd class="text-slate-700 font-medium">{{ $item->supplier }}</dd>
             </div>

@@ -38,15 +38,50 @@
                 </svg>
                 Process Return
             </a>
+            @if(empty($txn->void_blocked_reason))
+                <button type="button" @click="$dispatch('open-void')"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-red-300 text-red-600 text-sm font-semibold hover:bg-red-50 transition-colors">
+                    Void Sale
+                </button>
+            @endif
         @endif
     </div>
 </div>
 
-{{-- Main Grid --}}
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+@if(($txn->status ?? '') === 'Voided')
+    <div class="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p class="font-semibold">This sale was voided{{ $txn->voided_at ? ' on '.\Carbon\Carbon::parse($txn->voided_at)->format('M d, Y g:i A') : '' }}.</p>
+        @if($txn->void_reason)<p class="mt-0.5">Reason: {{ $txn->void_reason }}</p>@endif
+        <p class="mt-0.5">The items were put back in stock.</p>
+    </div>
+@elseif(($txn->void_blocked_reason ?? null))
+    <p class="mb-5 text-xs text-slate-400">Void unavailable: {{ $txn->void_blocked_reason }}</p>
+@endif
 
-    {{-- LEFT: col-span-2 --}}
-    <div class="lg:col-span-2 flex flex-col gap-5">
+@if(empty($txn->void_blocked_reason) && ($txn->status ?? '') === 'Completed')
+<div x-data="{ open: false }" @open-void.window="open = true" @keydown.escape.window="open = false">
+    <div x-show="open" style="display:none" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <form method="POST" action="{{ route('owner.sales.void', $txn->id) }}" @click.outside="open = false"
+              class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+            @csrf
+            <h3 class="text-lg font-bold text-[#363E48]">Void {{ $txn->code }}?</h3>
+            <p class="mt-1 text-sm text-slate-500">All items go back into stock and the sale is marked Voided. This cannot be undone.</p>
+            <label class="mt-4 block text-xs font-medium text-slate-600 mb-1">Reason</label>
+            <input type="text" name="reason" required maxlength="255" placeholder="e.g. Wrong item rung up"
+                   class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
+            <div class="mt-5 flex justify-end gap-2">
+                <button type="button" @click="open = false" class="px-4 py-2 text-sm rounded-lg border border-slate-300 text-slate-600">Keep Sale</button>
+                <button type="submit" class="px-4 py-2 text-sm font-semibold rounded-lg bg-red-500 text-white hover:bg-red-600">Void Sale</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
+
+{{-- Main Grid --}}
+<div>
+
+    <div class="flex flex-col-reverse gap-5">
 
         {{-- Transaction Information Card --}}
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
@@ -73,7 +108,11 @@
                         <dd>
                             @php $status = $txn->status ?? 'Completed'; @endphp
                             @if($status === 'Completed')
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">Completed</span>
+                                @if($txn->return_label ?? null)
+                                    @include('partials.return-badge', ['label' => $txn->return_label ?? null])
+                                @else
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">Completed</span>
+                                @endif
                             @elseif($status === 'Pending')
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Pending</span>
                             @elseif($status === 'Returned')
@@ -143,6 +182,9 @@
             </div>
         </div>
 
+        {{-- Returns on this sale --}}
+        @include('partials.sale-returns', ['routePrefix' => 'owner'])
+
         {{-- Items Card --}}
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100">
@@ -158,7 +200,6 @@
                             <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Qty</th>
                             <th class="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Unit Price</th>
                             <th class="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Subtotal</th>
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Movement</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -169,15 +210,6 @@
                                 <td class="px-6 py-3 text-slate-600">{{ $item->qty }}</td>
                                 <td class="px-6 py-3 text-right text-slate-700">₱{{ number_format($item->unit_price, 2) }}</td>
                                 <td class="px-6 py-3 text-right font-semibold text-slate-800">₱{{ number_format($item->subtotal ?? ($item->unit_price * $item->qty), 2) }}</td>
-                                <td class="px-6 py-3">
-                                    @if(($item->movement ?? null) === 'Fast-Moving')
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Fast-Moving</span>
-                                    @elseif(($item->movement ?? null) === 'Slow-Moving')
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Slow-Moving</span>
-                                    @elseif(isset($item->movement))
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">No Movement</span>
-                                    @endif
-                                </td>
                             </tr>
                         @empty
                             {{-- Hardcoded sample items --}}
@@ -187,7 +219,6 @@
                                 <td class="px-6 py-3 text-slate-600">5</td>
                                 <td class="px-6 py-3 text-right text-slate-700">₱40.50</td>
                                 <td class="px-6 py-3 text-right font-semibold text-slate-800">₱202.50</td>
-                                <td class="px-6 py-3"></td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -222,63 +253,21 @@
                         </span>
                     </div>
 
-                    <p class="text-right text-xs text-slate-400">
-                        VAT (12%) included in total
-                    </p>
+                    @if(($txn->refunded ?? 0) != 0)
+                        <div class="flex justify-between text-sm">
+                            <span class="{{ $txn->refunded > 0 ? 'text-red-600' : 'text-green-600' }}">{{ $txn->refunded > 0 ? 'Refunded' : 'Paid extra for exchange' }}</span>
+                            <span class="font-medium {{ $txn->refunded > 0 ? 'text-red-600' : 'text-green-600' }}">{{ $txn->refunded > 0 ? '-' : '+' }}₱{{ number_format(abs($txn->refunded), 2) }}</span>
+                        </div>
+                        <div class="flex justify-between text-base font-bold pt-2 border-t border-slate-200">
+                            <span class="text-[#363E48]">Net Total</span>
+                            <span class="text-[#363E48]">₱{{ number_format($txn->net_total, 2) }}</span>
+                        </div>
+                    @endif
+
                 </div>
             </div>
         </div>
 
-    </div>
-
-    {{-- RIGHT: col-span-1 --}}
-    <div>
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-            <h2 class="text-sm font-semibold text-[#363E48] mb-4">Quick Actions</h2>
-            <div class="flex flex-col gap-3">
-
-                <a href="{{ route('owner.sales.receipt', $txn->id ?? 'TXN-2024-001') }}"
-                   class="flex items-center gap-3 px-4 py-3 rounded-lg border border-slate-200 hover:border-[#363E48] hover:bg-[#363E48]/5 transition-colors group">
-                    <span class="w-9 h-9 rounded-lg bg-slate-100 group-hover:bg-[#363E48]/10 flex items-center justify-center text-[#363E48] transition-colors flex-shrink-0">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.056 48.056 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z" />
-                        </svg>
-                    </span>
-                    <div>
-                        <p class="text-sm font-semibold text-[#363E48]">Print Receipt</p>
-                        <p class="text-xs text-slate-400">Generate printable receipt</p>
-                    </div>
-                </a>
-
-                @if(($txn->status ?? 'Completed') === 'Completed')
-                    <a href="{{ route('owner.returns.create', ['transaction' => $txn->id ?? 'TXN-2024-001']) }}"
-                       class="flex items-center gap-3 px-4 py-3 rounded-lg border border-slate-200 hover:border-red-300 hover:bg-red-50 transition-colors group">
-                        <span class="w-9 h-9 rounded-lg bg-red-50 group-hover:bg-red-100 flex items-center justify-center text-red-500 transition-colors flex-shrink-0">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
-                            </svg>
-                        </span>
-                        <div>
-                            <p class="text-sm font-semibold text-red-600">Process Return</p>
-                            <p class="text-xs text-slate-400">Initiate a return or refund</p>
-                        </div>
-                    </a>
-                @endif
-
-                <a href="{{ route('owner.sales.index') }}"
-                   class="flex items-center gap-3 px-4 py-3 rounded-lg border border-slate-200 hover:border-[#363E48] hover:bg-[#363E48]/5 transition-colors group">
-                    <span class="w-9 h-9 rounded-lg bg-slate-100 group-hover:bg-[#363E48]/10 flex items-center justify-center text-[#363E48] transition-colors flex-shrink-0">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M12 17.25h8.25" />
-                        </svg>
-                    </span>
-                    <div>
-                        <p class="text-sm font-semibold text-[#363E48]">All Transactions</p>
-                        <p class="text-xs text-slate-400">Back to transactions list</p>
-                    </div>
-                </a>
-            </div>
-        </div>
     </div>
 </div>
 @endsection

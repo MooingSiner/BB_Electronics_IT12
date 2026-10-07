@@ -5,29 +5,37 @@ namespace App\Http\Controllers\Owner;
 use App\Enums\ReturnCondition;
 use App\Enums\ReturnResolution;
 use App\Enums\ReturnStatus;
+use App\Enums\SaleStatus;
 use App\Enums\WarrantyClaimStatus;
 use App\Enums\WarrantyOutcome;
+use App\Http\Controllers\Concerns\FilesWarrantyClaims;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\Product;
 use App\Models\ReturnRecord;
 use App\Models\Sale;
-use App\Models\StockAdjustment;
+use App\Models\SaleItem;
 use App\Models\Warranty;
+use App\Support\PerPage;
+use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Enum;
 use Illuminate\View\View;
 
 class ReturnController extends Controller
 {
+    use FilesWarrantyClaims;
+
     public function index(Request $request): View
     {
         if ($request->input('tab', 'returns') === 'warranty') {
             $warranties = Warranty::with('saleItem.product')
                 ->latest('warranty_id')
-                ->get()
-                ->map(fn (Warranty $warranty) => (object) [
+                ->paginate(PerPage::rows())
+                ->withQueryString()
+                ->through(fn (Warranty $warranty) => (object) [
                     'id' => $warranty->warranty_id,
                     'transaction_id' => $warranty->saleItem->sale?->code() ?? '—',
                     'product_name' => $warranty->saleItem->product->product_name ?? '—',
@@ -45,8 +53,9 @@ class ReturnController extends Controller
             ->when($request->input('status') === 'Pending', fn ($query) => $query->where('status', ReturnStatus::Open))
             ->when($request->input('status') === 'Completed', fn ($query) => $query->where('status', ReturnStatus::Resolved))
             ->latest('return_date')
-            ->get()
-            ->map(fn (ReturnRecord $return) => (object) [
+            ->paginate(PerPage::rows())
+            ->withQueryString()
+            ->through(fn (ReturnRecord $return) => (object) [
                 'id' => $return->return_id,
                 'transaction_id' => $return->sale?->code() ?? '—',
                 'product_name' => $return->product->product_name ?? '—',
@@ -62,7 +71,7 @@ class ReturnController extends Controller
 
     public function show(ReturnRecord $returnRecord): View
     {
-        $returnRecord->load(['product', 'sale']);
+        $returnRecord->load(['product', 'sale', 'replacementProduct']);
 
         $return = (object) [
             'id' => $returnRecord->return_id,
@@ -79,88 +88,184 @@ class ReturnController extends Controller
             'created_at' => $returnRecord->return_date,
             'status' => $returnRecord->status === ReturnStatus::Open ? 'Pending' : 'Completed',
             'status_value' => $returnRecord->status->value,
+            'stock_note' => $returnRecord->stockNote(),
+            'exchange' => $returnRecord->isExchange() ? ($returnRecord->replacementProduct->product_name ?? '—').' ×'.$returnRecord->quantity : null,
+            'exchange_note' => $returnRecord->exchangeDifferenceNote(),
+            'will_restock' => $returnRecord->willRestock(),
+            'cancellable' => $returnRecord->isCancellable(),
         ];
 
         return view('owner.returns.show', compact('return'));
     }
 
+    public function slip(ReturnRecord $returnRecord): View
+    {
+        abort_unless($returnRecord->sale_id !== null, 404);
+
+        $returnRecord->load(['product', 'sale.items', 'replacementProduct']);
+
+        return view('owner.returns.slip', [
+            'ret' => $returnRecord,
+            'backUrl' => route('owner.returns.show', $returnRecord->return_id),
+        ]);
+    }
+
     public function process(?ReturnRecord $returnRecord = null): View
     {
         $transactionId = request('transaction_id');
-        $sale = $transactionId ? Sale::with('items.product')->find($transactionId) : null;
+        $sale = $transactionId > 0
+            ? Sale::where('status', SaleStatus::Completed)->with('items.product')->find($transactionId)
+            : null;
+
+        $paidShare = $sale && (float) $sale->subtotal > 0 ? (float) $sale->total_amount / (float) $sale->subtotal : 1.0;
 
         $txn = $sale ? (object) [
             'id' => $sale->sale_id,
             'code' => $sale->code(),
             'items' => $sale->items->map(fn ($item) => (object) [
+                'paid_unit' => round((float) $item->unit_price * $paidShare, 2),
                 'product_id' => $item->product_id,
                 'product_name' => $item->product->product_name ?? '—',
                 'qty' => $item->quantity,
-            ]),
+                'remaining' => $this->remainingReturnable($sale->sale_id, $item->product_id),
+            ])->filter(fn ($item) => $item->remaining > 0)
+                ->values(),
         ] : null;
 
-        return view('owner.returns.process', compact('txn'));
+        $exchangeProducts = Product::where('is_active', true)->where('quantity_on_hand', '>', 0)->orderBy('product_name')->get(['product_id', 'product_name', 'unit_price', 'quantity_on_hand']);
+
+        return view('owner.returns.process', compact('txn', 'exchangeProducts'));
     }
 
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'transaction_id' => ['required', 'exists:sale,sale_id'],
-            'product_id' => ['required', 'exists:product,product_id'],
-            'qty' => ['required', 'integer', 'min:1'],
-            'reason' => ['required', 'string', 'max:255'],
-            'resolution' => ['required', new Enum(ReturnResolution::class)],
-            'condition' => ['required', new Enum(ReturnCondition::class)],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', 'exists:product,product_id'],
+            'items.*.qty' => ['required', 'integer', 'min:1'],
+            'items.*.reason' => ['required', 'string', 'max:255'],
+            'items.*.resolution' => ['required', new Enum(ReturnResolution::class)],
+            'items.*.condition' => ['required', new Enum(ReturnCondition::class)],
+            'items.*.replacement_product_id' => ['nullable', 'exists:product,product_id'],
         ]);
 
-        $return = ReturnRecord::create([
-            'sale_id' => $validated['transaction_id'],
-            'product_id' => $validated['product_id'],
-            'supplier_id' => null,
-            'return_date' => now(),
-            'quantity' => $validated['qty'],
-            'reason' => $validated['reason'],
-            'condition' => $validated['condition'],
-            'resolution' => $validated['resolution'],
-            'status' => ReturnStatus::Resolved,
-        ]);
+        // Multiple lines can target the same product in one submission, so check the combined quantity.
+        $requestedByProduct = collect($validated['items'])
+            ->groupBy('product_id')
+            ->map(fn ($rows) => collect($rows)->sum('qty'));
 
-        $restockable = in_array($validated['condition'], [
-            ReturnCondition::WrongItem->value,
-            ReturnCondition::CustomerChangedMind->value,
-            ReturnCondition::Other->value,
-        ], true);
+        foreach ($requestedByProduct as $productId => $requestedQty) {
+            $remaining = $this->remainingReturnable($validated['transaction_id'], (int) $productId);
 
-        if ($restockable) {
-            StockAdjustment::create([
-                'product_id' => $validated['product_id'],
-                'user_id' => Auth::id(),
-                'adjustment_date' => now(),
-                'quantity_change' => $validated['qty'],
-                'reason' => "Restocked from return #{$return->return_id}",
-            ]);
+            if ($requestedQty > $remaining) {
+                return back()->withErrors([
+                    'items' => $remaining > 0
+                        ? "Only {$remaining} unit(s) of that product from this transaction can still be returned."
+                        : 'All units of that product from this transaction have already been returned.',
+                ])->withInput();
+            }
         }
 
-        AuditLog::record(
-            'refund',
-            "Processed return #{$return->return_id} for {$validated['qty']} unit(s) — resolution: ".ucwords(str_replace('_', ' ', $validated['resolution']))
-        );
+        $created = collect();
 
-        return redirect()->route('owner.returns.show', $return->return_id)->with('success', 'Return processed.');
+        try {
+            DB::transaction(function () use ($validated, &$created) {
+                foreach ($validated['items'] as $item) {
+                    $exchangeFor = ($item['resolution'] === ReturnResolution::Replacement->value
+                        && ! empty($item['replacement_product_id'])
+                        && (int) $item['replacement_product_id'] !== (int) $item['product_id'])
+                        ? (int) $item['replacement_product_id']
+                        : null;
+
+                    $return = ReturnRecord::create([
+                        'sale_id' => $validated['transaction_id'],
+                        'product_id' => $item['product_id'],
+                        'replacement_product_id' => $exchangeFor,
+                        'supplier_id' => null,
+                        'return_date' => now(),
+                        'quantity' => $item['qty'],
+                        'reason' => $item['reason'],
+                        'condition' => $item['condition'],
+                        'resolution' => $item['resolution'],
+                        'status' => ReturnStatus::Open,
+                    ]);
+
+                    $stockMessage = $return->settle();
+
+                    AuditLog::record(
+                        'refund',
+                        "Processed return #{$return->return_id} for {$item['qty']} unit(s) — resolution: ".ucwords(str_replace('_', ' ', $item['resolution'])).". {$stockMessage}"
+                    );
+
+                    $created->push($return);
+                }
+            });
+        } catch (DomainException $exception) {
+            return back()->withErrors(['items' => $exception->getMessage()])->withInput();
+        }
+
+        if ($created->count() === 1) {
+            return redirect()->route('owner.returns.show', $created->first()->return_id)->with('success', 'Return processed.');
+        }
+
+        return redirect()->route('owner.returns.index')->with('success', "{$created->count()} returns processed.");
     }
 
     public function resolve(ReturnRecord $returnRecord): RedirectResponse
     {
-        $returnRecord->update(['status' => ReturnStatus::Resolved]);
+        if ($returnRecord->status === ReturnStatus::Resolved) {
+            return redirect()->route('owner.returns.show', $returnRecord->return_id)->with('error', 'This return was already resolved.');
+        }
 
-        AuditLog::record('refund', "Marked return #{$returnRecord->return_id} as resolved.");
+        try {
+            $stockMessage = $returnRecord->settle();
+        } catch (DomainException $exception) {
+            return redirect()->route('owner.returns.show', $returnRecord->return_id)->with('error', $exception->getMessage());
+        }
 
-        return redirect()->route('owner.returns.show', $returnRecord->return_id)->with('success', 'Return marked as resolved.');
+        AuditLog::record('refund', "Marked return #{$returnRecord->return_id} as resolved. {$stockMessage}");
+
+        return redirect()->route('owner.returns.show', $returnRecord->return_id)->with('success', "Return marked as resolved. {$stockMessage}");
     }
 
     public function create(Sale $transaction): RedirectResponse
     {
         return redirect()->route('owner.returns.process', ['transaction_id' => $transaction->sale_id]);
+    }
+
+    public function cancel(ReturnRecord $returnRecord): RedirectResponse
+    {
+        if (! $returnRecord->isCancellable()) {
+            return redirect()->route('owner.returns.show', $returnRecord->return_id)->with('error', 'Only a pending customer return can be cancelled.');
+        }
+
+        $returnRecord->load('product');
+        $returnRecord->delete();
+
+        AuditLog::record('refund', "Cancelled return #{$returnRecord->return_id} ({$returnRecord->quantity} x ".($returnRecord->product->product_name ?? 'product').').');
+
+        return redirect()->route('owner.returns.index')->with('success', 'Return cancelled.');
+    }
+
+    public function warrantyCancel(Warranty $warranty): RedirectResponse
+    {
+        $cancelled = $this->cancelWarrantyClaim($warranty);
+
+        return redirect()->route('owner.returns.warranty', $warranty->warranty_id)
+            ->with($cancelled ? 'success' : 'error', $cancelled ? 'Warranty claim cancelled.' : 'Only a claim that is still under review can be cancelled.');
+    }
+
+    public function claim(Request $request): View
+    {
+        return view('owner.returns.claim', $this->claimFormData($request));
+    }
+
+    public function claimStore(Request $request): RedirectResponse
+    {
+        $warranty = $this->storeWarrantyClaim($request);
+
+        return redirect()->route('owner.returns.warranty', $warranty->warranty_id)->with('success', 'Warranty claim filed.');
     }
 
     public function warranty(Warranty $warranty): View
@@ -181,10 +286,12 @@ class ReturnController extends Controller
             'status_value' => $warranty->claim_status->value,
             'customerName' => $warranty->customer_name,
             'contactNumber' => $warranty->contact_number,
-            'issue' => $warranty->claim_status !== WarrantyClaimStatus::None ? 'Customer filed a warranty claim.' : 'No claim filed yet.',
+            'issue' => $warranty->issue ?: ($warranty->claim_status === WarrantyClaimStatus::None ? 'No claim filed yet.' : 'No description of the problem was recorded for this claim.'),
             'resolution' => $warranty->outcome && $warranty->outcome !== WarrantyOutcome::NotApplicable
                 ? ucwords(str_replace('_', ' ', $warranty->outcome->value))
                 : null,
+            'resolution_notes' => $warranty->resolution_notes,
+            'outcome_value' => $warranty->outcome->value,
         ];
 
         return view('owner.returns.warranty', ['warranty' => $item]);
@@ -195,12 +302,14 @@ class ReturnController extends Controller
         $validated = $request->validate([
             'status' => ['required', new Enum(WarrantyClaimStatus::class)],
             'outcome' => ['nullable', new Enum(WarrantyOutcome::class)],
+            'resolution_notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $warranty->update([
             'claim_status' => $validated['status'],
             'claim_date' => $validated['status'] !== WarrantyClaimStatus::None->value ? ($warranty->claim_date ?? now()) : $warranty->claim_date,
             'outcome' => $validated['outcome'] ?? $warranty->outcome,
+            'resolution_notes' => $validated['resolution_notes'] ?? $warranty->resolution_notes,
         ]);
 
         AuditLog::record(
@@ -212,12 +321,20 @@ class ReturnController extends Controller
         return redirect()->route('owner.returns.warranty', $warranty->warranty_id)->with('success', 'Warranty claim updated.');
     }
 
+    private function remainingReturnable(int $saleId, int $productId): int
+    {
+        $sold = SaleItem::where('sale_id', $saleId)->where('product_id', $productId)->sum('quantity');
+        $returned = ReturnRecord::where('sale_id', $saleId)->where('product_id', $productId)->sum('quantity');
+
+        return max(0, $sold - $returned);
+    }
+
     private function warrantyStatusLabel(WarrantyClaimStatus $status): string
     {
         return match ($status) {
             WarrantyClaimStatus::None => 'Active',
             WarrantyClaimStatus::Claimed => 'Under Review',
-            WarrantyClaimStatus::InProgress => 'Repaired',
+            WarrantyClaimStatus::InProgress => 'In Repair',
             WarrantyClaimStatus::Resolved => 'Completed',
         };
     }

@@ -3,18 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <title>Receipt {{ $txn->code }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    @vite('resources/css/app.css')
     <style>
         body { font-family: 'Inter', sans-serif; }
         @media print {
             .no-print { display: none; }
+            body { background: #fff !important; padding: 0 !important; }
+            .receipt-card { box-shadow: none !important; border: 0 !important; border-radius: 0 !important; max-width: none !important; margin: 0 !important; }
+            @page { margin: 8mm; }
         }
     </style>
 </head>
 <body class="bg-slate-100 py-10">
 
-<div class="max-w-sm mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+<div class="receipt-card max-w-sm mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
 
     <div class="text-center mb-4">
         <h1 class="font-bold text-slate-800">B&amp;B Electronics</h1>
@@ -63,7 +65,7 @@
             style="background-color:#363E48;">
         Print
     </button>
-    <a href="{{ route('cashier.sales.show', $txn->id) }}"
+    <a href="{{ $backUrl ?? route('cashier.sales.show', $txn->id) }}"
        class="no-print block text-center mt-2 text-xs text-slate-500 hover:underline">
         Back to Transaction
     </a>

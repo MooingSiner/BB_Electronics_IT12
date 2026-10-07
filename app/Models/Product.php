@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\CostCode;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['category_id', 'product_code', 'product_name', 'unit_price', 'cost_price', 'quantity_on_hand', 'reorder_level', 'warranty_period_days', 'is_active'])]
+#[Fillable(['category_id', 'product_code', 'barcode', 'product_name', 'image_url', 'unit_price', 'cost_price', 'quantity_on_hand', 'reorder_level', 'warranty_period_days', 'is_active'])]
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
@@ -59,6 +60,30 @@ class Product extends Model
     public function returnRecords(): HasMany
     {
         return $this->hasMany(ReturnRecord::class, 'product_id', 'product_id');
+    }
+
+    /**
+     * Find an active product by what a scanner or the cashier typed: its barcode or its product code.
+     */
+    public static function findByScan(string $value): ?self
+    {
+        $value = trim($value);
+
+        if ($value === '') {
+            return null;
+        }
+
+        return static::where('is_active', true)
+            ->where(fn ($query) => $query->where('barcode', $value)->orWhere('product_code', $value))
+            ->first();
+    }
+
+    /**
+     * The cost price as a letter code that staff can read but customers cannot.
+     */
+    public function costCode(): string
+    {
+        return CostCode::encode($this->cost_price);
     }
 
     public function isLowStock(): bool

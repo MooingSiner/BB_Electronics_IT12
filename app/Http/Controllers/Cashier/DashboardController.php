@@ -7,20 +7,24 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ReturnRecord;
 use App\Models\Sale;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
         $user = Auth::user();
 
-        $todaysSales = (float) Sale::whereDate('sale_date', today())
-            ->where('status', SaleStatus::Completed)
-            ->sum('total_amount');
+        $period = $request->input('period', 'today');
+        [$dateFrom, $dateTo, $periodLabel] = $this->resolvePeriod($request, $period);
 
-        $todaysSalesCount = Sale::whereDate('sale_date', today())->count();
+        $todaysSales = Sale::netRevenue(Sale::whereBetween('sale_date', [$dateFrom, $dateTo])
+            ->where('status', SaleStatus::Completed));
+
+        $todaysSalesCount = Sale::whereBetween('sale_date', [$dateFrom, $dateTo])->where('status', SaleStatus::Completed)->count();
 
         $lowStockCount = Product::where('is_active', true)
             ->whereColumn('quantity_on_hand', '<=', 'reorder_level')
@@ -29,15 +33,15 @@ class DashboardController extends Controller
         $pendingReturnsCount = ReturnRecord::where('status', 'open')->count();
 
         $mySalesTodayCount = Sale::where('user_id', $user->user_id)
-            ->whereDate('sale_date', today())
+            ->whereBetween('sale_date', [$dateFrom, $dateTo])
             ->count();
 
-        $mySalesTodayTotal = (float) Sale::where('user_id', $user->user_id)
-            ->whereDate('sale_date', today())
-            ->where('status', SaleStatus::Completed)
-            ->sum('total_amount');
+        $mySalesTodayTotal = Sale::netRevenue(Sale::where('user_id', $user->user_id)
+            ->whereBetween('sale_date', [$dateFrom, $dateTo])
+            ->where('status', SaleStatus::Completed));
 
         $transactions = Sale::with(['user', 'items.product'])
+            ->whereBetween('sale_date', [$dateFrom, $dateTo])
             ->latest('sale_date')
             ->take(5)
             ->get()
@@ -74,9 +78,40 @@ class DashboardController extends Controller
                 'status' => $return->status->value === 'open' ? 'Pending' : 'Approved',
             ]);
 
-        return view('cashier.dashboard', compact(
-            'todaysSales', 'todaysSalesCount', 'lowStockCount', 'pendingReturnsCount',
-            'mySalesTodayCount', 'mySalesTodayTotal', 'transactions', 'lowStockItems', 'recentReturns'
-        ));
+        return view('cashier.dashboard', [
+            'todaysSales' => $todaysSales,
+            'todaysSalesCount' => $todaysSalesCount,
+            'lowStockCount' => $lowStockCount,
+            'pendingReturnsCount' => $pendingReturnsCount,
+            'mySalesTodayCount' => $mySalesTodayCount,
+            'mySalesTodayTotal' => $mySalesTodayTotal,
+            'transactions' => $transactions,
+            'lowStockItems' => $lowStockItems,
+            'recentReturns' => $recentReturns,
+            'period' => $period,
+            'periodLabel' => $periodLabel,
+            'dateFrom' => $dateFrom->format('Y-m-d'),
+            'dateTo' => $dateTo->format('Y-m-d'),
+        ]);
+    }
+
+    /**
+     * @return array{0: Carbon, 1: Carbon, 2: string}
+     */
+    private function resolvePeriod(Request $request, string $period): array
+    {
+        if ($period === 'custom' && $request->filled('date_from') && $request->filled('date_to')) {
+            $from = Carbon::parse($request->input('date_from'))->startOfDay();
+            $to = Carbon::parse($request->input('date_to'))->endOfDay();
+
+            return [$from, $to, $from->format('M d').' – '.$to->format('M d, Y')];
+        }
+
+        return match ($period) {
+            'week' => [now()->startOfWeek(), now()->endOfWeek(), 'This Week'],
+            'month' => [now()->startOfMonth(), now()->endOfMonth(), 'This Month'],
+            'year' => [now()->startOfYear(), now()->endOfYear(), 'This Year'],
+            default => [now()->startOfDay(), now()->endOfDay(), 'Today'],
+        };
     }
 }

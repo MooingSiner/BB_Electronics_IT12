@@ -78,11 +78,11 @@
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Product ID</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Product Name</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Category</th>
-                        <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Unit Price</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Stock</th>
+                        <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Unit Price</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Reorder At</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
-                        <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
+                        <th class="sticky right-0 text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide bg-slate-50 shadow-[-6px_0_8px_-6px_rgba(0,0,0,0.15)]">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
@@ -91,6 +91,7 @@
                         <td class="px-5 py-4 text-slate-500 font-mono text-xs">{{ $product->code }}</td>
                         <td class="px-5 py-4">
                             <p class="font-medium text-slate-800">{{ $product->name }}</p>
+                            <p class="text-xs text-slate-400 font-mono">Capital price: {{ $product->cost_code }}</p>
                             @if($product->sku ?? false)
                             <p class="text-xs text-slate-400 font-mono">{{ $product->sku }}</p>
                             @endif
@@ -100,12 +101,12 @@
                                 {{ $product->category }}
                             </span>
                         </td>
-                        <td class="px-5 py-4 font-semibold text-slate-800">₱{{ number_format($product->price, 2) }}</td>
                         <td class="px-5 py-4">
                             <span class="font-semibold {{ $product->stock == 0 ? 'text-red-600' : ($product->stock <= ($product->reorder_level ?? 5) ? 'text-amber-600' : 'text-slate-800') }}">
                                 {{ $product->stock }}
                             </span>
                         </td>
+                        <td class="px-5 py-4 font-semibold text-slate-800">₱{{ number_format($product->price, 2) }}</td>
                         <td class="px-5 py-4 text-slate-500">{{ $product->reorder_level ?? '—' }}</td>
                         <td class="px-5 py-4">
                             @if($product->stock == 0)
@@ -116,11 +117,8 @@
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">In Stock</span>
                             @endif
                         </td>
-                        <td class="px-5 py-4">
-                            <a href="{{ route('cashier.inventory.show', $product->id) }}"
-                               class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 transition-colors">
-                                View
-                            </a>
+                        <td class="sticky right-0 px-5 py-4 bg-white shadow-[-6px_0_8px_-6px_rgba(0,0,0,0.15)]">
+                            <a href="{{ route('cashier.inventory.show', $product->id) }}" class="tip inline-flex items-center justify-center p-1.5 border rounded-md transition border-slate-300 text-slate-600 hover:bg-slate-100" data-tip="View" aria-label="View"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178zM15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg></a>
                         </td>
                     </tr>
                     @empty

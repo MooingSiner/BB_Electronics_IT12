@@ -15,6 +15,8 @@ class CategoryFactory extends Factory
      */
     protected static ?array $queue = null;
 
+    protected static int $round = 0;
+
     /**
      * Define the model's default state.
      *
@@ -23,6 +25,7 @@ class CategoryFactory extends Factory
     public function definition(): array
     {
         if (empty(static::$queue)) {
+            static::$round++;
             static::$queue = collect([
                 'Lighting',
                 'Wiring & Cables',
@@ -30,7 +33,7 @@ class CategoryFactory extends Factory
                 'Switches & Outlets',
                 'Power & Batteries',
                 'Connectors',
-            ])->shuffle()->all();
+            ])->map(fn (string $name) => static::$round > 1 ? $name.' '.static::$round : $name)->shuffle()->all();
         }
 
         return [

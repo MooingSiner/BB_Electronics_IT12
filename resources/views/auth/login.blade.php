@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>B&B Electronics — Login</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    @vite('resources/css/app.css')
     <style>body { font-family: 'Inter', sans-serif; }</style>
 </head>
 <body class="min-h-screen flex items-center justify-center" style="background-color:#363E48">
@@ -26,6 +25,12 @@
     {{-- Card --}}
     <div class="bg-white rounded-2xl shadow-xl p-8">
         <h2 class="text-slate-800 text-lg font-semibold mb-6">Sign in to your account</h2>
+
+        @if (session('notice'))
+            <div class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <p class="text-sm text-amber-800">{{ session('notice') }}</p>
+            </div>
+        @endif
 
         @if ($errors->any())
             <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">

@@ -13,23 +13,40 @@
 @section('content')
 <div class="p-6 max-w-3xl mx-auto space-y-6">
 
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-2xl font-bold text-slate-800">Transaction {{ $txn->code }}</h1>
-            <p class="text-sm text-slate-500 mt-1">{{ \Carbon\Carbon::parse($txn->created_at)->format('F d, Y \a\t g:i A') }}</p>
-        </div>
-        <div class="flex gap-2">
-            <a href="{{ route('cashier.sales.receipt', $txn->id) }}"
-               class="px-4 py-2 text-sm font-medium border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
-                Print Receipt
-            </a>
-            @if($txn->status === 'Completed')
-            <a href="{{ route('cashier.returns.process', ['transaction_id' => $txn->id]) }}"
-               class="px-4 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition-opacity"
-               style="background-color:#363E48;">
-                Process Return
-            </a>
-            @endif
+    <a href="{{ route('cashier.sales.index') }}"
+       class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition-colors">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+        Back to Sales Transactions
+    </a>
+
+    {{-- Header Card --}}
+    <div class="rounded-2xl shadow-sm p-6" style="background: linear-gradient(135deg, #363E48 0%, #454f5c 100%);">
+        <div class="flex items-center justify-between gap-4 flex-wrap">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 accent-bg">
+                    <svg class="w-7 h-7 accent-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-white">Transaction {{ $txn->code }}</h1>
+                    <p class="text-sm text-white/60 mt-0.5">{{ \Carbon\Carbon::parse($txn->created_at)->format('F d, Y \a\t g:i A') }}</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <a href="{{ route('cashier.sales.receipt', $txn->id) }}"
+                   class="px-3 py-1.5 text-xs font-medium rounded-md bg-white/10 text-white hover:bg-white/20 transition">
+                    Print Receipt
+                </a>
+                @if($txn->status === 'Completed')
+                <a href="{{ route('cashier.returns.process', ['transaction_id' => $txn->id]) }}"
+                   class="px-3 py-1.5 text-xs font-medium rounded-md bg-white/10 text-white hover:bg-white/20 transition">
+                    Process Return
+                </a>
+                @endif
+            </div>
         </div>
     </div>
 
@@ -37,7 +54,8 @@
         <div class="px-6 py-4 border-b border-slate-100">
             <h2 class="font-semibold text-slate-800">Items</h2>
         </div>
-        <table class="w-full text-sm">
+        <div class="overflow-x-auto">
+<table class="w-full text-sm">
             <thead>
                 <tr class="bg-slate-50 border-b border-slate-100">
                     <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Product</th>
@@ -57,6 +75,7 @@
                 @endforeach
             </tbody>
         </table>
+</div>
     </div>
 
     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-1.5 text-sm">
@@ -94,9 +113,21 @@
         </div>
         <div class="flex justify-between text-slate-500">
             <span>Status</span>
-            <span>{{ $txn->status }}</span>
+            <span>{{ $txn->return_label ?? $txn->status }}</span>
         </div>
+        @if($txn->refunded != 0)
+        <div class="flex justify-between {{ $txn->refunded > 0 ? 'text-red-600' : 'text-green-600' }}">
+            <span>{{ $txn->refunded > 0 ? 'Refunded' : 'Paid extra for exchange' }}</span>
+            <span>{{ $txn->refunded > 0 ? '-' : '+' }}₱{{ number_format(abs($txn->refunded), 2) }}</span>
+        </div>
+        <div class="flex justify-between font-bold text-slate-800">
+            <span>Net Total</span>
+            <span>₱{{ number_format($txn->net_total, 2) }}</span>
+        </div>
+        @endif
     </div>
+
+    @include('partials.sale-returns', ['routePrefix' => 'cashier'])
 
 </div>
 @endsection

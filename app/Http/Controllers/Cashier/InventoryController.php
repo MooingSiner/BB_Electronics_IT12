@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Cashier;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
+use App\Support\PerPage;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -22,7 +23,8 @@ class InventoryController extends Controller
 
                 $query->where(fn ($q) => $q
                     ->where('product_name', 'like', "%{$search}%")
-                    ->orWhere('product_code', 'like', "%{$search}%"));
+                    ->orWhere('product_code', 'like', "%{$search}%")
+                    ->orWhere('barcode', 'like', "%{$search}%"));
             })
             ->when($request->filled('category'), fn ($query) => $query->whereHas(
                 'category',
@@ -35,13 +37,15 @@ class InventoryController extends Controller
             ->when($request->input('status') === 'in_stock', fn ($query) => $query->whereColumn('quantity_on_hand', '>', 'reorder_level'))
             ->when($request->input('status') === 'needs_restock', fn ($query) => $query->whereColumn('quantity_on_hand', '<=', 'reorder_level'))
             ->orderBy('product_name')
-            ->get()
-            ->map(fn (Product $product) => (object) [
+            ->paginate(PerPage::rows())
+            ->withQueryString()
+            ->through(fn (Product $product) => (object) [
                 'id' => $product->product_id,
                 'code' => $product->product_code,
                 'name' => $product->product_name,
                 'category' => $product->category->category_name ?? '—',
                 'price' => (float) $product->unit_price,
+                'cost_code' => $product->costCode(),
                 'stock' => $product->quantity_on_hand,
                 'reorder_level' => $product->reorder_level,
             ]);
@@ -59,6 +63,7 @@ class InventoryController extends Controller
             'name' => $product->product_name,
             'category' => $product->category->category_name ?? '—',
             'price' => (float) $product->unit_price,
+            'cost_code' => $product->costCode(),
             'stock' => $product->quantity_on_hand,
             'reorder_level' => $product->reorder_level,
             'warranty_period_days' => $product->warranty_period_days,

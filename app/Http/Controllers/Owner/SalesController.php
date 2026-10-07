@@ -4,20 +4,22 @@ namespace App\Http\Controllers\Owner;
 
 use App\Enums\SaleStatus;
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Sale;
+use App\Models\StockAdjustment;
+use App\Support\PerPage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class SalesController extends Controller
 {
     public function index(Request $request): View
     {
-        $movement = $this->movementByProduct();
-
         $transactions = Sale::query()
-            ->with(['user', 'items.product'])
+            ->with(['user', 'items.product', 'returnRecords'])
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->string('search');
 
@@ -30,22 +32,21 @@ class SalesController extends Controller
             ->when($request->input('discount') === 'with', fn ($query) => $query->where('discount_amount', '>', 0))
             ->when($request->input('discount') === 'without', fn ($query) => $query->where('discount_amount', 0))
             ->latest('sale_date')
-            ->paginate(20)
+            ->paginate(PerPage::rows())
             ->withQueryString()
             ->through(fn (Sale $sale) => (object) [
                 'id' => $sale->sale_id,
                 'code' => $sale->code(),
-                'products' => $sale->items->map(fn ($item) => (object) [
-                    'name' => $item->product->product_name ?? '—',
-                    'movement' => $this->movementLabel($item->product_id, $movement),
-                ]),
+                'products' => $sale->items->pluck('product.product_name')->filter()->implode(', '),
                 'qty' => $sale->items->sum('quantity'),
+                'unit_prices' => $sale->items->map(fn ($item) => '₱'.number_format((float) $item->unit_price, 2))->implode(', '),
                 'total' => '₱'.number_format((float) $sale->total_amount, 2),
                 'discount' => (float) $sale->subtotal > 0 ? round(((float) $sale->discount_amount / (float) $sale->subtotal) * 100) : 0,
                 'payment_method' => $sale->payment_method->label(),
                 'date' => $sale->sale_date->format('M d, Y'),
                 'processed_by' => $sale->user->full_name ?? '—',
                 'status' => $sale->status === SaleStatus::Completed ? 'Completed' : 'Voided',
+                'return_label' => $sale->returnStatusLabel(),
             ]);
 
         return view('owner.sales.index', compact('transactions'));
@@ -53,16 +54,21 @@ class SalesController extends Controller
 
     public function show(Sale $sale): View
     {
-        $sale->load(['user', 'items.product']);
-
-        $movement = $this->movementByProduct();
+        $sale->load(['user', 'items.product', 'returnRecords.product']);
 
         $txn = (object) [
             'id' => $sale->sale_id,
             'code' => $sale->code(),
             'created_at' => $sale->sale_date,
+            'return_label' => $sale->returnStatusLabel(),
+            'return_lines' => $sale->returnLines(),
+            'refunded' => $sale->refundedAmount(),
+            'net_total' => $sale->netTotal(),
             'status' => $sale->status === SaleStatus::Completed ? 'Completed' : 'Voided',
             'processed_by' => $sale->user->full_name ?? '—',
+            'void_reason' => $sale->void_reason,
+            'voided_at' => $sale->voided_at,
+            'void_blocked_reason' => $sale->voidBlockedReason(),
             'payment_method' => $sale->payment_method->label(),
             'amount_received' => (float) $sale->amount_paid,
             'change_given' => (float) $sale->change_amount,
@@ -76,36 +82,68 @@ class SalesController extends Controller
                 'qty' => $item->quantity,
                 'unit_price' => (float) $item->unit_price,
                 'subtotal' => (float) $item->subtotal,
-                'movement' => $this->movementLabel($item->product_id, $movement),
             ]),
         ];
 
         return view('owner.sales.show', compact('txn'));
     }
 
-    public function receipt(Sale $sale): RedirectResponse
+    public function void(Request $request, Sale $sale): RedirectResponse
     {
-        return redirect()->route('owner.sales.show', $sale->sale_id);
+        $validated = $request->validate(['reason' => ['required', 'string', 'max:255']]);
+
+        if ($blocked = $sale->voidBlockedReason()) {
+            return back()->with('error', $blocked);
+        }
+
+        DB::transaction(function () use ($sale, $validated) {
+            foreach ($sale->items as $item) {
+                StockAdjustment::create([
+                    'product_id' => $item->product_id,
+                    'user_id' => Auth::id(),
+                    'adjustment_date' => now(),
+                    'quantity_change' => $item->quantity,
+                    'reason' => "Restocked from voided sale {$sale->code()}",
+                ]);
+            }
+
+            $sale->update([
+                'status' => SaleStatus::Voided,
+                'void_reason' => $validated['reason'],
+                'voided_at' => now(),
+            ]);
+
+            AuditLog::record('void', "Voided sale {$sale->code()}: {$validated['reason']}");
+        });
+
+        return back()->with('success', 'Sale voided and its items were put back in stock.');
     }
 
-    /**
-     * Units sold per product over the last 30 days, keyed by product_id.
-     */
-    private function movementByProduct(): Collection
+    public function receipt(Sale $sale): View
     {
-        return Sale::where('status', SaleStatus::Completed)
-            ->where('sale_date', '>=', now()->subDays(30)->startOfDay())
-            ->with('items')
-            ->get()
-            ->flatMap->items
-            ->groupBy('product_id')
-            ->map(fn ($items) => $items->sum('quantity'));
-    }
+        $sale->load(['user', 'items.product']);
 
-    private function movementLabel(?int $productId, Collection $movement): string
-    {
-        $unitsSold = (int) ($movement[$productId] ?? 0);
+        $txn = (object) [
+            'id' => $sale->sale_id,
+            'code' => $sale->code(),
+            'created_at' => $sale->sale_date,
+            'processed_by' => $sale->user->full_name ?? '—',
+            'subtotal' => (float) $sale->subtotal,
+            'discount_amount' => (float) $sale->discount_amount,
+            'total' => (float) $sale->total_amount,
+            'payment_method' => $sale->payment_method->label(),
+            'amount_paid' => (float) $sale->amount_paid,
+            'change_amount' => (float) $sale->change_amount,
+            'items' => $sale->items->map(fn ($item) => (object) [
+                'name' => $item->product->product_name ?? '—',
+                'quantity' => $item->quantity,
+                'subtotal' => (float) $item->subtotal,
+            ]),
+        ];
 
-        return $unitsSold === 0 ? 'No Movement' : ($unitsSold >= 10 ? 'Fast-Moving' : 'Slow-Moving');
+        return view('cashier.sales.receipt', [
+            'txn' => $txn,
+            'backUrl' => route('owner.sales.show', $sale->sale_id),
+        ]);
     }
 }

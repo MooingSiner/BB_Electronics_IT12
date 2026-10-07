@@ -4,10 +4,16 @@ namespace App\Http\Controllers\Cashier;
 
 use App\Enums\ReturnCondition;
 use App\Enums\ReturnResolution;
+use App\Enums\SaleStatus;
+use App\Http\Controllers\Concerns\FilesWarrantyClaims;
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
+use App\Models\Product;
 use App\Models\ReturnRecord;
 use App\Models\Sale;
+use App\Models\SaleItem;
 use App\Models\Warranty;
+use App\Support\PerPage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Enum;
@@ -15,19 +21,22 @@ use Illuminate\View\View;
 
 class ReturnController extends Controller
 {
+    use FilesWarrantyClaims;
+
     public function index(Request $request): View
     {
         if ($request->input('tab', 'returns') === 'warranty') {
             $warranties = Warranty::with('saleItem.product')
                 ->latest('warranty_id')
-                ->get()
-                ->map(fn (Warranty $warranty) => (object) [
+                ->paginate(PerPage::rows())
+                ->withQueryString()
+                ->through(fn (Warranty $warranty) => (object) [
                     'id' => $warranty->warranty_id,
                     'product_name' => $warranty->saleItem->product->product_name ?? '—',
-                    'issue' => null,
+                    'issue' => $warranty->issue,
                     'purchase_date' => $warranty->start_date,
                     'warranty_until' => $warranty->end_date,
-                    'created_at' => $warranty->start_date,
+                    'created_at' => $warranty->claim_date ?? $warranty->start_date,
                     'status' => match ($warranty->claim_status->value) {
                         'claimed' => 'Pending',
                         'in_progress' => 'In Repair',
@@ -43,8 +52,9 @@ class ReturnController extends Controller
             ->when($request->input('status') === 'Pending', fn ($query) => $query->where('status', 'open'))
             ->when($request->input('status') === 'Approved', fn ($query) => $query->where('status', 'resolved'))
             ->latest('return_date')
-            ->get()
-            ->map(fn (ReturnRecord $return) => (object) [
+            ->paginate(PerPage::rows())
+            ->withQueryString()
+            ->through(fn (ReturnRecord $return) => (object) [
                 'id' => $return->return_id,
                 'transaction_id' => $return->sale_id,
                 'transaction_code' => $return->sale?->code(),
@@ -66,12 +76,32 @@ class ReturnController extends Controller
         return view('cashier.returns.show', ['ret' => $returnRecord]);
     }
 
+    public function slip(ReturnRecord $returnRecord): View
+    {
+        abort_unless($returnRecord->sale_id !== null, 404);
+
+        $returnRecord->load(['product', 'sale.items', 'replacementProduct']);
+
+        return view('owner.returns.slip', [
+            'ret' => $returnRecord,
+            'backUrl' => route('cashier.returns.show', $returnRecord->return_id),
+        ]);
+    }
+
     public function process(Request $request): View
     {
         $transactionId = $request->input('transaction_id');
-        $sale = $transactionId ? Sale::with('items.product')->find($transactionId) : null;
+        $sale = $transactionId > 0
+            ? Sale::where('status', SaleStatus::Completed)->with('items.product')->find($transactionId)
+            : null;
 
-        return view('cashier.returns.process', ['sale' => $sale]);
+        $remaining = $sale
+            ? $sale->items->mapWithKeys(fn ($item) => [$item->product_id => $this->remainingReturnable($sale->sale_id, $item->product_id)])
+            : collect();
+
+        $exchangeProducts = Product::where('is_active', true)->where('quantity_on_hand', '>', 0)->orderBy('product_name')->get(['product_id', 'product_name', 'unit_price', 'quantity_on_hand']);
+
+        return view('cashier.returns.process', ['sale' => $sale, 'transactionId' => $transactionId, 'remaining' => $remaining, 'exchangeProducts' => $exchangeProducts]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -83,11 +113,29 @@ class ReturnController extends Controller
             'reason' => ['required', 'string', 'max:255'],
             'condition' => ['required', new Enum(ReturnCondition::class)],
             'resolution' => ['required', new Enum(ReturnResolution::class)],
+            'replacement_product_id' => ['nullable', 'exists:product,product_id'],
         ]);
+
+        $remaining = $this->remainingReturnable($validated['sale_id'], $validated['product_id']);
+
+        if ($validated['quantity'] > $remaining) {
+            return back()->withErrors([
+                'quantity' => $remaining > 0
+                    ? "Only {$remaining} unit(s) of this product from this transaction can still be returned."
+                    : 'All units of this product from this transaction have already been returned.',
+            ])->withInput();
+        }
+
+        $exchangeFor = ($validated['resolution'] === ReturnResolution::Replacement->value
+            && ! empty($validated['replacement_product_id'])
+            && (int) $validated['replacement_product_id'] !== (int) $validated['product_id'])
+            ? (int) $validated['replacement_product_id']
+            : null;
 
         ReturnRecord::create([
             'sale_id' => $validated['sale_id'],
             'product_id' => $validated['product_id'],
+            'replacement_product_id' => $exchangeFor,
             'supplier_id' => null,
             'return_date' => now(),
             'quantity' => $validated['quantity'],
@@ -97,7 +145,43 @@ class ReturnController extends Controller
             'status' => 'open',
         ]);
 
-        return redirect()->route('cashier.returns.index')->with('success', 'Return recorded.');
+        return redirect()->route('cashier.returns.index')->with('success', $exchangeFor
+            ? 'Exchange recorded. It needs the owner\'s approval before the stock changes.'
+            : 'Return recorded.');
+    }
+
+    public function cancel(ReturnRecord $returnRecord): RedirectResponse
+    {
+        if (! $returnRecord->isCancellable()) {
+            return redirect()->route('cashier.returns.show', $returnRecord->return_id)->with('error', 'Only a pending customer return can be cancelled.');
+        }
+
+        $returnRecord->load('product');
+        $returnRecord->delete();
+
+        AuditLog::record('refund', "Cancelled return #{$returnRecord->return_id} ({$returnRecord->quantity} x ".($returnRecord->product->product_name ?? 'product').').');
+
+        return redirect()->route('cashier.returns.index')->with('success', 'Return cancelled.');
+    }
+
+    public function warrantyCancel(Warranty $warranty): RedirectResponse
+    {
+        $cancelled = $this->cancelWarrantyClaim($warranty);
+
+        return redirect()->route('cashier.returns.warranty', $warranty->warranty_id)
+            ->with($cancelled ? 'success' : 'error', $cancelled ? 'Warranty claim cancelled.' : 'Only a claim that is still under review can be cancelled.');
+    }
+
+    public function claim(Request $request): View
+    {
+        return view('cashier.returns.claim', $this->claimFormData($request));
+    }
+
+    public function claimStore(Request $request): RedirectResponse
+    {
+        $warranty = $this->storeWarrantyClaim($request);
+
+        return redirect()->route('cashier.returns.warranty', $warranty->warranty_id)->with('success', 'Warranty claim filed.');
     }
 
     public function warranty(Warranty $warranty): View
@@ -105,5 +189,13 @@ class ReturnController extends Controller
         $warranty->load('saleItem.product');
 
         return view('cashier.returns.warranty', ['warranty' => $warranty]);
+    }
+
+    private function remainingReturnable(int $saleId, int $productId): int
+    {
+        $sold = SaleItem::where('sale_id', $saleId)->where('product_id', $productId)->sum('quantity');
+        $returned = ReturnRecord::where('sale_id', $saleId)->where('product_id', $productId)->sum('quantity');
+
+        return max(0, $sold - $returned);
     }
 }

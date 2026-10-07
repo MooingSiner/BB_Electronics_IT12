@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Owner;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Support\PerPage;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -14,7 +15,7 @@ class AuditController extends Controller
         $logs = AuditLog::with('user')
             ->when($request->filled('action'), fn ($query) => $query->where('action', $request->string('action')))
             ->latest('created_at')
-            ->paginate(25)
+            ->paginate(PerPage::rows())
             ->withQueryString()
             ->through(fn (AuditLog $log) => (object) [
                 'id' => $log->audit_id,

@@ -11,20 +11,10 @@
         ← Back to Inventory
     </a>
 
-    {{-- Page Header --}}
-    <h1 class="text-2xl font-bold mb-6" style="color:#363E48">Add Product</h1>
+    <div class="max-w-xl mx-auto">
 
-    {{-- Success Alert --}}
-    @if(session('success'))
-        <div class="mb-4 flex items-center gap-3 px-4 py-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
-            <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clip-rule="evenodd"/>
-            </svg>
-            {{ session('success') }}
-        </div>
-    @endif
+    {{-- Page Header --}}
+    <h1 class="text-2xl font-bold mb-6 text-center" style="color:#363E48">Add Product</h1>
 
     {{-- Validation Errors --}}
     @if($errors->any())
@@ -39,7 +29,7 @@
     @endif
 
     {{-- Form --}}
-    <form method="POST" action="{{ route('owner.inventory.store') }}" class="max-w-xl">
+    <form method="POST" action="{{ route('owner.inventory.store') }}" enctype="multipart/form-data">
         @csrf
 
         <div class="bg-white rounded-xl shadow border border-slate-200 p-6 space-y-5">
@@ -86,6 +76,45 @@
                 @enderror
             </div>
 
+            {{-- Image --}}
+            <div>
+                <label for="image_file" class="block text-sm font-medium text-slate-700 mb-1">Upload Image</label>
+                <input type="file" id="image_file" name="image_file" accept="image/*"
+                       class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-slate-100 file:text-slate-600 hover:file:bg-slate-200 @error('image_file') border-red-400 @enderror">
+                <p class="mt-1 text-xs text-slate-400">JPG, PNG, or GIF up to 4MB.</p>
+                @error('image_file')
+                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                @enderror
+
+                <div class="flex items-center gap-2 my-3">
+                    <div class="flex-1 h-px bg-slate-200"></div>
+                    <span class="text-xs text-slate-400">or</span>
+                    <div class="flex-1 h-px bg-slate-200"></div>
+                </div>
+
+                <label for="image_url" class="block text-sm font-medium text-slate-700 mb-1">Image URL</label>
+                <input type="url" id="image_url" name="image_url" value="{{ old('image_url') }}"
+                       placeholder="https://example.com/product-photo.jpg"
+                       class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 @error('image_url') border-red-400 @enderror">
+                <p class="mt-1 text-xs text-slate-400">Link to a hosted photo instead. Uploading a file above takes priority. Leave both blank to use a placeholder.</p>
+                @error('image_url')
+                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- Barcode --}}
+            <div>
+                <label for="barcode" class="block text-sm font-medium text-slate-700 mb-1">Barcode</label>
+                <input type="text" id="barcode" name="barcode" value="{{ old('barcode', '') }}" maxlength="50"
+                       placeholder="Click here, then scan the product's barcode"
+                       @keydown.enter.prevent
+                       class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 @error('barcode') border-red-400 @enderror">
+                <p class="mt-1 text-xs text-slate-400">Optional. Leave blank to use the product code. The cashier can scan this at the POS.</p>
+                @error('barcode')
+                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
             {{-- Unit Price & Cost Price --}}
             <div class="grid grid-cols-2 gap-4">
                 <div>
@@ -100,7 +129,7 @@
                     @enderror
                 </div>
                 <div>
-                    <label for="cost_price" class="block text-sm font-medium text-slate-700 mb-1">Cost Price (₱)</label>
+                    <label for="cost_price" class="block text-sm font-medium text-slate-700 mb-1">Capital Price (₱)</label>
                     <input type="number" id="cost_price" name="cost_price"
                            value="{{ old('cost_price') }}" step="0.01" min="0"
                            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 @error('cost_price') border-red-400 @enderror">
@@ -155,14 +184,15 @@
         {{-- Form Buttons --}}
         <div class="flex items-center gap-3 mt-5">
             <button type="submit"
-                    class="px-5 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition shadow-sm"
+                    class="flex-1 px-5 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition shadow-sm"
                     style="background-color:#363E48">
                 Add Product
             </button>
             <a href="{{ route('owner.inventory.index') }}"
-               class="px-5 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition">
+               class="flex-1 text-center px-5 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition">
                 Cancel
             </a>
         </div>
     </form>
+    </div>
 @endsection

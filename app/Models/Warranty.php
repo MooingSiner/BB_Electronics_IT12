@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['sale_item_id', 'customer_name', 'contact_number', 'start_date', 'end_date', 'claim_status', 'claim_date', 'outcome'])]
+#[Fillable(['sale_item_id', 'customer_name', 'contact_number', 'start_date', 'end_date', 'claim_status', 'claim_date', 'issue', 'outcome', 'resolution_notes'])]
 class Warranty extends Model
 {
     /** @use HasFactory<WarrantyFactory> */
@@ -34,6 +34,14 @@ class Warranty extends Model
             'claim_status' => WarrantyClaimStatus::class,
             'outcome' => WarrantyOutcome::class,
         ];
+    }
+
+    /**
+     * A claim can be withdrawn while it is still under review, before any repair or outcome has started.
+     */
+    public function isCancellable(): bool
+    {
+        return $this->claim_status === WarrantyClaimStatus::Claimed;
     }
 
     public function saleItem(): BelongsTo

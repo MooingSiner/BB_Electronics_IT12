@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Cashier;
 use App\Enums\SaleStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Sale;
+use App\Support\PerPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -14,7 +15,7 @@ class SalesController extends Controller
     public function index(Request $request): View
     {
         $transactions = Sale::query()
-            ->with(['user', 'items.product'])
+            ->with(['user', 'items.product', 'returnRecords'])
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->string('search');
 
@@ -29,15 +30,16 @@ class SalesController extends Controller
             ->when($request->input('date') === 'today', fn ($query) => $query->whereDate('sale_date', today()))
             ->when($request->boolean('mine'), fn ($query) => $query->where('user_id', Auth::id()))
             ->latest('sale_date')
-            ->get()
-            ->map(fn (Sale $sale) => $this->present($sale));
+            ->paginate(PerPage::rows())
+            ->withQueryString()
+            ->through(fn (Sale $sale) => $this->present($sale));
 
         return view('cashier.sales.index', compact('transactions'));
     }
 
     public function show(Sale $sale): View
     {
-        $sale->load(['user', 'items.product']);
+        $sale->load(['user', 'items.product', 'returnRecords.product']);
 
         $txn = $this->present($sale);
 
@@ -60,6 +62,7 @@ class SalesController extends Controller
             'code' => $sale->code(),
             'items_summary' => $sale->items->pluck('product.product_name')->filter()->implode(', '),
             'total_qty' => $sale->items->sum('quantity'),
+            'unit_prices' => $sale->items->map(fn ($item) => '₱'.number_format((float) $item->unit_price, 2))->implode(', '),
             'total' => (float) $sale->total_amount,
             'subtotal' => (float) $sale->subtotal,
             'discount_amount' => (float) $sale->discount_amount,
@@ -69,6 +72,10 @@ class SalesController extends Controller
             'created_at' => $sale->sale_date,
             'processed_by' => $sale->user->full_name ?? '—',
             'status' => $sale->status === SaleStatus::Completed ? 'Completed' : 'Voided',
+            'return_label' => $sale->returnStatusLabel(),
+            'return_lines' => $sale->relationLoaded('returnRecords') ? $sale->returnLines() : collect(),
+            'refunded' => $sale->refundedAmount(),
+            'net_total' => $sale->netTotal(),
             'items' => $sale->items->map(fn ($item) => (object) [
                 'name' => $item->product->product_name ?? '—',
                 'quantity' => $item->quantity,

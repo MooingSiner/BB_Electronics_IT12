@@ -7,20 +7,24 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\Sale;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $period = $request->input('period', 'today');
+        [$dateFrom, $dateTo, $periodLabel] = $this->resolvePeriod($request, $period);
+
         $totalProducts = Product::where('is_active', true)->count();
         $totalStock = (int) Product::where('is_active', true)->sum('quantity_on_hand');
 
-        $todaySalesTotal = Sale::whereDate('sale_date', today())
-            ->where('status', SaleStatus::Completed)
-            ->sum('total_amount');
+        $periodSalesTotal = Sale::netRevenue(Sale::whereBetween('sale_date', [$dateFrom, $dateTo])
+            ->where('status', SaleStatus::Completed));
 
-        $txnCount = Sale::whereDate('sale_date', today())->count();
+        $txnCount = Sale::whereBetween('sale_date', [$dateFrom, $dateTo])->where('status', SaleStatus::Completed)->count();
 
         $lowStockCount = Product::where('is_active', true)
             ->whereColumn('quantity_on_hand', '<=', 'reorder_level')
@@ -32,6 +36,7 @@ class DashboardController extends Controller
             ->count();
 
         $transactions = Sale::with(['user', 'items.product'])
+            ->whereBetween('sale_date', [$dateFrom, $dateTo])
             ->latest('sale_date')
             ->take(5)
             ->get()
@@ -64,16 +69,128 @@ class DashboardController extends Controller
                 'date' => optional($order->order_date)->format('M d, Y'),
             ]);
 
+        $soldByProduct = Sale::where('status', SaleStatus::Completed)
+            ->where('sale_date', '>=', now()->subDays(30)->startOfDay())
+            ->with('items')
+            ->get()
+            ->flatMap->items
+            ->groupBy('product_id')
+            ->map(fn ($items) => $items->sum('quantity'));
+
+        $activeProducts = Product::where('is_active', true)->get();
+
+        $fastMoving = $activeProducts
+            ->map(fn (Product $product) => (object) [
+                'name' => $product->product_name,
+                'units_sold' => (int) ($soldByProduct[$product->product_id] ?? 0),
+            ])
+            ->filter(fn ($product) => $product->units_sold >= 10)
+            ->sortByDesc('units_sold')
+            ->take(5)
+            ->values();
+
+        $slowMoving = $activeProducts
+            ->map(fn (Product $product) => (object) [
+                'name' => $product->product_name,
+                'units_sold' => (int) ($soldByProduct[$product->product_id] ?? 0),
+            ])
+            ->filter(fn ($product) => $product->units_sold < 10)
+            ->sortBy('units_sold')
+            ->take(5)
+            ->values();
+
+        $salesTrend = $this->buildSalesTrend($dateFrom, $dateTo);
+
         return view('owner.dashboard', [
             'totalProducts' => $totalProducts,
             'totalStock' => number_format($totalStock),
-            'todaySales' => '₱'.number_format((float) $todaySalesTotal, 2),
+            'todaySales' => '₱'.number_format((float) $periodSalesTotal, 2),
             'txnCount' => $txnCount,
             'lowStockCount' => $lowStockCount,
             'outOfStockCount' => $outOfStockCount,
             'transactions' => $transactions,
             'lowStockProducts' => $lowStockProducts,
             'recentOrders' => $recentOrders,
+            'fastMoving' => $fastMoving,
+            'slowMoving' => $slowMoving,
+            'salesTrend' => $salesTrend,
+            'period' => $period,
+            'periodLabel' => $periodLabel,
+            'dateFrom' => $dateFrom->format('Y-m-d'),
+            'dateTo' => $dateTo->format('Y-m-d'),
         ]);
+    }
+
+    /**
+     * @return array{unit: string, points: array<int, array{label: string, value: float}>}
+     */
+    private function buildSalesTrend(Carbon $dateFrom, Carbon $dateTo): array
+    {
+        $sales = Sale::where('status', SaleStatus::Completed)
+            ->whereBetween('sale_date', [$dateFrom, $dateTo])
+            ->get(['sale_id', 'sale_date', 'total_amount']);
+        $refunds = Sale::refundsBySale($sales->pluck('sale_id'));
+        $netOf = fn (Sale $sale) => (float) $sale->total_amount - (float) $refunds->get($sale->sale_id, 0);
+
+        if ($dateFrom->isSameDay($dateTo)) {
+            $grouped = $sales->groupBy(fn (Sale $s) => $s->sale_date->format('H'));
+
+            $points = collect(range(0, 23))
+                ->map(fn (int $hour) => [
+                    'label' => Carbon::createFromTime($hour)->format('ga'),
+                    'value' => (float) ($grouped->get(str_pad((string) $hour, 2, '0', STR_PAD_LEFT)) ?? collect())->sum($netOf),
+                ])
+                ->all();
+
+            return ['unit' => 'hour', 'points' => $points];
+        }
+
+        if ($dateFrom->diffInDays($dateTo) > 60) {
+            $grouped = $sales->groupBy(fn (Sale $s) => $s->sale_date->format('Y-m'));
+            $points = [];
+
+            for ($cursor = $dateFrom->copy()->startOfMonth(), $end = $dateTo->copy()->startOfMonth(); $cursor <= $end; $cursor->addMonth()) {
+                $key = $cursor->format('Y-m');
+                $points[] = [
+                    'label' => $cursor->format('M'),
+                    'value' => (float) ($grouped->get($key) ?? collect())->sum($netOf),
+                ];
+            }
+
+            return ['unit' => 'month', 'points' => $points];
+        }
+
+        $grouped = $sales->groupBy(fn (Sale $s) => $s->sale_date->format('Y-m-d'));
+        $points = [];
+
+        for ($cursor = $dateFrom->copy()->startOfDay(), $end = $dateTo->copy()->startOfDay(); $cursor <= $end; $cursor->addDay()) {
+            $key = $cursor->format('Y-m-d');
+            $points[] = [
+                'label' => $cursor->format('M j'),
+                'value' => (float) ($grouped->get($key) ?? collect())->sum($netOf),
+            ];
+        }
+
+        return ['unit' => 'day', 'points' => $points];
+    }
+
+    /**
+     * @return array{0: Carbon, 1: Carbon, 2: string}
+     */
+    private function resolvePeriod(Request $request, string $period): array
+    {
+        if ($period === 'custom' && $request->filled('date_from') && $request->filled('date_to')) {
+            $from = Carbon::parse($request->input('date_from'))->startOfDay();
+            $to = Carbon::parse($request->input('date_to'))->endOfDay();
+
+            return [$from, $to, $from->format('M d').' – '.$to->format('M d, Y')];
+        }
+
+        return match ($period) {
+            'week' => [now()->startOfWeek(), now()->endOfWeek(), 'This Week'],
+            'month' => [now()->startOfMonth(), now()->endOfMonth(), 'This Month'],
+            'year' => [now()->startOfYear(), now()->endOfYear(), 'This Year'],
+            default => [now()->startOfDay(), now()->endOfDay(), 'Today'],
+        };
     }
 }

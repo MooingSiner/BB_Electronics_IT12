@@ -22,20 +22,20 @@ class Pos extends Component
 
     public string $category = '';
 
-    /** @var array<string, array{product_id: int, name: string, price: float, quantity: int}> */
+    /** @var array<string, array{product_id: int, name: string, price: float, quantity: int, image_url: ?string}> */
     public array $cart = [];
 
     public string $discountType = 'none';
 
-    public float $discountValue = 0;
+    public ?float $discountValue = 0;
 
     public string $payment = 'Cash';
 
-    public float $amountReceived = 0;
+    public ?float $amountReceived = 0;
 
     public ?string $errorMessage = null;
 
-    /** @var array<string, string>|null */
+    /** @var array<string, mixed>|null */
     public ?array $completedSale = null;
 
     public function mount(): void
@@ -69,15 +69,35 @@ class Pos extends Component
             'name' => $product->product_name,
             'price' => (float) $product->unit_price,
             'quantity' => $currentQty + 1,
+            'image_url' => $product->image_url,
         ];
 
         $this->errorMessage = null;
         $this->syncCartSession();
     }
 
+    public function scan(): void
+    {
+        $product = Product::findByScan($this->search);
+
+        if ($product) {
+            $this->addToCart($product->product_id);
+            $this->search = '';
+
+            return;
+        }
+
+        $hasNameMatch = Product::where('is_active', true)->where('product_name', 'like', '%'.$this->search.'%')->exists();
+
+        if (trim($this->search) !== '' && ! $hasNameMatch) {
+            $this->errorMessage = "No product found for \"{$this->search}\".";
+        }
+    }
+
     public function removeFromCart(string $key): void
     {
         unset($this->cart[$key]);
+        $this->errorMessage = null;
         $this->syncCartSession();
     }
 
@@ -89,13 +109,16 @@ class Pos extends Component
 
         $product = Product::find($this->cart[$key]['product_id']);
         $quantity = max(1, $quantity);
+        $this->errorMessage = null;
 
         if ($product && $quantity > $product->quantity_on_hand) {
+            $this->errorMessage = "Only {$product->quantity_on_hand} unit(s) of {$product->product_name} in stock, so the quantity was set to {$product->quantity_on_hand}.";
             $quantity = $product->quantity_on_hand;
         }
 
         $this->cart[$key]['quantity'] = $quantity;
         $this->syncCartSession();
+        $this->dispatch('cart-quantity-corrected', cartKey: $key, quantity: $quantity);
     }
 
     public function clearCart(): void
@@ -118,7 +141,7 @@ class Pos extends Component
             $this->discountValue = 0;
         }
 
-        session(['discount_type' => $type, 'discount_value' => $this->discountValue]);
+        session(['discount_type' => $type, 'discount_value' => (float) $this->discountValue]);
     }
 
     public function setPayment(string $method): void
@@ -129,12 +152,12 @@ class Pos extends Component
 
     public function updatedDiscountValue(mixed $value): void
     {
-        session(['discount_value' => $value]);
+        session(['discount_value' => (float) $value]);
     }
 
     public function updatedAmountReceived(mixed $value): void
     {
-        session(['amount_received' => $value]);
+        session(['amount_received' => (float) $value]);
     }
 
     public function startNewSale(): void
@@ -171,13 +194,13 @@ class Pos extends Component
         };
 
         if ($paymentMethod === PaymentMethod::Cash) {
-            if ($this->amountReceived < $total) {
+            if ((float) $this->amountReceived < $total) {
                 $this->errorMessage = 'Amount received is less than the total due.';
 
                 return;
             }
 
-            $amountReceived = $this->amountReceived;
+            $amountReceived = (float) $this->amountReceived;
             $changeAmount = $amountReceived - $total;
         } else {
             $amountReceived = $total;
@@ -212,7 +235,27 @@ class Pos extends Component
             return $sale;
         });
 
+        $lowStock = Product::query()
+            ->whereIn('product_id', array_column($cartSnapshot, 'product_id'))
+            ->whereColumn('quantity_on_hand', '<=', 'reorder_level')
+            ->get()
+            ->map(fn (Product $product) => [
+                'name' => $product->product_name,
+                'left' => $product->quantity_on_hand,
+                'reorder' => $product->reorder_level,
+            ])
+            ->values()
+            ->all();
+
         $this->completedSale = [
+            'items' => array_values(array_map(fn ($item) => [
+                'name' => $item['name'],
+                'image_url' => $item['image_url'] ?? null,
+                'quantity' => $item['quantity'],
+                'price' => number_format($item['price'], 2),
+                'subtotal' => number_format($item['price'] * $item['quantity'], 2),
+            ], $cartSnapshot)),
+            'low_stock' => $lowStock,
             'id' => (string) $sale->sale_id,
             'code' => $sale->code(),
             'subtotal' => number_format($subtotal, 2),
@@ -241,8 +284,8 @@ class Pos extends Component
     private function calculateDiscount(float $subtotal): float
     {
         return match ($this->discountType) {
-            'percent' => round($subtotal * min(max($this->discountValue, 0), 100) / 100, 2),
-            'fixed' => min(max($this->discountValue, 0), $subtotal),
+            'percent' => round($subtotal * min(max((float) $this->discountValue, 0), 100) / 100, 2),
+            'fixed' => min(max((float) $this->discountValue, 0), $subtotal),
             default => 0,
         };
     }
@@ -253,7 +296,9 @@ class Pos extends Component
             ->with('category')
             ->where('is_active', true)
             ->when($this->search !== '', fn ($query) => $query->where(
-                'product_name', 'like', '%'.$this->search.'%'
+                fn ($q) => $q->where('product_name', 'like', '%'.$this->search.'%')
+                    ->orWhere('barcode', $this->search)
+                    ->orWhere('product_code', $this->search)
             ))
             ->when($this->category !== '', fn ($query) => $query->whereHas(
                 'category',
@@ -264,17 +309,23 @@ class Pos extends Component
             ->map(fn (Product $product) => (object) [
                 'id' => $product->product_id,
                 'name' => $product->product_name,
+                'image_url' => $product->image_url,
                 'price' => (float) $product->unit_price,
                 'stock' => $product->quantity_on_hand,
                 'reorder_level' => $product->reorder_level,
+                'cost_code' => $product->costCode(),
             ]);
 
         $subtotal = collect($this->cart)->sum(fn ($item) => $item['price'] * $item['quantity']);
         $discountAmount = $this->calculateDiscount($subtotal);
         $total = max(0, $subtotal - $discountAmount);
-        $vat = $total - ($total / 1.12);
-        $change = $this->payment === 'Cash' && $this->amountReceived > 0 ? $this->amountReceived - $total : null;
+        $change = $this->payment === 'Cash' && (float) $this->amountReceived > 0 ? (float) $this->amountReceived - $total : null;
 
-        return view('livewire.cashier.pos', compact('products', 'subtotal', 'discountAmount', 'total', 'vat', 'change'));
+        $cartStock = Product::query()
+            ->whereIn('product_id', array_column($this->cart, 'product_id'))
+            ->get(['product_id', 'quantity_on_hand', 'reorder_level', 'cost_price'])
+            ->keyBy('product_id');
+
+        return view('livewire.cashier.pos', compact('products', 'subtotal', 'discountAmount', 'total', 'change', 'cartStock'));
     }
 }

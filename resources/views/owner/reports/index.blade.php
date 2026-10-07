@@ -7,13 +7,21 @@
 <div class="space-y-6">
 
     {{-- Page Header --}}
-    <div>
+    <div class="print:hidden">
         <h1 class="text-2xl font-bold text-slate-800">Reports</h1>
         <p class="text-sm text-slate-500 mt-1">Generate sales and inventory reports.</p>
     </div>
 
+    {{-- Print-only letterhead --}}
+    @if($report)
+    <div class="hidden print:block">
+        <h1 class="text-lg font-bold text-slate-800">B&amp;B Electronics</h1>
+        <p class="text-xs text-slate-500">Generated {{ now()->format('M d, Y g:i A') }}</p>
+    </div>
+    @endif
+
     {{-- Filter Card --}}
-    <div class="bg-white rounded-xl border shadow-sm p-6">
+    <div class="bg-white rounded-xl border shadow-sm p-6 print:hidden">
         <h2 class="font-semibold text-slate-800 mb-4">Generate Report</h2>
         <form method="GET" action="{{ route('owner.reports.index') }}" class="space-y-4">
             <div>
@@ -23,6 +31,7 @@
                     <option value="">Select a report type...</option>
                     <option value="sales" {{ request('type') === 'sales' ? 'selected' : '' }}>Sales Report</option>
                     <option value="inventory" {{ request('type') === 'inventory' ? 'selected' : '' }}>Inventory Report (incl. fast/slow-moving)</option>
+                    <option value="procurement" {{ request('type') === 'procurement' ? 'selected' : '' }}>Procurement &amp; Damage Report</option>
                 </select>
             </div>
             <div class="grid grid-cols-2 gap-4">
@@ -54,7 +63,7 @@
             <h2 class="font-semibold text-slate-800">
                 Sales Report &mdash; {{ $dateFrom->format('M d, Y') }} to {{ $dateTo->format('M d, Y') }}
             </h2>
-            <button onclick="window.print()" class="text-sm font-medium hover:underline" style="color:#363E48">Print</button>
+            <button onclick="window.print()" class="text-sm font-medium hover:underline print:hidden" style="color:#363E48">Print</button>
         </div>
 
         {{-- Summary Stats --}}
@@ -107,7 +116,7 @@
             <h2 class="font-semibold text-slate-800">
                 Inventory Report &mdash; movement from {{ $dateFrom->format('M d, Y') }} to {{ $dateTo->format('M d, Y') }}
             </h2>
-            <button onclick="window.print()" class="text-sm font-medium hover:underline" style="color:#363E48">Print</button>
+            <button onclick="window.print()" class="text-sm font-medium hover:underline print:hidden" style="color:#363E48">Print</button>
         </div>
 
         {{-- Summary Stats --}}
@@ -124,6 +133,39 @@
                 <p class="text-xs text-slate-500 uppercase tracking-wide font-medium">Low / Out of Stock</p>
                 <p class="text-2xl font-bold text-slate-800 mt-1">{{ $report['low_stock_count'] }}</p>
             </div>
+        </div>
+
+        {{-- Movement Summary --}}
+        <div class="px-6 py-5 border-b">
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Movement Summary</p>
+            <div class="grid grid-cols-3 gap-4 mb-5">
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Fast-Moving</span>
+                    <span class="text-sm font-semibold text-slate-800">{{ $report['fast_moving_count'] }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Slow-Moving</span>
+                    <span class="text-sm font-semibold text-slate-800">{{ $report['slow_moving_count'] }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">No Movement</span>
+                    <span class="text-sm font-semibold text-slate-800">{{ $report['no_movement_count'] }}</span>
+                </div>
+            </div>
+
+            @if($report['top_movers']->isNotEmpty())
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Top Moving Products</p>
+                <ol class="space-y-1.5">
+                    @foreach($report['top_movers'] as $i => $mover)
+                        <li class="flex items-center justify-between text-sm">
+                            <span class="text-slate-700">{{ $i + 1 }}. {{ $mover['name'] }} <span class="text-slate-400">({{ $mover['code'] }})</span></span>
+                            <span class="font-medium text-slate-800">{{ $mover['units_sold'] }} sold</span>
+                        </li>
+                    @endforeach
+                </ol>
+            @else
+                <p class="text-sm text-slate-400">No units sold in this date range.</p>
+            @endif
         </div>
 
         {{-- Table --}}
@@ -160,6 +202,106 @@
                     @empty
                     <tr>
                         <td colspan="6" class="px-6 py-12 text-center text-slate-400 text-sm">No active products found.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @elseif($report && $type === 'procurement')
+    <div class="bg-white rounded-xl border shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b flex items-center justify-between">
+            <h2 class="font-semibold text-slate-800">
+                Procurement &amp; Damage Report &mdash; {{ $dateFrom->format('M d, Y') }} to {{ $dateTo->format('M d, Y') }}
+            </h2>
+            <button onclick="window.print()" class="text-sm font-medium hover:underline print:hidden" style="color:#363E48">Print</button>
+        </div>
+
+        {{-- Summary Stats --}}
+        <div class="grid grid-cols-4 divide-x border-b">
+            <div class="px-6 py-5">
+                <p class="text-xs text-slate-500 uppercase tracking-wide font-medium">Orders</p>
+                <p class="text-2xl font-bold text-slate-800 mt-1">{{ $report['total_orders'] }}</p>
+            </div>
+            <div class="px-6 py-5">
+                <p class="text-xs text-slate-500 uppercase tracking-wide font-medium">Total Spend</p>
+                <p class="text-2xl font-bold text-slate-800 mt-1">₱{{ number_format($report['total_spend'], 2) }}</p>
+            </div>
+            <div class="px-6 py-5">
+                <p class="text-xs text-slate-500 uppercase tracking-wide font-medium">Units Received</p>
+                <p class="text-2xl font-bold text-slate-800 mt-1">{{ $report['total_units_received'] }}</p>
+            </div>
+            <div class="px-6 py-5">
+                <p class="text-xs text-slate-500 uppercase tracking-wide font-medium">Damage Rate</p>
+                <p class="text-2xl font-bold text-slate-800 mt-1">{{ $report['overall_damage_rate'] }}%</p>
+            </div>
+        </div>
+
+        {{-- By Source --}}
+        <div class="px-6 py-5 border-b">
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">By Supplier / Store</p>
+            @if($report['by_source']->isEmpty())
+                <p class="text-sm text-slate-400">No orders placed in this date range.</p>
+            @else
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-slate-50 border-b">
+                                <th class="text-left px-4 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">Name</th>
+                                <th class="text-left px-4 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">Type</th>
+                                <th class="text-right px-4 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">Orders</th>
+                                <th class="text-right px-4 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">Spend</th>
+                                <th class="text-right px-4 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">Received</th>
+                                <th class="text-right px-4 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">Damaged</th>
+                                <th class="text-right px-4 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">Damage Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @foreach($report['by_source'] as $source)
+                            <tr>
+                                <td class="px-4 py-2 text-slate-700 font-medium">{{ $source['name'] }}</td>
+                                <td class="px-4 py-2 text-slate-500">{{ $source['type'] }}</td>
+                                <td class="px-4 py-2 text-right text-slate-600">{{ $source['orders'] }}</td>
+                                <td class="px-4 py-2 text-right text-slate-700">₱{{ number_format($source['spend'], 2) }}</td>
+                                <td class="px-4 py-2 text-right text-slate-600">{{ $source['units_received'] }}</td>
+                                <td class="px-4 py-2 text-right text-red-600">{{ $source['units_damaged'] }}</td>
+                                <td class="px-4 py-2 text-right {{ $source['damage_rate'] > 0 ? 'text-red-600 font-medium' : 'text-slate-400' }}">{{ $source['damage_rate'] }}%</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </div>
+
+        {{-- Table: order detail --}}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-slate-50 border-b">
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Order</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Type</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Supplier / Store</th>
+                        <th class="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Spend</th>
+                        <th class="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Received</th>
+                        <th class="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Damaged</th>
+                        <th class="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Damage Rate</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @forelse($report['rows'] as $row)
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 font-mono text-xs text-slate-500">{{ $row['code'] }}</td>
+                        <td class="px-6 py-4 text-slate-600">{{ $row['source_type'] }}</td>
+                        <td class="px-6 py-4 text-slate-700">{{ $row['source_name'] }}</td>
+                        <td class="px-6 py-4 text-right text-slate-700">₱{{ number_format($row['spend'], 2) }}</td>
+                        <td class="px-6 py-4 text-right text-slate-600">{{ $row['units_received'] }}</td>
+                        <td class="px-6 py-4 text-right text-red-600">{{ $row['units_damaged'] }}</td>
+                        <td class="px-6 py-4 text-right {{ $row['damage_rate'] > 0 ? 'text-red-600 font-medium' : 'text-slate-400' }}">{{ $row['damage_rate'] }}%</td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="7" class="px-6 py-12 text-center text-slate-400 text-sm">No orders placed in this date range.</td>
                     </tr>
                     @endforelse
                 </tbody>
