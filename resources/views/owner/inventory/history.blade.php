@@ -77,6 +77,7 @@
                     <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Quantity</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Reason</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">By</th>
+                    <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Action</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -109,10 +110,23 @@
                         </td>
                         <td class="px-4 py-3 text-slate-600">{{ $movement->reason }}</td>
                         <td class="px-4 py-3 text-slate-600">{{ $movement->by }}</td>
+                        <td class="px-4 py-3 text-right whitespace-nowrap">
+                            @if($movement->can_reverse ?? false)
+                                <form method="POST" action="{{ route('owner.inventory.adjustment.reverse', [$item->id, $movement->id]) }}"
+                                      data-confirm="Reverse this entry? A new opposite entry will be recorded, and the original stays in the history." class="inline">
+                                    @csrf
+                                    <button type="submit" class="px-2.5 py-1 text-xs font-medium border border-slate-300 rounded-md text-slate-600 hover:bg-slate-100 transition">Reverse</button>
+                                </form>
+                            @elseif($movement->is_reversed ?? false)
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">Reversed</span>
+                            @elseif($movement->is_reversal ?? false)
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">Reversal</span>
+                            @endif
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-4 py-12 text-center text-slate-400 text-sm">No stock movements recorded yet.</td>
+                        <td colspan="6" class="px-4 py-12 text-center text-slate-400 text-sm">No stock movements recorded yet.</td>
                     </tr>
                 @endforelse
             </tbody>

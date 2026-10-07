@@ -15,7 +15,9 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -211,7 +213,7 @@ class InventoryController extends Controller
             'date_received' => ['required', 'date', 'before_or_equal:today'],
         ]);
 
-        StockAdjustment::create([
+        $adjustment = StockAdjustment::create([
             'product_id' => $product->product_id,
             'user_id' => Auth::id(),
             'adjustment_date' => $validated['date_received'],
@@ -225,7 +227,8 @@ class InventoryController extends Controller
         );
 
         return redirect()->route('owner.inventory.show', $product->product_id)
-            ->with('success', "Added {$validated['quantity']} unit(s) to stock.");
+            ->with('success', "Added {$validated['quantity']} unit(s) to stock.")
+            ->with('undo', route('owner.inventory.adjustment.reverse', [$product->product_id, $adjustment->adjustment_id]));
     }
 
     public function stockOut(Product $product): View
@@ -248,7 +251,7 @@ class InventoryController extends Controller
             'quantity.max' => 'Quantity can\'t be more than the '.$product->quantity_on_hand.' unit(s) currently in stock.',
         ]);
 
-        StockAdjustment::create([
+        $adjustment = StockAdjustment::create([
             'product_id' => $product->product_id,
             'user_id' => Auth::id(),
             'adjustment_date' => $validated['date_adjusted'],
@@ -262,7 +265,44 @@ class InventoryController extends Controller
         );
 
         return redirect()->route('owner.inventory.show', $product->product_id)
-            ->with('success', "Removed {$validated['quantity']} unit(s) from stock.");
+            ->with('success', "Removed {$validated['quantity']} unit(s) from stock.")
+            ->with('undo', route('owner.inventory.adjustment.reverse', [$product->product_id, $adjustment->adjustment_id]));
+    }
+
+    /**
+     * Undo a Stock In or Stock Out typed in by hand. Nothing is deleted: a new opposite entry is recorded.
+     */
+    public function reverseAdjustment(Product $product, StockAdjustment $adjustment): RedirectResponse
+    {
+        abort_unless($adjustment->product_id === $product->product_id, 404);
+
+        $error = null;
+
+        DB::transaction(function () use ($product, $adjustment, &$error) {
+            $product = Product::whereKey($product->product_id)->lockForUpdate()->firstOrFail();
+            $adjustment->setRelation('product', $product);
+
+            if ($error = $adjustment->reverseBlockedReason()) {
+                return;
+            }
+
+            StockAdjustment::create([
+                'product_id' => $product->product_id,
+                'user_id' => Auth::id(),
+                'adjustment_date' => now(),
+                'quantity_change' => -$adjustment->quantity_change,
+                'reason' => Str::limit("Reversal of #{$adjustment->adjustment_id}: {$adjustment->reason}", 255, ''),
+            ]);
+
+            AuditLog::record(
+                'stock_adjustment',
+                'Reversed stock entry #'.$adjustment->adjustment_id." for {$product->product_code} ({$product->product_name}): ".($adjustment->quantity_change > 0 ? 'removed ' : 'put back ').abs($adjustment->quantity_change).' unit(s).'
+            );
+        });
+
+        return $error
+            ? back()->with('error', $error)
+            : back()->with('success', 'The stock entry was reversed.');
     }
 
     public function bulkStockIn(): View
@@ -320,16 +360,24 @@ class InventoryController extends Controller
 
     public function history(Request $request, Product $product): View
     {
-        $adjustments = StockAdjustment::where('product_id', $product->product_id)
-            ->with('user')
-            ->get()
-            ->map(fn (StockAdjustment $adjustment) => (object) [
+        $entries = StockAdjustment::where('product_id', $product->product_id)->with('user')->get();
+        $reversedIds = $entries->map(fn (StockAdjustment $entry) => StockAdjustment::reversedIdFrom($entry->reason))->filter()->values();
+
+        $adjustments = $entries->map(function (StockAdjustment $adjustment) use ($product, $reversedIds) {
+            $adjustment->setRelation('product', $product);
+
+            return (object) [
+                'id' => $adjustment->adjustment_id,
                 'date' => $adjustment->adjustment_date,
                 'type' => $adjustment->quantity_change >= 0 ? 'In' : 'Out',
                 'quantity' => abs($adjustment->quantity_change),
                 'reason' => $adjustment->reason,
                 'by' => $adjustment->user->full_name ?? '—',
-            ]);
+                'is_reversal' => StockAdjustment::reversedIdFrom($adjustment->reason) !== null,
+                'is_reversed' => $reversedIds->contains($adjustment->adjustment_id),
+                'can_reverse' => $adjustment->reverseBlockedReason($reversedIds) === null,
+            ];
+        });
 
         $received = OrderItem::where('product_id', $product->product_id)
             ->where('quantity_received', '>', 0)
