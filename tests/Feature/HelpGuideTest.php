@@ -37,4 +37,11 @@ class HelpGuideTest extends TestCase
         $this->actingAs($cashier)->get(route('cashier.pos'))
             ->assertOk()->assertSee('open-help', false)->assertSee('Help guide');
     }
+
+    public function test_hidden_until_ready_elements_stay_hidden_before_alpine_loads(): void
+    {
+        $this->actingAs(User::factory()->ownerManager()->create())
+            ->get(route('owner.dashboard'))
+            ->assertSee('[x-cloak] { display: none !important; }', false);
+    }
 }

@@ -6,6 +6,7 @@
     <title>B&B Electronics — {{ $title ?? 'Point of Sale' }}</title>
     @vite('resources/css/app.css')
     <style>
+        [x-cloak] { display: none !important; }
         @view-transition { navigation: auto; }
         html { background-color: #f1f5f9; }
         body { font-family: 'Inter', sans-serif; }
