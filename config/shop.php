@@ -9,4 +9,11 @@ return [
     */
     'cost_code_key' => env('COST_CODE_KEY', 'CHRISTYNED'),
 
+    /*
+    | The mysqldump program used by the backup:database command. Leave it as it is when
+    | mysqldump can be run from any folder, or give its full path, for example
+    | C:/laragon/bin/mysql/mysql-8.4.3-winx64/bin/mysqldump.exe
+    */
+    'mysqldump_path' => env('MYSQLDUMP_PATH', 'mysqldump'),
+
 ];
