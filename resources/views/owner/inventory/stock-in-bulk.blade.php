@@ -30,7 +30,7 @@
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-5 relative">
             <label for="productSearch" class="block text-sm font-medium text-slate-700 mb-1">Search Product</label>
             <div class="relative">
-                <input type="text" id="productSearch" autocomplete="off" placeholder="Scan a barcode or type a product name or code…"
+                <input type="text" id="productSearch" autocomplete="off" data-scan-search placeholder="Scan a barcode or type a product name or code…"
                        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
                 <div id="productResults"
                      class="hidden absolute z-10 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-64 overflow-y-auto"></div>
@@ -154,18 +154,11 @@
         renderResults(matches);
     });
 
-    searchInput.addEventListener('keydown', function (e) {
-        if (e.key !== 'Enter') {
-            return;
-        }
-
-        e.preventDefault();
-
-        const value = this.value.trim();
+    function addScanned(value) {
         const product = catalog.find(p => p.code === value || (p.barcode && p.barcode === value));
 
         if (!product) {
-            return;
+            return false;
         }
 
         if (addedIds.has(product.id)) {
@@ -176,8 +169,27 @@
             itemsBody.querySelector('tr[data-product-id="' + product.id + '"] input[name$="[quantity]"]').value = 1;
         }
 
-        this.value = '';
+        searchInput.value = '';
         resultsBox.classList.add('hidden');
+
+        return true;
+    }
+
+    searchInput.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter') {
+            return;
+        }
+
+        e.preventDefault();
+        addScanned(this.value.trim());
+    });
+
+    // A scanner that does not send Enter: a full barcode or code that matches a product is added by itself.
+    let scanTimer = null;
+
+    searchInput.addEventListener('input', function () {
+        clearTimeout(scanTimer);
+        scanTimer = setTimeout(() => addScanned(this.value.trim()), 200);
     });
 
     document.addEventListener('click', function (e) {
