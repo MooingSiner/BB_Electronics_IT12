@@ -9,6 +9,7 @@
 <body>
     <form class="toolbar" method="GET" action="{{ route('owner.inventory.label', $item->id) }}">
         <a href="{{ route('owner.inventory.show', $item->id) }}">&larr; Back</a>
+        <a href="{{ route('owner.inventory.labels') }}">Print many products</a>
         <label>Copies <input type="number" name="copies" min="1" max="60" value="{{ $copies }}"></label>
         <label>Size
             <select name="size">

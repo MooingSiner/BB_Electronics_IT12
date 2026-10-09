@@ -68,5 +68,6 @@ class BulkLabelTest extends TestCase
         $page = $this->actingAs($owner)->get(route('owner.inventory.label', [$product->product_id, 'copies' => 2]))->assertOk();
 
         $this->assertSame(2, substr_count($page->getContent(), '<div class="name">Alpha Plug</div>'));
+        $page->assertSee('Print many products')->assertSee(route('owner.inventory.labels'), false);
     }
 }
