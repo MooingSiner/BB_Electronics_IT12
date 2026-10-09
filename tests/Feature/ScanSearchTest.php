@@ -51,4 +51,15 @@ class ScanSearchTest extends TestCase
                 ->assertSee('function addScanned', false);
         }
     }
+
+    public function test_a_scan_that_lands_in_another_field_is_moved_to_the_search_box_on_every_scan_page(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+
+        foreach ([route('owner.suppliers.create'), route('owner.purchase-orders.create'), route('owner.inventory.stockin.bulk'), route('owner.inventory.labels')] as $url) {
+            $this->actingAs($owner)->get($url)->assertOk()
+                ->assertSee('function restore(snapshot)', false)
+                ->assertSee('data-scan-search', false);
+        }
+    }
 }
