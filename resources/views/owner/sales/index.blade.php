@@ -134,53 +134,14 @@
                         </td>
                     </tr>
                 @empty
-                    {{-- Sample hardcoded rows --}}
-                    @php
-                        $sampleRows = [
-                            ['id'=>'TXN-2024-001','products'=>'LED Bulb 9W','qty'=>5,'total'=>'₱202.50','discount'=>null,'payment'=>'Cash','date'=>'Jan 15, 2024','by'=>'Ana Reyes','status'=>'Completed'],
-                            ['id'=>'TXN-2024-002','products'=>'Extension Cord 5m','qty'=>2,'total'=>'₱170.00','discount'=>null,'payment'=>'GCash','date'=>'Jan 15, 2024','by'=>'Ana Reyes','status'=>'Completed'],
-                            ['id'=>'TXN-2024-003','products'=>'Circuit Breaker 15A','qty'=>1,'total'=>'₱405.00','discount'=>10,'payment'=>'Cash','date'=>'Jan 14, 2024','by'=>'Carlo Mena','status'=>'Pending'],
-                            ['id'=>'TXN-2024-004','products'=>'Wire 2.0mm (10m)','qty'=>3,'total'=>'₱320.00','discount'=>null,'payment'=>'Cheque','date'=>'Jan 14, 2024','by'=>'Ana Reyes','status'=>'Completed'],
-                            ['id'=>'TXN-2024-005','products'=>'Switch Panel 4-gang','qty'=>1,'total'=>'₱285.00','discount'=>null,'payment'=>'Cash','date'=>'Jan 13, 2024','by'=>'Carlo Mena','status'=>'Returned'],
-                        ];
-                    @endphp
-                    @foreach($sampleRows as $row)
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-5 py-3"><span class="font-mono text-xs text-slate-700">{{ $row['id'] }}</span></td>
-                            <td class="px-5 py-3 text-slate-700">{{ $row['products'] }}</td>
-                            <td class="px-5 py-3 text-slate-600">{{ $row['qty'] }}</td>
-                            <td class="px-5 py-3 text-slate-600">—</td>
-                            <td class="px-5 py-3 font-medium text-slate-800">{{ $row['total'] }}</td>
-                            <td class="px-5 py-3">
-                                @if($row['discount'])
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">{{ $row['discount'] }}%</span>
-                                @else
-                                    <span class="text-slate-400">—</span>
-                                @endif
-                            </td>
-                            <td class="px-5 py-3 text-slate-600">{{ $row['payment'] }}</td>
-                            <td class="px-5 py-3 text-slate-600 whitespace-nowrap">{{ $row['date'] }}</td>
-                            <td class="px-5 py-3 text-slate-600">{{ $row['by'] }}</td>
-                            <td class="px-5 py-3">
-                                @if($row['status'] === 'Completed')
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Completed</span>
-                                @elseif($row['status'] === 'Pending')
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Pending</span>
-                                @else
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">{{ $row['status'] }}</span>
-                                @endif
-                            </td>
-                            <td class="px-5 py-3">
-                                <div class="flex items-center gap-2">
-                                    <a href="{{ route('owner.sales.show', $row['id']) }}" class="tip inline-flex items-center justify-center p-1.5 border rounded-md transition border-slate-300 text-slate-600 hover:bg-slate-100" data-tip="View" aria-label="View"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178zM15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg></a>
-                                    <a href="{{ route('owner.sales.receipt', $row['id']) }}" class="tip inline-flex items-center justify-center p-1.5 border rounded-md transition border-slate-300 text-slate-600 hover:bg-slate-100" data-tip="Print" aria-label="Print"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.056 48.056 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z"/></svg></a>
-                                    @if($row['status'] === 'Completed')
-                                        <button  class="tip inline-flex items-center justify-center p-1.5 border rounded-md transition border-red-200 text-red-600 bg-red-50 hover:bg-red-100" data-tip="Return" aria-label="Return"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"/></svg></button>
-                                    @endif
-                                </div>
-                            </td>
-                        </tr>
-                    @endforeach
+                    <tr>
+                        <td colspan="11" class="px-5 py-16 text-center text-slate-400 text-sm">
+                            <svg class="w-10 h-10 mx-auto mb-2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            No transactions found.
+                        </td>
+                    </tr>
                 @endforelse
             </tbody>
         </table>

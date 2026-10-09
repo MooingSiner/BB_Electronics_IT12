@@ -16,13 +16,7 @@ class SalesController extends Controller
     {
         $transactions = Sale::query()
             ->with(['user', 'items.product', 'returnRecords'])
-            ->when($request->filled('search'), function ($query) use ($request) {
-                $search = $request->string('search');
-
-                $query->where(fn ($q) => $q
-                    ->where('sale_id', 'like', "%{$search}%")
-                    ->orWhereHas('items.product', fn ($p) => $p->where('product_name', 'like', "%{$search}%")));
-            })
+            ->when($request->filled('search'), fn ($query) => $query->matching($request->string('search')->toString()))
             ->when($request->input('status') === 'Completed', fn ($query) => $query->where('status', SaleStatus::Completed))
             ->when($request->input('status') === 'Voided', fn ($query) => $query->where('status', SaleStatus::Voided))
             ->when($request->input('discount') === 'with', fn ($query) => $query->where('discount_amount', '>', 0))

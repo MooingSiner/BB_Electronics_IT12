@@ -172,6 +172,29 @@ class Sale extends Model
         return $this->hasMany(ReturnRecord::class, 'sale_id', 'sale_id');
     }
 
+    /**
+     * Find sales by the number printed on the receipt (TXN-00028 or 28), by a product name or code, or by a scanned barcode.
+     *
+     * @param  Builder<Sale>  $query
+     */
+    public function scopeMatching(Builder $query, string $term): void
+    {
+        $term = trim($term);
+
+        if (preg_match('/^TXN-?0*(\d+)$/i', $term, $parts)) {
+            $query->where('sale_id', (int) $parts[1]);
+
+            return;
+        }
+
+        $query->where(fn (Builder $q) => $q
+            ->where('sale_id', 'like', "%{$term}%")
+            ->orWhereHas('items.product', fn ($product) => $product
+                ->where('product_name', 'like', "%{$term}%")
+                ->orWhere('product_code', 'like', "%{$term}%")
+                ->orWhere('barcode', 'like', "%{$term}%")));
+    }
+
     public function code(): string
     {
         return static::formatCode($this->sale_id);
