@@ -40,4 +40,15 @@ class ScanSearchTest extends TestCase
             ->assertSee('data-scan-search data-scan-enter', false)
             ->assertSee("document.querySelector('input[data-scan-search]')", false);
     }
+
+    public function test_the_purchase_order_and_supplier_order_forms_take_scans_without_clicking(): void
+    {
+        $owner = User::factory()->ownerManager()->create();
+
+        foreach ([route('owner.purchase-orders.create'), route('owner.suppliers.create')] as $url) {
+            $this->actingAs($owner)->get($url)->assertOk()
+                ->assertSee('id="orderScan" autocomplete="off" data-scan-search', false)
+                ->assertSee('function addScanned', false);
+        }
+    }
 }
