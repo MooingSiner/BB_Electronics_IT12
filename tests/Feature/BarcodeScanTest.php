@@ -138,6 +138,6 @@ class BarcodeScanTest extends TestCase
             ->assertSee($bulb->product_name)->assertDontSee($cord->product_name);
 
         $this->actingAs($owner)->get(route('owner.inventory.index'))
-            ->assertSee('id="inventoryResults"', false)->assertSee('Search name, code, barcode or category');
+            ->assertSee('id="inventoryResults"', false)->assertSee('Scan a barcode or search name, code or category');
     }
 }

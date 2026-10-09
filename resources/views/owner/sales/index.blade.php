@@ -33,7 +33,9 @@
                     type="text"
                     name="search"
                     value="{{ request('search') }}"
-                    placeholder="Search transaction ID or product..."
+                    data-scan-search data-scan-submit
+                    autocomplete="off"
+                    placeholder="Scan a barcode or search transaction ID or product..."
                     class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#363E48]/20 focus:border-[#363E48] transition"
                 />
             </div>

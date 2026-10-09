@@ -85,8 +85,8 @@
             @endif
             <div class="flex-1 min-w-[180px]">
                 <label class="block text-xs font-medium text-slate-600 mb-1">Search</label>
-                <input type="text" name="search" value="{{ request('search') }}"
-                       placeholder="Search name, code, barcode or category…" autocomplete="off"
+                <input type="text" name="search" value="{{ request('search') }}" data-scan-search
+                       placeholder="Scan a barcode or search name, code or category…" autocomplete="off"
                        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
             </div>
             <div class="min-w-[160px]">
