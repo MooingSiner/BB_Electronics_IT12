@@ -49,6 +49,7 @@ Route::middleware(['auth', 'role:owner_manager'])->prefix('owner')->name('owner.
     Route::post('/inventory', [OwnerInventoryController::class, 'store'])->name('inventory.store');
     Route::get('/inventory/stock-in', [OwnerInventoryController::class, 'bulkStockIn'])->name('inventory.stockin.bulk');
     Route::post('/inventory/stock-in', [OwnerInventoryController::class, 'bulkStockInStore'])->name('inventory.stockin.bulk.store');
+    Route::get('/inventory/labels', [OwnerInventoryController::class, 'labels'])->name('inventory.labels');
     Route::get('/inventory/{product}', [OwnerInventoryController::class, 'show'])->name('inventory.show');
     Route::get('/inventory/{product}/label', [OwnerInventoryController::class, 'label'])->name('inventory.label');
     Route::get('/inventory/{product}/edit', [OwnerInventoryController::class, 'edit'])->name('inventory.edit');

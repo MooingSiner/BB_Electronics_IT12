@@ -64,6 +64,10 @@
                style="background-color:#363E48">
                 Stock In
             </a>
+            <a href="{{ route('owner.inventory.labels') }}"
+               class="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition">
+                Print Labels
+            </a>
             @endunless
             <a href="{{ route('owner.inventory.index', $showArchived ? [] : ['archived' => 1]) }}"
                class="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition">

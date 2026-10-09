@@ -131,8 +131,7 @@ class InventoryController extends Controller
     public function label(Request $request, Product $product): View
     {
         $copies = min(60, max(1, (int) $request->query('copies', 1)));
-        $size = in_array($request->query('size'), ['xxsmall', 'xsmall', 'small', 'medium', 'large'], true) ? $request->query('size') : 'small';
-        [$width, $scale] = ['xxsmall' => [32, 0.55], 'xsmall' => [45, 0.8], 'small' => [62, 1], 'medium' => [92, 1.5], 'large' => [186, 2.5]][$size];
+        [$size, $width, $scale] = $this->labelSize($request->query('size'));
 
         $item = (object) [
             'id' => $product->product_id,
@@ -143,6 +142,60 @@ class InventoryController extends Controller
         ];
 
         return view('owner.inventory.label', compact('item', 'copies', 'size', 'width', 'scale'));
+    }
+
+    /**
+     * The picker when nothing is chosen yet, or one sheet with the labels of every chosen product.
+     */
+    public function labels(Request $request): View
+    {
+        [$size, $width, $scale] = $this->labelSize($request->query('size'));
+
+        $requested = collect($request->query('items', []))
+            ->filter(fn ($copies, $id) => is_numeric($id) && is_numeric($copies))
+            ->map(fn ($copies) => min(60, max(1, (int) $copies)));
+
+        $products = Product::whereIn('product_id', $requested->keys())->orderBy('product_name')->get();
+
+        if ($products->isEmpty()) {
+            $catalog = Product::where('is_active', true)->orderBy('product_name')->get()->map(fn (Product $product) => [
+                'id' => $product->product_id,
+                'name' => $product->product_name,
+                'code' => $product->product_code,
+                'barcode' => $product->barcode,
+                'stock' => $product->quantity_on_hand,
+            ])->values();
+
+            return view('owner.inventory.labels-select', compact('catalog', 'size'));
+        }
+
+        $labels = $products->map(fn (Product $product) => (object) [
+            'id' => $product->product_id,
+            'name' => $product->product_name,
+            'barcode' => $product->barcode ?: $product->product_code,
+            'unit_price' => (float) $product->unit_price,
+            'cost_code' => $product->costCode(),
+            'copies' => $requested[$product->product_id],
+        ]);
+
+        return view('owner.inventory.labels', [
+            'labels' => $labels,
+            'size' => $size,
+            'width' => $width,
+            'scale' => $scale,
+            'items' => $labels->mapWithKeys(fn ($label) => [$label->id => $label->copies])->all(),
+        ]);
+    }
+
+    /**
+     * @return array{0: string, 1: int, 2: float}
+     */
+    private function labelSize(mixed $requested): array
+    {
+        $sizes = ['xxsmall' => [32, 0.55], 'xsmall' => [45, 0.8], 'small' => [62, 1], 'medium' => [92, 1.5], 'large' => [186, 2.5]];
+        $size = is_string($requested) && isset($sizes[$requested]) ? $requested : 'small';
+
+        return [$size, ...$sizes[$size]];
     }
 
     public function edit(Product $product): View
