@@ -21,6 +21,7 @@
                     <option value="">All Actions</option>
                     <option value="price_change" {{ request('action') === 'price_change' ? 'selected' : '' }}>Price Change</option>
                     <option value="stock_adjustment" {{ request('action') === 'stock_adjustment' ? 'selected' : '' }}>Stock Adjustment</option>
+                    <option value="discount" {{ request('action') === 'discount' ? 'selected' : '' }}>Discount</option>
                     <option value="void" {{ request('action') === 'void' ? 'selected' : '' }}>Void</option>
                     <option value="refund" {{ request('action') === 'refund' ? 'selected' : '' }}>Refund</option>
                     <option value="order_cancelled" {{ request('action') === 'order_cancelled' ? 'selected' : '' }}>Order Cancelled</option>

@@ -10,18 +10,24 @@ class BackupDatabaseTest extends TestCase
 {
     private string $folder;
 
+    /** @var list<string> */
+    private array $existingBackups = [];
+
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->folder = storage_path('framework/testing/backups');
         File::deleteDirectory($this->folder);
+        $this->existingBackups = File::glob(storage_path('app/backups/bb_electronics_*.sql'));
     }
 
     protected function tearDown(): void
     {
         File::deleteDirectory($this->folder);
-        File::deleteDirectory(storage_path('app/backups'));
+        foreach (array_diff(File::glob(storage_path('app/backups/bb_electronics_*.sql')), $this->existingBackups) as $file) {
+            File::delete($file);
+        }
 
         parent::tearDown();
     }
@@ -35,7 +41,7 @@ class BackupDatabaseTest extends TestCase
         $copies = File::glob($this->folder.'/bb_electronics_*.sql');
         $this->assertCount(1, $copies);
         $this->assertStringContainsString('CREATE TABLE sale (id int);', File::get($copies[0]));
-        $this->assertCount(1, File::glob(storage_path('app/backups/bb_electronics_*.sql')));
+        $this->assertCount(count($this->existingBackups) + 1, File::glob(storage_path('app/backups/bb_electronics_*.sql')));
     }
 
     public function test_it_keeps_only_the_newest_backups(): void

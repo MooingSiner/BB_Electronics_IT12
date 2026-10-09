@@ -160,6 +160,9 @@
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
                                     {{ $discount }}% OFF
                                 </span>
+                                @if($txn->discount_reason ?? null)
+                                    <span class="block text-xs text-slate-500 mt-1">{{ $txn->discount_reason }}</span>
+                                @endif
                             </dd>
                         </div>
                     @endif

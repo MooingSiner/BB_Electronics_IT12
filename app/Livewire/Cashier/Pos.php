@@ -4,9 +4,11 @@ namespace App\Livewire\Cashier;
 
 use App\Enums\PaymentMethod;
 use App\Enums\SaleStatus;
+use App\Models\AuditLog;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Support\DiscountReasons;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +31,10 @@ class Pos extends Component
 
     public ?float $discountValue = 0;
 
+    public string $discountReason = '';
+
+    public string $discountNote = '';
+
     public string $payment = 'Cash';
 
     public ?float $amountReceived = 0;
@@ -43,6 +49,8 @@ class Pos extends Component
         $this->cart = session('cart', []);
         $this->discountType = session('discount_type', 'none');
         $this->discountValue = (float) session('discount_value', 0);
+        $this->discountReason = session('discount_reason', '');
+        $this->discountNote = session('discount_note', '');
         $this->payment = session('payment', 'Cash');
         $this->amountReceived = (float) session('amount_received', 0);
     }
@@ -126,11 +134,13 @@ class Pos extends Component
         $this->cart = [];
         $this->discountType = 'none';
         $this->discountValue = 0;
+        $this->discountReason = '';
+        $this->discountNote = '';
         $this->payment = 'Cash';
         $this->amountReceived = 0;
         $this->errorMessage = null;
 
-        session()->forget(['cart', 'discount_type', 'discount_value', 'payment', 'amount_received']);
+        session()->forget(['cart', 'discount_type', 'discount_value', 'discount_reason', 'discount_note', 'payment', 'amount_received']);
     }
 
     public function setDiscountType(string $type): void
@@ -139,9 +149,30 @@ class Pos extends Component
 
         if ($type === 'none') {
             $this->discountValue = 0;
+            $this->discountReason = '';
+            $this->discountNote = '';
         }
 
-        session(['discount_type' => $type, 'discount_value' => (float) $this->discountValue]);
+        session([
+            'discount_type' => $type,
+            'discount_value' => (float) $this->discountValue,
+            'discount_reason' => $this->discountReason,
+            'discount_note' => $this->discountNote,
+        ]);
+    }
+
+    public function updatedDiscountReason(string $value): void
+    {
+        if ($value !== DiscountReasons::OTHER) {
+            $this->discountNote = '';
+        }
+
+        session(['discount_reason' => $value, 'discount_note' => $this->discountNote]);
+    }
+
+    public function updatedDiscountNote(string $value): void
+    {
+        session(['discount_note' => $value]);
     }
 
     public function setPayment(string $method): void
@@ -187,6 +218,20 @@ class Pos extends Component
         $discountAmount = $this->calculateDiscount($subtotal);
         $total = max(0, $subtotal - $discountAmount);
 
+        $discountReason = null;
+
+        if ($discountAmount > 0) {
+            $discountReason = DiscountReasons::resolve($this->discountReason, $this->discountNote);
+
+            if ($discountReason === null) {
+                $this->errorMessage = $this->discountReason === DiscountReasons::OTHER
+                    ? 'Type the reason for the discount.'
+                    : 'Choose a reason for the discount.';
+
+                return;
+            }
+        }
+
         $paymentMethod = match ($this->payment) {
             'GCash' => PaymentMethod::GCash,
             'Cheque' => PaymentMethod::Cheque,
@@ -209,12 +254,13 @@ class Pos extends Component
 
         $cartSnapshot = $this->cart;
 
-        $sale = DB::transaction(function () use ($cartSnapshot, $subtotal, $discountAmount, $total, $paymentMethod, $amountReceived, $changeAmount) {
+        $sale = DB::transaction(function () use ($cartSnapshot, $subtotal, $discountAmount, $discountReason, $total, $paymentMethod, $amountReceived, $changeAmount) {
             $sale = Sale::create([
                 'user_id' => Auth::id(),
                 'sale_date' => now(),
                 'subtotal' => $subtotal,
                 'discount_amount' => $discountAmount,
+                'discount_reason' => $discountReason,
                 'total_amount' => $total,
                 'payment_method' => $paymentMethod,
                 'amount_paid' => $amountReceived,
@@ -230,6 +276,10 @@ class Pos extends Component
                     'unit_price' => $item['price'],
                     'subtotal' => $item['price'] * $item['quantity'],
                 ]);
+            }
+
+            if ($discountReason !== null) {
+                AuditLog::record('discount', 'Gave a discount of ₱'.number_format($discountAmount, 2).' on '.$sale->code().' ('.$discountReason.').');
             }
 
             return $sale;
@@ -260,6 +310,7 @@ class Pos extends Component
             'code' => $sale->code(),
             'subtotal' => number_format($subtotal, 2),
             'discount' => number_format($discountAmount, 2),
+            'discount_reason' => $discountReason,
             'total' => number_format($total, 2),
             'payment' => $this->payment,
             'received' => number_format($amountReceived, 2),
@@ -269,11 +320,13 @@ class Pos extends Component
         $this->cart = [];
         $this->discountType = 'none';
         $this->discountValue = 0;
+        $this->discountReason = '';
+        $this->discountNote = '';
         $this->payment = 'Cash';
         $this->amountReceived = 0;
         $this->errorMessage = null;
 
-        session()->forget(['cart', 'discount_type', 'discount_value', 'payment', 'amount_received']);
+        session()->forget(['cart', 'discount_type', 'discount_value', 'discount_reason', 'discount_note', 'payment', 'amount_received']);
     }
 
     private function syncCartSession(): void

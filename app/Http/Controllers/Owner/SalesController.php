@@ -75,6 +75,7 @@ class SalesController extends Controller
             'discount_pct' => (float) $sale->subtotal > 0 ? round(((float) $sale->discount_amount / (float) $sale->subtotal) * 100) : 0,
             'subtotal' => (float) $sale->subtotal,
             'discount_amount' => (float) $sale->discount_amount,
+            'discount_reason' => $sale->discount_reason,
             'total_amount' => (float) $sale->total_amount,
             'items' => $sale->items->map(fn ($item) => (object) [
                 'product_name' => $item->product->product_name ?? '—',
@@ -130,6 +131,7 @@ class SalesController extends Controller
             'processed_by' => $sale->user->full_name ?? '—',
             'subtotal' => (float) $sale->subtotal,
             'discount_amount' => (float) $sale->discount_amount,
+            'discount_reason' => $sale->discount_reason,
             'total' => (float) $sale->total_amount,
             'payment_method' => $sale->payment_method->label(),
             'amount_paid' => (float) $sale->amount_paid,

@@ -66,6 +66,7 @@ class SalesController extends Controller
             'total' => (float) $sale->total_amount,
             'subtotal' => (float) $sale->subtotal,
             'discount_amount' => (float) $sale->discount_amount,
+            'discount_reason' => $sale->discount_reason,
             'payment_method' => $sale->payment_method->label(),
             'amount_paid' => (float) $sale->amount_paid,
             'change_amount' => (float) $sale->change_amount,

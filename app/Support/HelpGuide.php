@@ -92,7 +92,7 @@ class HelpGuide
         return [
             ['title' => 'Make a sale', 'steps' => [
                 ['text' => 'Scan the barcode or type in the search box, then tap a product to add it. Tapping it again adds one more.', 'image' => 'c-sale-1'],
-                ['text' => 'Press the Cart button. Change quantities, pick a discount if needed, choose the payment method, enter the amount received, then press Complete Sale and print the receipt.', 'image' => 'c-sale-2'],
+                ['text' => 'Press the Cart button. Change quantities, pick a discount if needed (and the reason for it), choose the payment method, enter the amount received, then press Complete Sale and print the receipt.', 'image' => 'c-sale-2'],
             ]],
             ['title' => 'Reprint a receipt', 'steps' => [
                 ['text' => 'In Sales Transactions, press the eye icon on the sale (or the printer icon to print straight away).', 'image' => 'c-rec-1'],
