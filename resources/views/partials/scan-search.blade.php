@@ -1,10 +1,13 @@
 <script>
     // A barcode scanner types like a very fast keyboard. The search box that has data-scan-search
     // is focused on its own, picks up scans typed anywhere on the page, and each new scan replaces the last one.
+    // data-scan-submit sends the form after a scan; data-scan-enter presses Enter for scanners that do not.
     (function () {
-        var input = document.querySelector('input[data-scan-search]');
+        function searchBox() {
+            return document.querySelector('input[data-scan-search]');
+        }
 
-        if (!input) {
+        if (!searchBox()) {
             return;
         }
 
@@ -14,8 +17,12 @@
         var timer = null;
 
         function focusAndSelect() {
-            input.focus();
-            input.select();
+            var input = searchBox();
+
+            if (input) {
+                input.focus();
+                input.select();
+            }
         }
 
         if (window.matchMedia('(pointer: fine)').matches) {
@@ -23,7 +30,9 @@
         }
 
         document.addEventListener('keydown', function (event) {
-            if (event.ctrlKey || event.metaKey || event.altKey || event.key.length !== 1) {
+            var input = searchBox();
+
+            if (!input || event.ctrlKey || event.metaKey || event.altKey || event.key.length !== 1) {
                 return;
             }
 
@@ -51,8 +60,16 @@
             timer = setTimeout(function () {
                 lastWasScan = fastKeys >= 4;
 
-                if (lastWasScan && input.hasAttribute('data-scan-submit') && input.form) {
-                    input.form.requestSubmit();
+                var box = searchBox();
+
+                if (!lastWasScan || !box) {
+                    return;
+                }
+
+                if (box.hasAttribute('data-scan-submit') && box.form) {
+                    box.form.requestSubmit();
+                } else if (box.hasAttribute('data-scan-enter')) {
+                    box.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
                 }
             }, 250);
         });

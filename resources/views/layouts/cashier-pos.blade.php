@@ -137,6 +137,7 @@
     });
 </script>
 @include('partials.confirm-dialog')
+@include('partials.scan-search')
 @include('partials.help-guide', ['helpRole' => 'cashier'])
 </body>
 </html>

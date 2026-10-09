@@ -31,4 +31,13 @@ class ScanSearchTest extends TestCase
                 ->assertSee("document.querySelector('input[data-scan-search]')", false);
         }
     }
+
+    public function test_the_point_of_sale_search_box_takes_scans_without_clicking_and_presses_enter_for_the_scanner(): void
+    {
+        $this->actingAs(User::factory()->cashierAttendant()->create())
+            ->get(route('cashier.pos'))
+            ->assertOk()
+            ->assertSee('data-scan-search data-scan-enter', false)
+            ->assertSee("document.querySelector('input[data-scan-search]')", false);
+    }
 }

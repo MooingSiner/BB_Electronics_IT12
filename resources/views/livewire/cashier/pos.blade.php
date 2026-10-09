@@ -25,6 +25,7 @@
                        wire:model.live.debounce.300ms="search"
                        wire:keydown.enter="scan"
                        autofocus
+                       data-scan-search data-scan-enter
                        placeholder="Scan barcode or search product..."
                        class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-transparent"
                        style="--tw-ring-color:#363E48;" />
