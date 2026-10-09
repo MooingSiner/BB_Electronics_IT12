@@ -90,7 +90,7 @@ class VoidSaleAndCancelOrderTest extends TestCase
         $supplierOrder = PurchaseOrder::factory()->create(['status' => PurchaseOrderStatus::Pending]);
         OrderItem::factory()->create(['order_id' => $supplierOrder->order_id, 'quantity_received' => 0]);
 
-        $this->actingAs($owner)->post(route('owner.suppliers.cancel', $supplierOrder->order_id))
+        $this->actingAs($owner)->post(route('owner.suppliers.cancel', $supplierOrder->order_id), ['reason' => 'Ordered by mistake'])
             ->assertSessionHas('success');
 
         $this->assertSame(PurchaseOrderStatus::Cancelled, $supplierOrder->fresh()->status);

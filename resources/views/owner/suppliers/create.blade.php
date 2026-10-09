@@ -145,12 +145,13 @@
                     style="background-color:#363E48">
                 Submit Order
             </button>
-            <a href="{{ route('owner.suppliers.index') }}"
+            <a href="{{ route('owner.suppliers.index') }}" id="discardOrder"
                class="px-5 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition">
                 Cancel
             </a>
         </div>
     </form>
+    @include('owner.partials.discard-order-confirm')
     </div>
 @endsection
 

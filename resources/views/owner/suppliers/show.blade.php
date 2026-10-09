@@ -40,13 +40,7 @@
                 Receipt
             </a>
             @if($order->can_cancel ?? false)
-            <form method="POST" action="{{ route('owner.suppliers.cancel', $order->id) }}"
-                  onsubmit="return confirm('Cancel this order? Nothing has been received yet, so stock is not affected. This cannot be undone.')">
-                @csrf
-                <button type="submit" class="px-4 py-2 text-sm font-medium rounded-lg border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition">
-                    Cancel Order
-                </button>
-            </form>
+            @include('owner.partials.cancel-order', ['action' => route('owner.suppliers.cancel', $order->id)])
             @endif
             @if($order->is_archived ?? false)
             <form method="POST" action="{{ route('owner.suppliers.restore', $order->id ?? 0) }}">
@@ -110,6 +104,9 @@
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Partially Received</span>
                             @elseif($status === 'Cancelled')
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Cancelled</span>
+                                @if($order->cancel_reason ?? null)
+                                    <span class="block text-xs text-slate-500 mt-1 text-right">{{ $order->cancel_reason }}</span>
+                                @endif
                             @else
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Ordered</span>
                             @endif

@@ -14,10 +14,12 @@ use App\Models\PurchaseOrder;
 use App\Models\ReturnRecord;
 use App\Models\StockAdjustment;
 use App\Models\Supplier;
+use App\Support\CancelReasons;
 use App\Support\PerPage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class SupplierController extends Controller
@@ -76,7 +78,7 @@ class SupplierController extends Controller
         return back()->with('success', 'Order archived.');
     }
 
-    public function cancelOrder(PurchaseOrder $order): RedirectResponse
+    public function cancelOrder(Request $request, PurchaseOrder $order): RedirectResponse
     {
         abort_unless($order->supplier_id, 404);
 
@@ -84,10 +86,17 @@ class SupplierController extends Controller
             return back()->with('error', $reason);
         }
 
-        $order->items()->update(['is_cancelled' => true]);
-        $order->update(['status' => PurchaseOrderStatus::Cancelled]);
+        $request->validate([
+            'reason' => ['required', Rule::in(CancelReasons::options())],
+            'note' => ['nullable', 'string', 'max:60', Rule::requiredIf($request->input('reason') === CancelReasons::OTHER)],
+        ]);
 
-        AuditLog::record('order_cancelled', "Cancelled order #{$order->order_id}.");
+        $cancelReason = CancelReasons::resolve($request->string('reason')->toString(), $request->string('note')->toString());
+
+        $order->items()->update(['is_cancelled' => true]);
+        $order->update(['status' => PurchaseOrderStatus::Cancelled, 'cancel_reason' => $cancelReason]);
+
+        AuditLog::record('order_cancelled', "Cancelled order #{$order->order_id} ({$cancelReason}).");
 
         return back()->with('success', 'Order cancelled.');
     }
@@ -198,6 +207,7 @@ class SupplierController extends Controller
             'status' => $statusLabels[$order->status->value] ?? 'Ordered',
             'is_archived' => $order->is_archived,
             'can_cancel' => $order->cancelBlockedReason() === null,
+            'cancel_reason' => $order->cancel_reason,
             'total_cost' => $order->items->sum(fn (OrderItem $i) => (float) $i->unit_cost * $i->quantity_ordered),
             'items' => $order->items->map(function (OrderItem $i) use ($damageInfoByProduct) {
                 $info = $damageInfoByProduct->get($i->product_id);
