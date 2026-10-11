@@ -23,6 +23,7 @@
             opacity: 0; visibility: hidden; pointer-events: none; z-index: 40;
         }
         .tip:hover::after, .tip:focus-visible::after { opacity: 1; visibility: visible; }
+        .tip-wide::after { white-space: normal; width: max-content; max-width: 300px; text-align: left; line-height: 1.35; left: 0; transform: none; }
         @media (min-width: 1024px) {
             .sb-collapsed .sb-label { display: none; }
             .sb-collapsed .sb-link, .sb-collapsed .sb-logo { justify-content: center; padding-left: 0; padding-right: 0; }
