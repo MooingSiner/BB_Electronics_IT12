@@ -55,9 +55,9 @@
                         <tr class="hover:bg-slate-50 transition-colors">
                             <td class="px-6 py-4 font-medium text-slate-800">{{ $return->id }}</td>
                             <td class="px-6 py-4 text-slate-600">{{ $return->transaction_id }}</td>
-                            <td class="px-6 py-4 text-slate-700">{{ $return->product_name }}</td>
+                            <td class="px-6 py-4 text-slate-700"><div class="tip tip-wide" data-tip="{{ $return->product_name }}"><span class="block max-w-[8rem] truncate">{{ $return->product_name }}</span></div></td>
                             <td class="px-6 py-4 text-slate-600">{{ $return->qty }}</td>
-                            <td class="px-6 py-4 text-slate-600 max-w-xs truncate">{{ $return->reason }}</td>
+                            <td class="px-6 py-4 text-slate-600"><div class="tip tip-wide" data-tip="{{ $return->reason }}"><span class="block max-w-[8rem] truncate">{{ $return->reason }}</span></div></td>
                             <td class="px-6 py-4 text-slate-600">{{ $return->resolution }}</td>
                             <td class="px-6 py-4 text-slate-500">{{ $return->created_at?->format('M d, Y') }}</td>
                             <td class="px-6 py-4">
@@ -120,9 +120,9 @@
                         <tr class="hover:bg-slate-50 transition-colors">
                             <td class="px-6 py-4 font-medium text-slate-800">{{ $w->id }}</td>
                             <td class="px-6 py-4 text-slate-600">{{ $w->transaction_id }}</td>
-                            <td class="px-6 py-4 text-slate-700">{{ $w->product_name }}</td>
+                            <td class="px-6 py-4 text-slate-700"><div class="tip tip-wide" data-tip="{{ $w->product_name }}"><span class="block max-w-[8rem] truncate">{{ $w->product_name }}</span></div></td>
                             <td class="px-6 py-4 text-slate-600">{{ $w->warranty_ref }}</td>
-                            <td class="px-6 py-4 text-slate-600 max-w-xs truncate">{{ $w->issue }}</td>
+                            <td class="px-6 py-4 text-slate-600"><div class="tip tip-wide" data-tip="{{ $w->issue }}"><span class="block max-w-[8rem] truncate">{{ $w->issue }}</span></div></td>
                             <td class="px-6 py-4 text-slate-500">{{ $w->created_at?->format('M d, Y') }}</td>
                             <td class="px-6 py-4">
                                 @if($w->status === 'Under Review')

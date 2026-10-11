@@ -78,8 +78,8 @@
                             <span class="text-slate-400">—</span>
                             @endif
                         </td>
-                        <td class="px-5 py-4 font-medium text-slate-800">{{ $ret->product_name ?? '—' }}</td>
-                        <td class="px-5 py-4 text-slate-600 max-w-36 truncate">{{ $ret->reason ?? '—' }}</td>
+                        <td class="px-5 py-4 font-medium text-slate-800"><div class="tip tip-wide" data-tip="{{ $ret->product_name ?? '—' }}"><span class="block max-w-[8rem] truncate">{{ $ret->product_name ?? '—' }}</span></div></td>
+                        <td class="px-5 py-4 text-slate-600"><div class="tip tip-wide" data-tip="{{ $ret->reason ?? '—' }}"><span class="block max-w-[8rem] truncate">{{ $ret->reason ?? '—' }}</span></div></td>
                         <td class="px-5 py-4 font-semibold text-slate-800">₱{{ number_format($ret->amount ?? 0, 2) }}</td>
                         <td class="px-5 py-4 text-slate-500 whitespace-nowrap">{{ \Carbon\Carbon::parse($ret->created_at)->format('M d, Y') }}</td>
                         <td class="px-5 py-4 text-slate-600">{{ $ret->processed_by ?? $ret->user->name ?? '—' }}</td>
@@ -148,8 +148,8 @@
                     @forelse($warranties ?? [] as $w)
                     <tr class="hover:bg-slate-50 transition-colors">
                         <td class="px-5 py-4 text-slate-500 font-mono text-xs">#{{ $w->id }}</td>
-                        <td class="px-5 py-4 font-medium text-slate-800">{{ $w->product_name ?? '—' }}</td>
-                        <td class="px-5 py-4 text-slate-600 max-w-40 truncate">{{ $w->issue ?? '—' }}</td>
+                        <td class="px-5 py-4 font-medium text-slate-800"><div class="tip tip-wide" data-tip="{{ $w->product_name ?? '—' }}"><span class="block max-w-[8rem] truncate">{{ $w->product_name ?? '—' }}</span></div></td>
+                        <td class="px-5 py-4 text-slate-600"><div class="tip tip-wide" data-tip="{{ $w->issue ?? '—' }}"><span class="block max-w-[8rem] truncate">{{ $w->issue ?? '—' }}</span></div></td>
                         <td class="px-5 py-4 text-slate-500 whitespace-nowrap">
                             {{ $w->purchase_date ? \Carbon\Carbon::parse($w->purchase_date)->format('M d, Y') : '—' }}
                         </td>
