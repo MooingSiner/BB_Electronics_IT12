@@ -79,8 +79,8 @@
                     <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Product(s)</th>
                     <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Qty</th>
                     <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Unit Price</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Total</th>
                     <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Discount</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Total</th>
                     <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Payment</th>
                     <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Date</th>
                     <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Processed By</th>
@@ -97,7 +97,6 @@
                         <td class="px-5 py-3 text-slate-700"><div class="tip tip-wide" data-tip="{{ $txn->products }}"><span class="block max-w-[180px] truncate">{{ $txn->products }}</span></div></td>
                         <td class="px-5 py-3 text-slate-600">{{ $txn->qty ?? '—' }}</td>
                         <td class="px-5 py-3 text-slate-600"><div class="tip tip-wide" data-tip="{{ $txn->unit_prices }}"><span class="block max-w-[140px] truncate">{{ $txn->unit_prices }}</span></div></td>
-                        <td class="px-5 py-3 font-medium text-slate-800">{{ $txn->total }}</td>
                         <td class="px-5 py-3">
                             @if($txn->discount)
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
@@ -107,6 +106,7 @@
                                 <span class="text-slate-400">—</span>
                             @endif
                         </td>
+                        <td class="px-5 py-3 font-medium text-slate-800">{{ $txn->total }}</td>
                         <td class="px-5 py-3 text-slate-600">{{ $txn->payment_method ?? '—' }}</td>
                         <td class="px-5 py-3 text-slate-600 whitespace-nowrap">{{ $txn->date ?? '—' }}</td>
                         <td class="px-5 py-3 text-slate-600">{{ $txn->processed_by ?? '—' }}</td>

@@ -95,8 +95,8 @@
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Product(s)</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Qty</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Unit Price</th>
-                        <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Total</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Discount</th>
+                        <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Total</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Payment</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Date</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Processed By</th>
@@ -116,7 +116,6 @@
                         <td class="px-5 py-4 text-slate-700"><div class="tip tip-wide" data-tip="{{ $txn->items_summary ?? $txn->product_name ?? '—' }}"><span class="block max-w-48 truncate">{{ $txn->items_summary ?? $txn->product_name ?? '—' }}</span></div></td>
                         <td class="px-5 py-4 text-slate-600">{{ $txn->total_qty ?? '—' }}</td>
                         <td class="px-5 py-4 text-slate-600"><div class="tip tip-wide" data-tip="{{ $txn->unit_prices }}"><span class="block max-w-40 truncate">{{ $txn->unit_prices }}</span></div></td>
-                        <td class="px-5 py-4 font-semibold text-slate-800">₱{{ number_format($txn->total, 2) }}</td>
                         <td class="px-5 py-4 text-slate-600">
                             @if(($txn->discount_amount ?? 0) > 0)
                                 <span class="text-green-600">−₱{{ number_format($txn->discount_amount, 2) }}</span>
@@ -124,6 +123,7 @@
                                 <span class="text-slate-400">—</span>
                             @endif
                         </td>
+                        <td class="px-5 py-4 font-semibold text-slate-800">₱{{ number_format($txn->total, 2) }}</td>
                         <td class="px-5 py-4 text-slate-600">{{ $txn->payment_method ?? '—' }}</td>
                         <td class="px-5 py-4 text-slate-500 whitespace-nowrap">{{ \Carbon\Carbon::parse($txn->created_at)->format('M d, Y') }}</td>
                         <td class="px-5 py-4 text-slate-600">{{ $txn->processed_by ?? $txn->user->name ?? '—' }}</td>
