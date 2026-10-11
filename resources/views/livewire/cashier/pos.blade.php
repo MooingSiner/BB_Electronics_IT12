@@ -47,7 +47,7 @@
 
         {{-- Product Grid --}}
         <div class="flex-1 overflow-y-auto p-4" wire:loading.class="opacity-60">
-            <div class="grid grid-cols-2 gap-2.5 sm:gap-3 sm:[grid-template-columns:repeat(auto-fill,minmax(150px,1fr))]">
+            <div class="grid grid-cols-2 gap-2.5 sm:gap-3 sm:[grid-template-columns:repeat(auto-fill,minmax(175px,1fr))]">
                 @forelse($products as $product)
                 @php
                     $outOfStock = $product->stock <= 0;
