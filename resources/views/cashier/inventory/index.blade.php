@@ -99,7 +99,7 @@
                             @endif
                         </td>
                         <td class="px-5 py-4">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
+                            <span class="inline-flex items-center whitespace-nowrap px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
                                 {{ $product->category }}
                             </span>
                         </td>
@@ -112,11 +112,11 @@
                         <td class="px-5 py-4 text-slate-500">{{ $product->reorder_level ?? '—' }}</td>
                         <td class="px-5 py-4">
                             @if($product->stock == 0)
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Out of Stock</span>
+                                <span class="inline-flex items-center whitespace-nowrap px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Out of Stock</span>
                             @elseif($product->stock <= ($product->reorder_level ?? 5))
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Low Stock</span>
+                                <span class="inline-flex items-center whitespace-nowrap px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Low Stock</span>
                             @else
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">In Stock</span>
+                                <span class="inline-flex items-center whitespace-nowrap px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">In Stock</span>
                             @endif
                         </td>
                         <td class="sticky right-0 px-5 py-4 bg-white shadow-[-6px_0_8px_-6px_rgba(0,0,0,0.15)]">
