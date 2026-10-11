@@ -94,9 +94,9 @@
                         <td class="px-5 py-3">
                             <span class="font-mono text-xs text-slate-700">{{ $txn->code }}</span>
                         </td>
-                        <td class="px-5 py-3 text-slate-700"><div class="tip tip-wide" data-tip="{{ $txn->products }}"><span class="block max-w-[180px] truncate">{{ $txn->products }}</span></div></td>
+                        <td class="px-5 py-3 text-slate-700"><div class="tip tip-wide" data-tip="{{ $txn->products }}"><span class="block max-w-[6.5rem] truncate">{{ $txn->products }}</span></div></td>
                         <td class="px-5 py-3 text-slate-600">{{ $txn->qty ?? '—' }}</td>
-                        <td class="px-5 py-3 text-slate-600"><div class="tip tip-wide" data-tip="{{ $txn->unit_prices }}"><span class="block max-w-[140px] truncate">{{ $txn->unit_prices }}</span></div></td>
+                        <td class="px-5 py-3 text-slate-600"><div class="tip tip-wide" data-tip="{{ $txn->unit_prices }}"><span class="block max-w-[6.5rem] truncate">{{ $txn->unit_prices }}</span></div></td>
                         <td class="px-5 py-3">
                             @if(($txn->discount_amount ?? 0) > 0)
                                 <span class="tip inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 cursor-default" data-tip="−₱{{ number_format($txn->discount_amount, 2) }}">{{ $txn->discount }}%</span>
