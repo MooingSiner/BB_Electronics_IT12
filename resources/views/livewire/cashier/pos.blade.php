@@ -47,7 +47,7 @@
 
         {{-- Product Grid --}}
         <div class="flex-1 overflow-y-auto p-4" wire:loading.class="opacity-60">
-            <div class="grid grid-cols-2 gap-3 sm:gap-4 sm:[grid-template-columns:repeat(auto-fill,minmax(200px,1fr))]">
+            <div class="grid grid-cols-2 gap-2.5 sm:gap-3 sm:[grid-template-columns:repeat(auto-fill,minmax(150px,1fr))]">
                 @forelse($products as $product)
                 @php
                     $outOfStock = $product->stock <= 0;
@@ -55,7 +55,7 @@
                     $borderClass = $qtyInCart > 0 ? 'border-[#363E48] shadow-md' : 'border-slate-200';
                 @endphp
                 <div @if(! $outOfStock) wire:click="addToCart({{ $product->id }})" @endif
-                     class="bg-white rounded-xl p-2.5 sm:p-4 relative transition-shadow border-2 {{ $borderClass }}
+                     class="bg-white rounded-xl p-2.5 sm:p-3 relative transition-shadow border-2 {{ $borderClass }}
                     {{ $outOfStock ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-md' }}">
                     @if($qtyInCart > 0)
                         <span class="absolute -top-2 -right-2 z-10 inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 rounded-full text-xs font-bold text-white shadow"
