@@ -36,6 +36,7 @@ class SalesController extends Controller
                 'unit_prices' => $sale->items->map(fn ($item) => '₱'.number_format((float) $item->unit_price, 2))->implode(', '),
                 'total' => '₱'.number_format((float) $sale->total_amount, 2),
                 'discount' => (float) $sale->subtotal > 0 ? round(((float) $sale->discount_amount / (float) $sale->subtotal) * 100) : 0,
+                'discount_amount' => (float) $sale->discount_amount,
                 'payment_method' => $sale->payment_method->label(),
                 'date' => $sale->sale_date->format('M d, Y'),
                 'processed_by' => $sale->user->full_name ?? '—',

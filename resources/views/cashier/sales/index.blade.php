@@ -119,6 +119,9 @@
                         <td class="px-5 py-4 text-slate-600">
                             @if(($txn->discount_amount ?? 0) > 0)
                                 <span class="text-green-600">−₱{{ number_format($txn->discount_amount, 2) }}</span>
+                                @if((float) $txn->subtotal > 0)
+                                    <span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">{{ round(((float) $txn->discount_amount / (float) $txn->subtotal) * 100) }}%</span>
+                                @endif
                             @else
                                 <span class="text-slate-400">—</span>
                             @endif
