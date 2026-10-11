@@ -90,13 +90,13 @@
             </thead>
             <tbody class="divide-y divide-slate-100">
                 @forelse($transactions ?? [] as $txn)
-                    <tr class="hover:bg-slate-50 transition-colors">
+                    <tr class="group hover:bg-slate-50 transition-colors">
                         <td class="px-5 py-3">
                             <span class="font-mono text-xs text-slate-700">{{ $txn->code }}</span>
                         </td>
-                        <td class="px-5 py-3 text-slate-700 max-w-[180px] truncate">{{ $txn->products }}</td>
+                        <td class="px-5 py-3 text-slate-700 max-w-[180px] truncate group-hover:whitespace-normal group-hover:break-words">{{ $txn->products }}</td>
                         <td class="px-5 py-3 text-slate-600">{{ $txn->qty ?? '—' }}</td>
-                        <td class="px-5 py-3 text-slate-600 max-w-[140px] truncate" title="{{ $txn->unit_prices }}">{{ $txn->unit_prices }}</td>
+                        <td class="px-5 py-3 text-slate-600 max-w-[140px] truncate group-hover:whitespace-normal group-hover:break-words" title="{{ $txn->unit_prices }}">{{ $txn->unit_prices }}</td>
                         <td class="px-5 py-3 font-medium text-slate-800">{{ $txn->total }}</td>
                         <td class="px-5 py-3">
                             @if($txn->discount)

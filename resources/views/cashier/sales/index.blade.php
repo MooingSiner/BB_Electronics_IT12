@@ -106,16 +106,16 @@
                 </thead>
                 <tbody class="divide-y divide-slate-50">
                     @forelse($transactions as $txn)
-                    <tr class="hover:bg-slate-50 transition-colors">
+                    <tr class="group hover:bg-slate-50 transition-colors">
                         <td class="px-5 py-4">
                             <a href="{{ route('cashier.sales.show', $txn->id) }}"
                                class="font-medium hover:underline" style="color:#363E48;">
                                 {{ $txn->code }}
                             </a>
                         </td>
-                        <td class="px-5 py-4 text-slate-700 max-w-48 truncate">{{ $txn->items_summary ?? $txn->product_name ?? '—' }}</td>
+                        <td class="px-5 py-4 text-slate-700 max-w-48 truncate group-hover:whitespace-normal group-hover:break-words">{{ $txn->items_summary ?? $txn->product_name ?? '—' }}</td>
                         <td class="px-5 py-4 text-slate-600">{{ $txn->total_qty ?? '—' }}</td>
-                        <td class="px-5 py-4 text-slate-600 max-w-40 truncate" title="{{ $txn->unit_prices }}">{{ $txn->unit_prices }}</td>
+                        <td class="px-5 py-4 text-slate-600 max-w-40 truncate group-hover:whitespace-normal group-hover:break-words" title="{{ $txn->unit_prices }}">{{ $txn->unit_prices }}</td>
                         <td class="px-5 py-4 font-semibold text-slate-800">₱{{ number_format($txn->total, 2) }}</td>
                         <td class="px-5 py-4 text-slate-600">
                             @if(($txn->discount_amount ?? 0) > 0)
