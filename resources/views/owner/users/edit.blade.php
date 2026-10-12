@@ -7,14 +7,14 @@
 @section('content')
     {{-- Back Link --}}
     <a href="{{ route('owner.users.index') }}"
-       class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-4 transition">
+       class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-2 transition">
         ← Back to User Management
     </a>
 
-    <div class="max-w-xl mx-auto">
+    <div class="max-w-2xl mx-auto">
 
     {{-- Page Header --}}
-    <h1 class="text-2xl font-bold mb-6 text-center" style="color:#363E48">Edit User</h1>
+    <h1 class="text-2xl font-bold mb-3 text-center" style="color:#363E48">Edit User</h1>
 
     {{-- Validation Errors --}}
     @if($errors->any())
@@ -33,7 +33,7 @@
         @csrf
         @method('PUT')
 
-        <div class="bg-white rounded-xl shadow border border-slate-200 p-6 space-y-5">
+        <div class="bg-white rounded-xl shadow border border-slate-200 p-5 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
 
             {{-- Full Name --}}
             <div>
@@ -87,8 +87,8 @@
                 @enderror
             </div>
 
-            <hr class="border-slate-200">
-            <p class="text-xs text-slate-500">Leave blank to keep the current password.</p>
+            <hr class="border-slate-200 sm:col-span-2">
+            <p class="text-xs text-slate-500 sm:col-span-2 -mt-1">Leave blank to keep the current password.</p>
 
             {{-- Password --}}
             <div>
@@ -110,7 +110,7 @@
         </div>
 
         {{-- Form Buttons --}}
-        <div class="flex items-center gap-3 mt-5">
+        <div class="flex items-center gap-3 mt-4">
             <button type="submit"
                     class="flex-1 px-5 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition shadow-sm"
                     style="background-color:#363E48">

@@ -4,7 +4,7 @@
 @php $activeNav = ''; @endphp
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-3">
 
     {{-- Page Header --}}
     <div>
@@ -12,10 +12,10 @@
     </div>
 
     {{-- Main Grid --}}
-    <div class="grid grid-cols-3 gap-6 items-start">
+    <div class="grid grid-cols-3 gap-4 items-start">
 
         {{-- LEFT: Profile Card --}}
-        <div class="bg-white rounded-xl border shadow-sm p-6 text-center">
+        <div class="bg-white rounded-xl border shadow-sm p-5 text-center">
             {{-- Avatar --}}
             @include('partials.avatar', ['avatarSize' => 'w-24 h-24 text-2xl', 'avatarClass' => 'mx-auto'])
             <form method="POST" action="{{ route('owner.profile.photo') }}" enctype="multipart/form-data" class="mt-3"
@@ -40,12 +40,12 @@
         </div>
 
         {{-- RIGHT: Forms --}}
-        <div class="col-span-2 space-y-5">
+        <div class="col-span-2 space-y-4">
 
             {{-- Personal Information --}}
-            <div class="bg-white rounded-xl border shadow-sm p-6">
-                <h2 class="font-semibold text-slate-800 mb-4">Personal Information</h2>
-                <form method="POST" action="{{ route('owner.profile.update') }}" class="space-y-4">
+            <div class="bg-white rounded-xl border shadow-sm p-5">
+                <h2 class="font-semibold text-slate-800 mb-3">Personal Information</h2>
+                <form method="POST" action="{{ route('owner.profile.update') }}" class="grid grid-cols-2 gap-x-4 gap-y-3">
                     @csrf
                     @method('PATCH')
                     <div>
@@ -66,14 +66,14 @@
                             <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                         @enderror
                     </div>
-                    <div>
+                    <div class="col-span-2">
                         <label class="block text-sm font-medium text-slate-700 mb-1">Role</label>
                         <div class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600">
                             Owner / Manager
                         </div>
                         <p class="text-xs text-slate-400 mt-1">Role can only be changed by a system administrator.</p>
                     </div>
-                    <div>
+                    <div class="col-span-2">
                         <button type="submit"
                                 class="px-5 py-2 text-sm font-medium text-white rounded-lg transition-opacity hover:opacity-90"
                                 style="background-color:#363E48">
@@ -84,9 +84,9 @@
             </div>
 
             {{-- Change Password --}}
-            <div class="bg-white rounded-xl border shadow-sm p-6">
-                <h2 class="font-semibold text-slate-800 mb-4">Change Password</h2>
-                <form method="POST" action="{{ route('owner.profile.password') }}" class="space-y-4">
+            <div class="bg-white rounded-xl border shadow-sm p-5">
+                <h2 class="font-semibold text-slate-800 mb-3">Change Password</h2>
+                <form method="POST" action="{{ route('owner.profile.password') }}" class="grid grid-cols-3 gap-x-4 gap-y-3">
                     @csrf
                     @method('PATCH')
                     <div>
@@ -110,7 +110,7 @@
                         <input type="password" id="password_confirmation" name="password_confirmation"
                                class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
                     </div>
-                    <div>
+                    <div class="col-span-3">
                         <button type="submit"
                                 class="px-5 py-2 text-sm font-medium text-white rounded-lg transition-opacity hover:opacity-90"
                                 style="background-color:#363E48">

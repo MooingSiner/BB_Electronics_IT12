@@ -4,7 +4,7 @@
 
 @section('content')
 {{-- Back Button --}}
-<div class="mb-5">
+<div class="mb-3">
     <a href="{{ route('owner.sales.index') }}"
        class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#363E48] transition-colors font-medium">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -15,7 +15,7 @@
 </div>
 
 {{-- Page Header --}}
-<div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+<div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-3">
     <div>
         <h1 class="text-2xl font-bold text-[#363E48] font-mono">{{ $txn->code ?? 'TXN-2024-001' }}</h1>
         <p class="mt-0.5 text-sm text-slate-500">
@@ -81,15 +81,15 @@
 {{-- Main Grid --}}
 <div>
 
-    <div class="flex flex-col-reverse gap-5">
+    <div class="flex flex-col-reverse gap-4">
 
         {{-- Transaction Information Card --}}
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
-            <div class="px-6 py-4 border-b border-slate-100">
+            <div class="px-6 py-3 border-b border-slate-100">
                 <h2 class="text-sm font-semibold text-[#363E48]">Transaction Information</h2>
             </div>
-            <div class="px-6 py-5">
-                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+            <div class="px-6 py-4">
+                <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-3 text-sm">
 
                     <div>
                         <dt class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-0.5">Transaction ID</dt>
@@ -190,7 +190,7 @@
 
         {{-- Items Card --}}
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-100">
+            <div class="px-6 py-3 border-b border-slate-100">
                 <h2 class="text-sm font-semibold text-[#363E48]">Items</h2>
             </div>
 
@@ -198,30 +198,30 @@
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b border-slate-100 bg-slate-50">
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Product</th>
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Product ID</th>
-                            <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Qty</th>
-                            <th class="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Unit Price</th>
-                            <th class="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Subtotal</th>
+                            <th class="text-left px-6 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">Product</th>
+                            <th class="text-left px-6 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">Product ID</th>
+                            <th class="text-left px-6 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">Qty</th>
+                            <th class="text-right px-6 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">Unit Price</th>
+                            <th class="text-right px-6 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">Subtotal</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @forelse($txn->items ?? [] as $item)
                             <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-3 font-medium text-slate-700">{{ $item->product->name ?? $item->product_name }}</td>
-                                <td class="px-6 py-3 font-mono text-xs text-slate-500">{{ $item->product->sku ?? $item->product_id }}</td>
-                                <td class="px-6 py-3 text-slate-600">{{ $item->qty }}</td>
-                                <td class="px-6 py-3 text-right text-slate-700">₱{{ number_format($item->unit_price, 2) }}</td>
-                                <td class="px-6 py-3 text-right font-semibold text-slate-800">₱{{ number_format($item->subtotal ?? ($item->unit_price * $item->qty), 2) }}</td>
+                                <td class="px-6 py-2 font-medium text-slate-700">{{ $item->product->name ?? $item->product_name }}</td>
+                                <td class="px-6 py-2 font-mono text-xs text-slate-500">{{ $item->product->sku ?? $item->product_id }}</td>
+                                <td class="px-6 py-2 text-slate-600">{{ $item->qty }}</td>
+                                <td class="px-6 py-2 text-right text-slate-700">₱{{ number_format($item->unit_price, 2) }}</td>
+                                <td class="px-6 py-2 text-right font-semibold text-slate-800">₱{{ number_format($item->subtotal ?? ($item->unit_price * $item->qty), 2) }}</td>
                             </tr>
                         @empty
                             {{-- Hardcoded sample items --}}
                             <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-3 font-medium text-slate-700">LED Bulb 9W</td>
-                                <td class="px-6 py-3 font-mono text-xs text-slate-500">ELEC-001</td>
-                                <td class="px-6 py-3 text-slate-600">5</td>
-                                <td class="px-6 py-3 text-right text-slate-700">₱40.50</td>
-                                <td class="px-6 py-3 text-right font-semibold text-slate-800">₱202.50</td>
+                                <td class="px-6 py-2 font-medium text-slate-700">LED Bulb 9W</td>
+                                <td class="px-6 py-2 font-mono text-xs text-slate-500">ELEC-001</td>
+                                <td class="px-6 py-2 text-slate-600">5</td>
+                                <td class="px-6 py-2 text-right text-slate-700">₱40.50</td>
+                                <td class="px-6 py-2 text-right font-semibold text-slate-800">₱202.50</td>
                             </tr>
                         @endforelse
                     </tbody>

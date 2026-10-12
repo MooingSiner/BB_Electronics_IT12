@@ -7,12 +7,12 @@
 @section('content')
     {{-- Back Link --}}
     <a href="{{ route('owner.suppliers.index') }}"
-       class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-4 transition">
+       class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-2 transition">
         ← Back to Supplier Orders
     </a>
 
     {{-- Page Header --}}
-    <div class="flex items-start justify-between mb-6">
+    <div class="flex items-start justify-between mb-3">
         <div>
             <h1 class="text-2xl font-bold" style="color:#363E48">SO-{{ str_pad($order->id ?? 0, 4, '0', STR_PAD_LEFT) }}</h1>
             <p class="text-sm text-slate-500 mt-1">{{ $order->supplier ?? 'TechWorld Distributors' }}</p>
@@ -61,15 +61,15 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 2xl:grid-cols-3 gap-5">
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
 
         {{-- LEFT: 2/3 --}}
-        <div class="2xl:col-span-2 space-y-5">
+        <div class="xl:col-span-2">
 
             {{-- Card: Order Information --}}
-            <div class="bg-white rounded-xl shadow border border-slate-200 p-6">
-                <h2 class="text-base font-semibold text-slate-800 mb-4">Order Information</h2>
-                <dl class="space-y-3">
+            <div class="bg-white rounded-xl shadow border border-slate-200 p-5">
+                <h2 class="text-base font-semibold text-slate-800 mb-3">Order Information</h2>
+                <dl class="grid grid-cols-2 gap-x-8 gap-y-2">
                     <div class="flex justify-between text-sm">
                         <dt class="text-slate-500">Order ID</dt>
                         <dd class="font-mono text-slate-700 font-medium">SO-{{ str_pad($order->id ?? 0, 4, '0', STR_PAD_LEFT) }}</dd>
@@ -131,85 +131,10 @@
                     @endif
                 </dl>
             </div>
-
-            {{-- Card: Order Items --}}
-            <div class="bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-200">
-                    <h2 class="text-base font-semibold text-slate-800">Order Items</h2>
-                </div>
-                <div class="overflow-x-auto">
-<table class="w-full text-sm">
-                    <thead>
-                        <tr class="bg-slate-50 border-b border-slate-200">
-                            <th class="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Product</th>
-                            <th class="px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Ordered</th>
-                            <th class="px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Received</th>
-                            <th class="px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Damaged</th>
-                            <th class="px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Accepted</th>
-                            <th class="px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Unit Cost</th>
-                            <th class="px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Cost</th>
-                            <th class="px-3 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        @foreach($order->items ?? [] as $item)
-                            <tr class="hover:bg-slate-50 transition">
-                                <td class="px-3 py-3 font-medium text-slate-800">{{ $item->product->name ?? $item->product_name ?? '—' }}</td>
-                                <td class="px-3 py-3 text-right text-slate-700">{{ $item->qty_ordered ?? 0 }}</td>
-                                <td class="px-3 py-3 text-right text-slate-700">{{ $item->qty_received ?? 0 }}</td>
-                                <td class="px-3 py-3 text-right text-red-600">{{ $item->qty_damaged ?? 0 }}</td>
-                                <td class="px-3 py-3 text-right text-green-700">{{ $item->qty_accepted ?? 0 }}</td>
-                                <td class="px-3 py-3 text-right text-slate-700">₱{{ number_format($item->unit_cost ?? 0, 2) }}</td>
-                                <td class="px-3 py-3 text-right font-medium text-slate-800">
-                                    ₱{{ number_format(($item->unit_cost ?? 0) * ($item->qty_ordered ?? 0), 2) }}
-                                </td>
-                                <td class="px-3 py-3 text-center">
-                                    @php
-                                        $qtyReceived = $item->qty_received ?? 0;
-                                        $qtyOrdered = $item->qty_ordered ?? 0;
-                                        $qtyDamaged = $item->qty_damaged ?? 0;
-                                        $qtyOpenDamaged = $item->qty_open_damaged ?? 0;
-                                        $qtyAccepted = $item->qty_accepted ?? 0;
-                                        $resolutionLabel = $item->damage_resolution_label ?? null;
-                                    @endphp
-                                    @if($item->is_cancelled ?? false)
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Cancelled</span>
-                                    @elseif($qtyOpenDamaged > 0 && $qtyReceived > 0 && $qtyAccepted <= 0)
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Damaged</span>
-                                    @elseif($qtyOpenDamaged > 0)
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">Partial Damage</span>
-                                    @elseif($qtyDamaged > 0 && $resolutionLabel === 'Replaced')
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Replaced</span>
-                                    @elseif($qtyDamaged > 0 && $resolutionLabel === 'Returned to Supplier')
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Returned to Supplier</span>
-                                    @elseif($qtyDamaged > 0 && $resolutionLabel)
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Resolved</span>
-                                    @elseif($qtyReceived >= $qtyOrdered)
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Received</span>
-                                    @elseif($qtyReceived > 0)
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Partial</span>
-                                    @else
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Pending</span>
-                                    @endif
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                    <tfoot class="border-t border-slate-200 bg-slate-50">
-                        <tr>
-                            <td colspan="7" class="px-3 py-3 text-right text-sm font-semibold text-slate-700">Total Order Cost</td>
-                            <td class="px-3 py-3 text-right text-sm font-bold text-slate-900">
-                                ₱{{ number_format($order->total_cost ?? collect($order->items ?? [])->sum(fn($i) => ($i->unit_cost ?? 0) * ($i->qty_ordered ?? 0)), 2) }}
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
-</div>
-            </div>
         </div>
 
         {{-- RIGHT: 1/3 --}}
-        <div class="2xl:col-span-1">
+        <div class="xl:col-span-1">
             <div class="bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
                 <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
                     <h2 class="text-base font-semibold text-slate-800">Damage Reports</h2>
@@ -265,14 +190,91 @@
                 @endif
             </div>
         </div>
+
+        {{-- Order items (full width) --}}
+        <div class="xl:col-span-3">
+            <div class="bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
+                <div class="px-6 py-3 border-b border-slate-200">
+                    <h2 class="text-base font-semibold text-slate-800">Order Items</h2>
+                </div>
+                <div class="overflow-x-auto">
+<table class="w-full text-sm">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200">
+                            <th class="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Product</th>
+                            <th class="px-3 py-2 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Ordered</th>
+                            <th class="px-3 py-2 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Received</th>
+                            <th class="px-3 py-2 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Damaged</th>
+                            <th class="px-3 py-2 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Accepted</th>
+                            <th class="px-3 py-2 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Unit Cost</th>
+                            <th class="px-3 py-2 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Cost</th>
+                            <th class="px-3 py-2 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @foreach($order->items ?? [] as $item)
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="px-3 py-1.5 font-medium text-slate-800">{{ $item->product->name ?? $item->product_name ?? '—' }}</td>
+                                <td class="px-3 py-1.5 text-right text-slate-700">{{ $item->qty_ordered ?? 0 }}</td>
+                                <td class="px-3 py-1.5 text-right text-slate-700">{{ $item->qty_received ?? 0 }}</td>
+                                <td class="px-3 py-1.5 text-right text-red-600">{{ $item->qty_damaged ?? 0 }}</td>
+                                <td class="px-3 py-1.5 text-right text-green-700">{{ $item->qty_accepted ?? 0 }}</td>
+                                <td class="px-3 py-1.5 text-right text-slate-700">₱{{ number_format($item->unit_cost ?? 0, 2) }}</td>
+                                <td class="px-3 py-1.5 text-right font-medium text-slate-800">
+                                    ₱{{ number_format(($item->unit_cost ?? 0) * ($item->qty_ordered ?? 0), 2) }}
+                                </td>
+                                <td class="px-3 py-1.5 text-center">
+                                    @php
+                                        $qtyReceived = $item->qty_received ?? 0;
+                                        $qtyOrdered = $item->qty_ordered ?? 0;
+                                        $qtyDamaged = $item->qty_damaged ?? 0;
+                                        $qtyOpenDamaged = $item->qty_open_damaged ?? 0;
+                                        $qtyAccepted = $item->qty_accepted ?? 0;
+                                        $resolutionLabel = $item->damage_resolution_label ?? null;
+                                    @endphp
+                                    @if($item->is_cancelled ?? false)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Cancelled</span>
+                                    @elseif($qtyOpenDamaged > 0 && $qtyReceived > 0 && $qtyAccepted <= 0)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Damaged</span>
+                                    @elseif($qtyOpenDamaged > 0)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">Partial Damage</span>
+                                    @elseif($qtyDamaged > 0 && $resolutionLabel === 'Replaced')
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Replaced</span>
+                                    @elseif($qtyDamaged > 0 && $resolutionLabel === 'Returned to Supplier')
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Returned to Supplier</span>
+                                    @elseif($qtyDamaged > 0 && $resolutionLabel)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Resolved</span>
+                                    @elseif($qtyReceived >= $qtyOrdered)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Received</span>
+                                    @elseif($qtyReceived > 0)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Partial</span>
+                                    @else
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Pending</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot class="border-t border-slate-200 bg-slate-50">
+                        <tr>
+                            <td colspan="7" class="px-3 py-2 text-right text-sm font-semibold text-slate-700">Total Order Cost</td>
+                            <td class="px-3 py-1.5 text-right text-sm font-bold text-slate-900">
+                                ₱{{ number_format($order->total_cost ?? collect($order->items ?? [])->sum(fn($i) => ($i->unit_cost ?? 0) * ($i->qty_ordered ?? 0)), 2) }}
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+</div>
+            </div>
+        </div>
     </div>
 @endsection
 
 @push('modals')
     {{-- Receive Delivery Modal --}}
     <div id="receiveModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-        <div class="bg-white rounded-xl p-6 max-w-lg w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between mb-4">
+        <div class="bg-white rounded-xl p-5 max-w-lg w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-3">
                 <h3 class="text-base font-semibold text-slate-800">Update Delivery Status</h3>
                 <button type="button" id="closeReceiveModal"
                         class="text-slate-400 hover:text-slate-600 transition">
@@ -286,7 +288,7 @@
                 @csrf
 
                 {{-- Date Received --}}
-                <div class="mb-4">
+                <div class="mb-3">
                     <label class="block text-sm font-medium text-slate-700 mb-1">
                         Date Received <span class="text-red-500">*</span>
                     </label>
@@ -295,7 +297,7 @@
                 </div>
 
                 {{-- Per-item qty table --}}
-                <div class="mb-4">
+                <div class="mb-3">
                     <p class="text-sm font-medium text-slate-700 mb-2">Quantities Received</p>
                     <div class="border border-slate-200 rounded-lg overflow-hidden">
                         <table class="w-full text-sm">
@@ -310,16 +312,16 @@
                             <tbody class="divide-y divide-slate-100">
                                 @foreach($order->items ?? [] as $item)
                                     <tr>
-                                        <td class="px-3 py-2 text-slate-700">{{ $item->product->name ?? '—' }}</td>
-                                        <td class="px-3 py-2 text-right text-slate-500">{{ $item->qty_ordered ?? 0 }}</td>
-                                        <td class="px-3 py-2 text-right">
+                                        <td class="px-3 py-1 text-slate-700">{{ $item->product->name ?? '—' }}</td>
+                                        <td class="px-3 py-1 text-right text-slate-500">{{ $item->qty_ordered ?? 0 }}</td>
+                                        <td class="px-3 py-1 text-right">
                                             <input type="number" name="items[{{ $item->id ?? 0 }}][qty_received]"
                                                    value="{{ $item->qty_ordered ?? 0 }}" min="0"
                                                    max="{{ $item->qty_ordered ?? 9999 }}"
                                                    {{ ($item->is_cancelled ?? false) ? 'readonly' : '' }}
-                                                   class="qty-received-input w-20 border border-slate-300 rounded-md px-2 py-1 text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
+                                                   class="qty-received-input w-20 border border-slate-300 rounded-md px-2 py-0.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#363E48]/30">
                                         </td>
-                                        <td class="px-3 py-2 text-center">
+                                        <td class="px-3 py-1 text-center">
                                             <input type="checkbox" name="items[{{ $item->id ?? 0 }}][cancelled]" value="1"
                                                    {{ ($item->is_cancelled ?? false) ? 'checked' : '' }}
                                                    class="cancel-item-checkbox w-4 h-4 rounded border-slate-300 text-red-500 focus:ring-red-400">
@@ -332,9 +334,9 @@
                 </div>
 
                 {{-- Notes --}}
-                <div class="mb-5">
+                <div class="mb-3">
                     <label class="block text-sm font-medium text-slate-700 mb-1">Notes</label>
-                    <textarea name="receive_notes" rows="2"
+                    <textarea name="receive_notes" rows="1"
                               class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#363E48]/30 resize-none"></textarea>
                 </div>
 

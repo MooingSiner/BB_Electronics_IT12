@@ -4,7 +4,7 @@
 @php $activeNav = 'returns'; @endphp
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-4">
 
     {{-- Back Link --}}
     <a href="{{ route('owner.returns.index', ['tab' => 'warranty']) }}"
@@ -39,15 +39,15 @@
     </div>
 
     {{-- Main Grid --}}
-    <div class="grid grid-cols-3 gap-6 items-start">
+    <div class="grid grid-cols-3 gap-4 items-start">
 
         {{-- LEFT: 1/3 --}}
         <div class="space-y-4">
 
             {{-- Warranty Information --}}
-            <div class="bg-white rounded-xl border shadow-sm p-5">
-                <h2 class="font-semibold text-slate-800 mb-4">Warranty Information</h2>
-                <dl class="space-y-3 text-sm">
+            <div class="bg-white rounded-xl border shadow-sm p-4">
+                <h2 class="font-semibold text-slate-800 mb-3">Warranty Information</h2>
+                <dl class="space-y-2 text-sm">
                     <div>
                         <dt class="text-xs text-slate-500 uppercase tracking-wide font-medium">Warranty Ref</dt>
                         <dd class="mt-0.5 text-slate-800 font-medium">{{ $warranty->warranty_ref }}</dd>
@@ -106,9 +106,9 @@
             </div>
 
             {{-- Customer Information --}}
-            <div class="bg-white rounded-xl border shadow-sm p-5">
-                <h2 class="font-semibold text-slate-800 mb-4">Customer Information</h2>
-                <dl class="space-y-3 text-sm">
+            <div class="bg-white rounded-xl border shadow-sm p-4">
+                <h2 class="font-semibold text-slate-800 mb-3">Customer Information</h2>
+                <dl class="space-y-2 text-sm">
                     <div>
                         <dt class="text-xs text-slate-500 uppercase tracking-wide font-medium">Customer Name</dt>
                         <dd class="mt-0.5 text-slate-700">{{ $warranty->customerName ?? '—' }}</dd>
@@ -126,13 +126,13 @@
         <div class="col-span-2 space-y-4">
 
             {{-- Issue / Concern --}}
-            <div class="bg-white rounded-xl border shadow-sm p-5">
+            <div class="bg-white rounded-xl border shadow-sm p-4">
                 <h2 class="font-semibold text-slate-800 mb-3">Issue / Concern</h2>
                 <p class="text-sm text-slate-700 leading-relaxed">{{ $warranty->issue ?? 'No issue description provided.' }}</p>
             </div>
 
             {{-- Resolution / Outcome --}}
-            <div class="bg-white rounded-xl border shadow-sm p-5">
+            <div class="bg-white rounded-xl border shadow-sm p-4">
                 <h2 class="font-semibold text-slate-800 mb-3">Resolution / Outcome</h2>
                 @if(!empty($warranty->resolution))
                     <p class="text-sm font-medium text-slate-800">{{ $warranty->resolution }}</p>
@@ -148,7 +148,7 @@
 
             {{-- Notes (conditional) --}}
             @if($warranty->notes ?? false)
-            <div class="bg-white rounded-xl border shadow-sm p-5">
+            <div class="bg-white rounded-xl border shadow-sm p-4">
                 <h2 class="font-semibold text-slate-800 mb-3">Notes</h2>
                 <p class="text-sm text-slate-700 leading-relaxed">{{ $warranty->notes }}</p>
             </div>
@@ -163,7 +163,7 @@
 @push('modals')
 <div id="updateModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
     <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
-        <h3 class="font-semibold text-slate-800 mb-4">Update Warranty Status</h3>
+        <h3 class="font-semibold text-slate-800 mb-3">Update Warranty Status</h3>
         <form data-confirm="Save this warranty update?" method="POST" action="{{ route('owner.returns.warrantyUpdate', $warranty->id ?? 1) }}">
             @csrf
             @method('PATCH')
