@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
-#[Fillable(['user_id', 'sale_date', 'subtotal', 'discount_amount', 'discount_reason', 'total_amount', 'payment_method', 'amount_paid', 'change_amount', 'status', 'void_reason', 'voided_at'])]
+#[Fillable(['user_id', 'sale_date', 'subtotal', 'discount_amount', 'discount_reason', 'vat_rate', 'vat_amount', 'total_amount', 'payment_method', 'amount_paid', 'change_amount', 'status', 'void_reason', 'voided_at'])]
 class Sale extends Model
 {
     /** @use HasFactory<SaleFactory> */
@@ -37,6 +37,8 @@ class Sale extends Model
             'sale_date' => 'datetime',
             'subtotal' => 'decimal:2',
             'discount_amount' => 'decimal:2',
+            'vat_rate' => 'decimal:2',
+            'vat_amount' => 'decimal:2',
             'total_amount' => 'decimal:2',
             'payment_method' => PaymentMethod::class,
             'amount_paid' => 'decimal:2',

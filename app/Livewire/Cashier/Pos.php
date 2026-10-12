@@ -8,7 +8,7 @@ use App\Models\AuditLog;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
-use App\Support\DiscountReasons;
+use App\Models\Setting;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -31,10 +31,6 @@ class Pos extends Component
 
     public ?float $discountValue = 0;
 
-    public string $discountReason = '';
-
-    public string $discountNote = '';
-
     public string $payment = 'Cash';
 
     public ?float $amountReceived = 0;
@@ -49,8 +45,6 @@ class Pos extends Component
         $this->cart = session('cart', []);
         $this->discountType = session('discount_type', 'none');
         $this->discountValue = (float) session('discount_value', 0);
-        $this->discountReason = session('discount_reason', '');
-        $this->discountNote = session('discount_note', '');
         $this->payment = session('payment', 'Cash');
         $this->amountReceived = (float) session('amount_received', 0);
     }
@@ -134,13 +128,11 @@ class Pos extends Component
         $this->cart = [];
         $this->discountType = 'none';
         $this->discountValue = 0;
-        $this->discountReason = '';
-        $this->discountNote = '';
         $this->payment = 'Cash';
         $this->amountReceived = 0;
         $this->errorMessage = null;
 
-        session()->forget(['cart', 'discount_type', 'discount_value', 'discount_reason', 'discount_note', 'payment', 'amount_received']);
+        session()->forget(['cart', 'discount_type', 'discount_value', 'payment', 'amount_received']);
     }
 
     public function setDiscountType(string $type): void
@@ -149,30 +141,12 @@ class Pos extends Component
 
         if ($type === 'none') {
             $this->discountValue = 0;
-            $this->discountReason = '';
-            $this->discountNote = '';
         }
 
         session([
             'discount_type' => $type,
             'discount_value' => (float) $this->discountValue,
-            'discount_reason' => $this->discountReason,
-            'discount_note' => $this->discountNote,
         ]);
-    }
-
-    public function updatedDiscountReason(string $value): void
-    {
-        if ($value !== DiscountReasons::OTHER) {
-            $this->discountNote = '';
-        }
-
-        session(['discount_reason' => $value, 'discount_note' => $this->discountNote]);
-    }
-
-    public function updatedDiscountNote(string $value): void
-    {
-        session(['discount_note' => $value]);
     }
 
     public function setPayment(string $method): void
@@ -214,23 +188,7 @@ class Pos extends Component
             }
         }
 
-        $subtotal = collect($this->cart)->sum(fn ($item) => $item['price'] * $item['quantity']);
-        $discountAmount = $this->calculateDiscount($subtotal);
-        $total = max(0, $subtotal - $discountAmount);
-
-        $discountReason = null;
-
-        if ($discountAmount > 0) {
-            $discountReason = DiscountReasons::resolve($this->discountReason, $this->discountNote);
-
-            if ($discountReason === null) {
-                $this->errorMessage = $this->discountReason === DiscountReasons::OTHER
-                    ? 'Type the reason for the discount.'
-                    : 'Choose a reason for the discount.';
-
-                return;
-            }
-        }
+        ['subtotal' => $subtotal, 'discount' => $discountAmount, 'vatRate' => $vatRate, 'vat' => $vatAmount, 'total' => $total] = $this->totals();
 
         $paymentMethod = match ($this->payment) {
             'GCash' => PaymentMethod::GCash,
@@ -254,13 +212,14 @@ class Pos extends Component
 
         $cartSnapshot = $this->cart;
 
-        $sale = DB::transaction(function () use ($cartSnapshot, $subtotal, $discountAmount, $discountReason, $total, $paymentMethod, $amountReceived, $changeAmount) {
+        $sale = DB::transaction(function () use ($cartSnapshot, $subtotal, $discountAmount, $vatRate, $vatAmount, $total, $paymentMethod, $amountReceived, $changeAmount) {
             $sale = Sale::create([
                 'user_id' => Auth::id(),
                 'sale_date' => now(),
                 'subtotal' => $subtotal,
                 'discount_amount' => $discountAmount,
-                'discount_reason' => $discountReason,
+                'vat_rate' => $vatRate,
+                'vat_amount' => $vatAmount,
                 'total_amount' => $total,
                 'payment_method' => $paymentMethod,
                 'amount_paid' => $amountReceived,
@@ -278,8 +237,8 @@ class Pos extends Component
                 ]);
             }
 
-            if ($discountReason !== null) {
-                AuditLog::record('discount', 'Gave a discount of ₱'.number_format($discountAmount, 2).' on '.$sale->code().' ('.$discountReason.').');
+            if ($discountAmount > 0) {
+                AuditLog::record('discount', 'Gave a discount of ₱'.number_format($discountAmount, 2).' on '.$sale->code().'.');
             }
 
             return $sale;
@@ -310,7 +269,8 @@ class Pos extends Component
             'code' => $sale->code(),
             'subtotal' => number_format($subtotal, 2),
             'discount' => number_format($discountAmount, 2),
-            'discount_reason' => $discountReason,
+            'vat_rate' => $vatRate,
+            'vat' => number_format($vatAmount, 2),
             'total' => number_format($total, 2),
             'payment' => $this->payment,
             'received' => number_format($amountReceived, 2),
@@ -320,18 +280,37 @@ class Pos extends Component
         $this->cart = [];
         $this->discountType = 'none';
         $this->discountValue = 0;
-        $this->discountReason = '';
-        $this->discountNote = '';
         $this->payment = 'Cash';
         $this->amountReceived = 0;
         $this->errorMessage = null;
 
-        session()->forget(['cart', 'discount_type', 'discount_value', 'discount_reason', 'discount_note', 'payment', 'amount_received']);
+        session()->forget(['cart', 'discount_type', 'discount_value', 'payment', 'amount_received']);
     }
 
     private function syncCartSession(): void
     {
         session(['cart' => $this->cart]);
+    }
+
+    /**
+     * The cart subtotal, the discount, the VAT added on what is left after the discount, and the total to pay.
+     *
+     * @return array{subtotal: float, discount: float, vatRate: float, vat: float, total: float}
+     */
+    private function totals(): array
+    {
+        $subtotal = (float) collect($this->cart)->sum(fn ($item) => $item['price'] * $item['quantity']);
+        $discount = $this->calculateDiscount($subtotal);
+        $vatRate = Setting::vatRate();
+        $vat = round(($subtotal - $discount) * $vatRate / 100, 2);
+
+        return [
+            'subtotal' => $subtotal,
+            'discount' => $discount,
+            'vatRate' => $vatRate,
+            'vat' => $vat,
+            'total' => round($subtotal - $discount + $vat, 2),
+        ];
     }
 
     private function calculateDiscount(float $subtotal): float
@@ -369,9 +348,7 @@ class Pos extends Component
                 'cost_code' => $product->costCode(),
             ]);
 
-        $subtotal = collect($this->cart)->sum(fn ($item) => $item['price'] * $item['quantity']);
-        $discountAmount = $this->calculateDiscount($subtotal);
-        $total = max(0, $subtotal - $discountAmount);
+        ['subtotal' => $subtotal, 'discount' => $discountAmount, 'vatRate' => $vatRate, 'vat' => $vatAmount, 'total' => $total] = $this->totals();
         $change = $this->payment === 'Cash' && (float) $this->amountReceived > 0 ? (float) $this->amountReceived - $total : null;
 
         $cartStock = Product::query()
@@ -379,6 +356,6 @@ class Pos extends Component
             ->get(['product_id', 'quantity_on_hand', 'reorder_level', 'cost_price'])
             ->keyBy('product_id');
 
-        return view('livewire.cashier.pos', compact('products', 'subtotal', 'discountAmount', 'total', 'change', 'cartStock'));
+        return view('livewire.cashier.pos', compact('products', 'subtotal', 'discountAmount', 'vatRate', 'vatAmount', 'total', 'change', 'cartStock'));
     }
 }

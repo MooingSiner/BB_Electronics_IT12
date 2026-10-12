@@ -92,7 +92,7 @@ class HelpGuide
         return [
             ['title' => 'Make a sale', 'steps' => [
                 ['text' => 'Scan the barcode or type in the search box, then tap a product to add it. Tapping it again adds one more.', 'image' => 'c-sale-1'],
-                ['text' => 'Press the Cart button. Change quantities, pick a discount if needed (and the reason for it), choose the payment method, enter the amount received, then press Complete Sale and print the receipt.', 'image' => 'c-sale-2'],
+                ['text' => 'Press the Cart button. Change quantities, pick a discount if needed, check the VAT line (the owner sets the VAT rate in Shop Settings), choose the payment method, enter the amount received, then press Complete Sale and print the receipt.', 'image' => 'c-sale-2'],
             ]],
             ['title' => 'Reprint a receipt', 'steps' => [
                 ['text' => 'In Sales Transactions, press the eye icon on the sale (or the printer icon to print straight away).', 'image' => 'c-rec-1'],
@@ -174,7 +174,7 @@ class HelpGuide
         return [
             ['title' => 'Point of Sale', 'image' => 'cashier-pos', 'summary' => 'Where sales are made.', 'points' => [
                 'Scan a barcode or type a name in the search box, or tap a product to add it to the cart.',
-                'Change quantities in the cart, add a discount if needed, and choose the payment method.',
+                'Change quantities in the cart, add a discount if needed, check the VAT line, and choose the payment method.',
                 'Press Complete Sale, then print the receipt.',
             ]],
             ['title' => 'Sales Transactions', 'image' => 'cashier-sales', 'summary' => 'Sales you have made.', 'points' => [

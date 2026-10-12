@@ -249,6 +249,13 @@
                         </div>
                     @endif
 
+                    @if(($txn->vat_amount ?? 0) > 0)
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-500">VAT ({{ rtrim(rtrim(number_format($txn->vat_rate, 2), '0'), '.') }}%)</span>
+                            <span class="font-medium text-slate-700">₱{{ number_format($txn->vat_amount, 2) }}</span>
+                        </div>
+                    @endif
+
                     <div class="flex justify-between text-base font-bold pt-2 border-t border-slate-200">
                         <span class="text-[#363E48]">Total</span>
                         <span class="text-[#363E48]">

@@ -10,6 +10,11 @@ return [
     'cost_code_key' => env('COST_CODE_KEY', 'CHRISTYNED'),
 
     /*
+    | The VAT percentage used until the owner sets one in Shop Settings.
+    */
+    'vat_rate' => (float) env('VAT_RATE', 12),
+
+    /*
     | The mysqldump program used by the backup:database command. Leave it as it is when
     | mysqldump can be run from any folder, or give its full path, for example
     | C:/laragon/bin/mysql/mysql-8.4.3-winx64/bin/mysqldump.exe

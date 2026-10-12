@@ -244,26 +244,6 @@
                                    class="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2"
                                    style="--tw-ring-color:#363E48;">
                         </div>
-                        @if($discountType !== 'none')
-                        <div class="mt-2 space-y-2">
-                            <select wire:model.live="discountReason"
-                                    class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 {{ $discountAmount > 0 && $discountReason === '' ? 'border-amber-400' : '' }}"
-                                    style="--tw-ring-color:#363E48;">
-                                <option value="">Reason for the discount…</option>
-                                @foreach(\App\Support\DiscountReasons::options() as $reasonOption)
-                                <option value="{{ $reasonOption }}">{{ $reasonOption }}</option>
-                                @endforeach
-                            </select>
-                            @if($discountReason === \App\Support\DiscountReasons::OTHER)
-                            <input type="text"
-                                   wire:model.live.debounce.400ms="discountNote"
-                                   maxlength="60"
-                                   placeholder="Type the reason"
-                                   class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2"
-                                   style="--tw-ring-color:#363E48;">
-                            @endif
-                        </div>
-                        @endif
                     </div>
 
                     {{-- Totals --}}
@@ -276,6 +256,12 @@
                         <div class="flex items-center justify-between text-green-600">
                             <span>Discount</span>
                             <span>−₱{{ number_format($discountAmount, 2) }}</span>
+                        </div>
+                        @endif
+                        @if($vatRate > 0)
+                        <div class="flex items-center justify-between text-slate-600">
+                            <span>VAT ({{ rtrim(rtrim(number_format($vatRate, 2), '0'), '.') }}%)</span>
+                            <span>₱{{ number_format($vatAmount, 2) }}</span>
                         </div>
                         @endif
                         <div class="flex items-center justify-between font-bold text-base text-slate-800 pt-1 border-t border-slate-100">
@@ -394,9 +380,12 @@
                 <span>Discount</span>
                 <span>−₱{{ $completedSale['discount'] }}</span>
             </div>
-            @if($completedSale['discount_reason'])
-            <div class="text-xs text-slate-500 text-right">{{ $completedSale['discount_reason'] }}</div>
             @endif
+            @if($completedSale['vat_rate'] > 0)
+            <div class="flex justify-between">
+                <span class="text-slate-500">VAT ({{ rtrim(rtrim(number_format($completedSale['vat_rate'], 2), '0'), '.') }}%)</span>
+                <span>₱{{ $completedSale['vat'] }}</span>
+            </div>
             @endif
             <div class="flex justify-between font-bold">
                 <span>Total</span>

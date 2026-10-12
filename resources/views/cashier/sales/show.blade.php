@@ -92,6 +92,12 @@
         <div class="text-xs text-slate-500 text-right">{{ $txn->discount_reason }}</div>
         @endif
         @endif
+        @if(($txn->vat_amount ?? 0) > 0)
+        <div class="flex justify-between text-slate-600">
+            <span>VAT ({{ rtrim(rtrim(number_format($txn->vat_rate, 2), '0'), '.') }}%)</span>
+            <span>₱{{ number_format($txn->vat_amount, 2) }}</span>
+        </div>
+        @endif
         <div class="flex justify-between font-bold text-base text-slate-800 pt-1 border-t border-slate-100">
             <span>Total</span>
             <span>₱{{ number_format($txn->total, 2) }}</span>

@@ -102,6 +102,15 @@
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.5 9.5a2.5 2.5 0 114 2c-.8.6-1.5 1-1.5 2M12 17h.01"/></svg>
             <span class="sb-label">Help</span>
         </button>
+        <a href="{{ route('owner.settings.edit') }}"
+           title="Shop Settings"
+           class="sb-link flex items-center gap-3 px-3 py-2 rounded-md text-sm {{ ($activeNav ?? '') === 'settings' ? 'font-medium' : 'text-white/60 hover:text-white hover:bg-white/10' }}"
+           @if(($activeNav ?? '') === 'settings') style="background-color:#E0CD66;color:#363E48" @endif>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 14.5l6-6M9.5 9.5h.01M14.5 14.5h.01M4 12a8 8 0 1116 0 8 8 0 01-16 0z"/>
+            </svg>
+            <span class="sb-label">Shop Settings</span>
+        </a>
         <a href="{{ route('owner.profile') }}"
            title="Account Settings"
            class="sb-link flex items-center gap-3 px-3 py-2 rounded-md text-sm text-white/60 hover:text-white hover:bg-white/10">

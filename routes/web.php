@@ -14,6 +14,7 @@ use App\Http\Controllers\Owner\PurchaseOrderController as OwnerPurchaseOrderCont
 use App\Http\Controllers\Owner\ReportController as OwnerReportController;
 use App\Http\Controllers\Owner\ReturnController as OwnerReturnController;
 use App\Http\Controllers\Owner\SalesController as OwnerSalesController;
+use App\Http\Controllers\Owner\SettingsController as OwnerSettingsController;
 use App\Http\Controllers\Owner\SupplierController as OwnerSupplierController;
 use App\Http\Controllers\Owner\UserController as OwnerUserController;
 use App\Http\Controllers\ProfileController;
@@ -117,6 +118,9 @@ Route::middleware(['auth', 'role:owner_manager'])->prefix('owner')->name('owner.
     Route::patch('/users/{user}/toggle-status', [OwnerUserController::class, 'toggleStatus'])->name('users.toggleStatus');
 
     Route::get('/audit-log', [OwnerAuditController::class, 'index'])->name('audit.index');
+
+    Route::get('/settings', [OwnerSettingsController::class, 'edit'])->name('settings.edit');
+    Route::put('/settings', [OwnerSettingsController::class, 'update'])->name('settings.update');
 
     Route::get('/profile', [OwnerProfileController::class, 'edit'])->name('profile');
     Route::patch('/profile', [OwnerProfileController::class, 'update'])->name('profile.update');
