@@ -88,7 +88,7 @@ class SalesController extends Controller
 
     public function void(Request $request, Sale $sale): RedirectResponse
     {
-        $validated = $request->validate(['reason' => ['required', 'string', 'max:255']]);
+        $validated = $request->validate(['reason' => ['required', 'string', 'max:120']]);
 
         if ($blocked = $sale->voidBlockedReason()) {
             return back()->with('error', $blocked);

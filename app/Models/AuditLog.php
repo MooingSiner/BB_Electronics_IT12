@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 #[Fillable(['user_id', 'action', 'description'])]
 class AuditLog extends Model
@@ -40,7 +41,7 @@ class AuditLog extends Model
         return self::create([
             'user_id' => auth()->id(),
             'action' => $action,
-            'description' => $description,
+            'description' => Str::limit($description, 200, '...'),
         ]);
     }
 }

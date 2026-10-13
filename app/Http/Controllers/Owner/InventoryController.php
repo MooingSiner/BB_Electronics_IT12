@@ -261,8 +261,8 @@ class InventoryController extends Controller
     public function stockInStore(Request $request, Product $product): RedirectResponse
     {
         $validated = $request->validate([
-            'quantity' => ['required', 'integer', 'min:1'],
-            'reason' => ['nullable', 'string', 'max:255'],
+            'quantity' => ['required', 'integer', 'min:1', 'max:'.min(30000, 32767 - $product->quantity_on_hand)],
+            'reason' => ['nullable', 'string', 'max:120'],
             'date_received' => ['required', 'date', 'before_or_equal:today'],
         ]);
 
@@ -298,7 +298,7 @@ class InventoryController extends Controller
     {
         $validated = $request->validate([
             'quantity' => ['required', 'integer', 'min:1', 'max:'.$product->quantity_on_hand],
-            'reason' => ['required', 'string', 'max:255'],
+            'reason' => ['required', 'string', 'max:120'],
             'date_adjusted' => ['required', 'date', 'before_or_equal:today'],
         ], [
             'quantity.max' => 'Quantity can\'t be more than the '.$product->quantity_on_hand.' unit(s) currently in stock.',
@@ -344,7 +344,7 @@ class InventoryController extends Controller
                 'user_id' => Auth::id(),
                 'adjustment_date' => now(),
                 'quantity_change' => -$adjustment->quantity_change,
-                'reason' => Str::limit("Reversal of #{$adjustment->adjustment_id}: {$adjustment->reason}", 255, ''),
+                'reason' => Str::limit("Reversal of #{$adjustment->adjustment_id}: {$adjustment->reason}", 150, ''),
             ]);
 
             AuditLog::record(
@@ -380,8 +380,8 @@ class InventoryController extends Controller
             'date_received' => ['required', 'date', 'before_or_equal:today'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'distinct', 'exists:product,product_id'],
-            'items.*.quantity' => ['required', 'integer', 'min:1'],
-            'items.*.reason' => ['nullable', 'string', 'max:255'],
+            'items.*.quantity' => ['required', 'integer', 'min:1', 'max:30000'],
+            'items.*.reason' => ['nullable', 'string', 'max:120'],
         ]);
 
         $products = Product::whereIn('product_id', collect($validated['items'])->pluck('product_id'))->get()->keyBy('product_id');
@@ -440,7 +440,7 @@ class InventoryController extends Controller
                 'date' => $item->purchaseOrder->order_date ?? null,
                 'type' => 'In',
                 'quantity' => $item->quantity_received,
-                'reason' => 'Supplier delivery — '.($item->purchaseOrder->supplier->supplier_name ?? 'Unknown supplier'),
+                'reason' => Str::limit('Supplier delivery — '.($item->purchaseOrder->supplier->supplier_name ?? 'Unknown supplier'), 150, ''),
                 'by' => $item->purchaseOrder->user->full_name ?? '—',
             ]);
 
@@ -496,12 +496,12 @@ class InventoryController extends Controller
             'barcode' => ['nullable', 'string', 'max:50', Rule::unique('product', 'barcode')->ignore($ignoreId, 'product_id')],
             'category' => ['required', 'string', 'max:80'],
             'description' => ['nullable', 'string'],
-            'image_url' => ['nullable', 'url', 'max:500'],
+            'image_url' => ['nullable', 'url', 'max:200'],
             'image_file' => ['nullable', 'image', 'max:4096'],
-            'unit_price' => ['required', 'numeric', 'min:0'],
-            'cost_price' => ['nullable', 'numeric', 'min:0'],
-            'initial_qty' => [$forUpdate ? 'sometimes' : 'required', 'integer', 'min:0'],
-            'reorder_level' => ['required', 'integer', 'min:0'],
+            'unit_price' => ['required', 'numeric', 'min:0', 'max:999999.99'],
+            'cost_price' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
+            'initial_qty' => [$forUpdate ? 'sometimes' : 'required', 'integer', 'min:0', 'max:30000'],
+            'reorder_level' => ['required', 'integer', 'min:0', 'max:30000'],
             'warranty_period' => ['nullable', 'string', 'max:50'],
         ]);
     }

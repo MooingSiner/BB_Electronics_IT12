@@ -50,8 +50,8 @@ class UserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', 'unique:user,username'],
+            'name' => ['required', 'string', 'max:100'],
+            'username' => ['required', 'string', 'max:50', 'unique:user,username'],
             'role' => ['required', 'in:owner,cashier'],
             'status' => ['required', 'in:Active,Inactive'],
             'password' => ['required', 'confirmed', 'min:8'],
@@ -76,8 +76,8 @@ class UserController extends Controller
     public function update(Request $request, User $user): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', 'unique:user,username,'.$user->user_id.',user_id'],
+            'name' => ['required', 'string', 'max:100'],
+            'username' => ['required', 'string', 'max:50', 'unique:user,username,'.$user->user_id.',user_id'],
             'role' => ['required', 'in:owner,cashier'],
             'status' => ['required', 'in:Active,Inactive'],
             'password' => ['nullable', 'confirmed', 'min:8'],

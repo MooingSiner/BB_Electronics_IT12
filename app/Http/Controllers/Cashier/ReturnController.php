@@ -109,8 +109,8 @@ class ReturnController extends Controller
         $validated = $request->validate([
             'sale_id' => ['required', 'exists:sale,sale_id'],
             'product_id' => ['required', 'exists:product,product_id'],
-            'quantity' => ['required', 'integer', 'min:1'],
-            'reason' => ['required', 'string', 'max:255'],
+            'quantity' => ['required', 'integer', 'min:1', 'max:30000'],
+            'reason' => ['required', 'string', 'max:120'],
             'condition' => ['required', new Enum(ReturnCondition::class)],
             'resolution' => ['required', new Enum(ReturnResolution::class)],
             'replacement_product_id' => ['nullable', 'exists:product,product_id'],

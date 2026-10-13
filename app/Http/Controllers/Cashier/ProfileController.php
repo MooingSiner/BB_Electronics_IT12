@@ -21,11 +21,11 @@ class ProfileController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:100'],
             'username' => [
                 'required',
                 'string',
-                'max:255',
+                'max:50',
                 Rule::unique('user', 'username')->ignore($request->user()->user_id, 'user_id'),
             ],
         ]);

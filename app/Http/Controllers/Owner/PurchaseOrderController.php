@@ -131,8 +131,8 @@ class PurchaseOrderController extends Controller
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'exists:product,product_id'],
-            'items.*.qty' => ['required', 'integer', 'min:1'],
-            'items.*.unit_cost' => ['nullable', 'numeric', 'min:0'],
+            'items.*.qty' => ['required', 'integer', 'min:1', 'max:30000'],
+            'items.*.unit_cost' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
         ]);
 
         $store = Store::where('store_name', $validated['store'])->first()
@@ -291,8 +291,8 @@ class PurchaseOrderController extends Controller
             'date' => ['required', 'date', 'before_or_equal:today'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'exists:product,product_id'],
-            'items.*.quantity' => ['required', 'integer', 'min:1'],
-            'items.*.reason' => ['required', 'string', 'max:255'],
+            'items.*.quantity' => ['required', 'integer', 'min:1', 'max:30000'],
+            'items.*.reason' => ['required', 'string', 'max:120'],
         ]);
 
         // Multiple lines can target the same product in one submission, so check the combined quantity.
@@ -426,7 +426,7 @@ class PurchaseOrderController extends Controller
         $validated = $request->validate([
             'date_received' => ['required', 'date'],
             'items' => ['required', 'array'],
-            'items.*.qty_received' => ['required', 'integer', 'min:0'],
+            'items.*.qty_received' => ['required', 'integer', 'min:0', 'max:30000'],
             'items.*.cancelled' => ['sometimes', 'boolean'],
         ]);
 
